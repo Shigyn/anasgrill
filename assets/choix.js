@@ -26,7 +26,7 @@
   }
   document.addEventListener('mouseover', function (e) { var el = e.target.closest('[data-snack]'); if (el) surligner(el.getAttribute('data-snack')); });
 
-  function classer(point, libelle) {
+  function classer(point, libelle, ouvrir) {
     var tries = SNACKS.map(function (s) { return { s: s, d: km(point, s) }; }).sort(function (a, b) { return a.d - b.d; });
     tries.forEach(function (t, i) {
       var li = liste.querySelector('li[data-snack="' + t.s.id + '"]');
@@ -42,6 +42,11 @@
       ? 'Le plus proche ' + (libelle ? 'de <b>' + libelle + '</b>' : 'de toi') + ' : ' + lien + ', à ' + fmtKm(p.d) + '.'
       : 'Pas encore d’Anas Grill ' + (libelle ? 'près de <b>' + libelle + '</b>' : 'près de toi') + '. Le plus proche est ' + lien + ', à ' + fmtKm(p.d) + '.';
     surligner(p.s.id);
+    // « Le plus proche de moi » : on ouvre directement sa carte (Nicolas).
+    if (ouvrir && p.d < LOIN) {
+      note.innerHTML = 'On t’emmène chez <b>Anas Grill ' + p.s.nom + '</b>, à ' + fmtKm(p.d) + '…';
+      setTimeout(function () { location.href = ANAS.racine + p.s.id + '/'; }, 450);
+    }
     // Ton point sur la petite carte, s'il tombe dedans.
     var x = (point.lng - C.O) / (C.E - C.O) * 100, y = (C.N - point.lat) / (C.N - C.S) * 100, v = ensemble.querySelector('[data-vous]');
     v.hidden = !(x > 1 && x < 99 && y > 1 && y < 99);
@@ -55,7 +60,7 @@
     if (!navigator.geolocation) { note.textContent = 'Ton navigateur ne donne pas ta position : tape ton adresse.'; return; }
     b.disabled = true; note.textContent = 'On cherche ta position…';
     navigator.geolocation.getCurrentPosition(function (pos) {
-      b.disabled = false; classer({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      b.disabled = false; classer({ lat: pos.coords.latitude, lng: pos.coords.longitude }, null, true);
     }, function () {
       b.disabled = false; note.textContent = 'Position refusée ou introuvable : tape ton adresse juste à côté.';
     }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
