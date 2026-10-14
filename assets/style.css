@@ -698,3 +698,5 @@ body::before {
 body::after { content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
   background: url("../photos/fond-grill.webp") center 70% / cover no-repeat; opacity: .16; }
 @media (max-width: 760px) { body::after { background-image: url("../photos/fond-grill-mobile.webp"); background-position: center 60%; } }
+/* Un cran plus visible (Nicolas, 2026-10-15). */
+body::after { opacity: .19; }
