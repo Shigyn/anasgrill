@@ -116,18 +116,18 @@ export const CARTE = [
    retirer (salade, tomate, oignon partout, plus ceux du plat) et une
    carte « Sauces » qui deplie les sauces offertes. Listes A CONFIRMER
    avec le client (cahier, question « ingredients retirables »). */
-const STO = ['Salade', 'Tomate', 'Oignon'];
+// Ce qu'il y a VRAIMENT dans chaque plat (description du panneau + visuels du
+// client), et rien d'autre : pas de salade dans un croc's ni dans un tacos
+// (Nicolas, 2026-10-15). « Legumes au choix » = salade, tomate, oignon.
+const LEG = ['Salade', 'Tomate', 'Oignon'];
 const PERSO = {
-  'formule-classique': ['Cheddar'], 'formule-grill-wrap': ['Cheddar', 'Bacon'], 'formule-turkish': ['Cornichon', 'Cheddar'],
-  'formule-mielleux': [], 'formule-crocs': ['Cornichon', 'Cheddar', 'Bacon'], 'formule-smash': ['Cornichon', 'Cheddar'],
-  'formule-algerien': ['Cheddar'], 'formule-rolls': ['Cheddar', 'Bacon'], 'formule-forestier': ['Cheddar'], 'formule-mexicain': ['Jalapeños', 'Cheddar'],
-  sandwich: [], tacos: ['Cheddar'], roule: [],
-  'sig-dz': ['Cheddar'], 'sig-tajs': ['Kiri', 'Cheddar', 'Piment'], 'sig-bollys': ['Kiri', 'Cheddar'], 'sig-forestiers': ['Cheddar'],
+  sandwich: [...LEG], tacos: ['Cheddar'], roule: [...LEG],
+  'sig-dz': ['Cheddar'], 'sig-tajs': ['Salade', 'Tomate', 'Kiri', 'Cheddar', 'Piment'], 'sig-bollys': ['Kiri', 'Cheddar'], 'sig-forestiers': ['Cheddar'],
   'sig-savoyards': ['Bacon'], 'sig-anas-food': ['Cheddar'],
-  cheese: ['Cornichon', 'Cheddar'], 'double-cheese': ['Cornichon', 'Cheddar'], 'triple-cheese-bacon': ['Cornichon', 'Cheddar', 'Bacon'],
-  'le-240': ['Cornichon', 'Cheddar'], 'fish-brioche': ['Cheddar'], 'maxi-brioche': ['Cornichon', 'Cheddar'], 'chicken-brioche': ['Cornichon', 'Cheddar'],
-  'steak-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'chicken-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'anas-grill': ['Cheddar', 'Bacon'],
-  'naan-beef': ['Cheddar', 'Gruyère'], 'naan-chicken': ['Cheddar', 'Gruyère'], 'naan-curry': ['Kiri', 'Cheddar', 'Gruyère'], 'naan-tandoori': ['Kiri', 'Cheddar', 'Gruyère'],
+  cheese: ['Oignon', 'Cornichon', 'Cheddar'], 'double-cheese': ['Oignon', 'Cornichon', 'Cheddar'], 'triple-cheese-bacon': ['Oignon', 'Cornichon', 'Cheddar', 'Bacon'],
+  'le-240': [...LEG, 'Cornichon', 'Cheddar'], 'fish-brioche': ['Salade', 'Cheddar'], 'maxi-brioche': [...LEG, 'Cornichon', 'Cheddar'], 'chicken-brioche': [...LEG, 'Cornichon', 'Cheddar'],
+  'steak-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'chicken-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'anas-grill': [...LEG, 'Cheddar', 'Bacon'],
+  'naan-beef': ['Salade', 'Cheddar', 'Gruyère'], 'naan-chicken': ['Salade', 'Cheddar', 'Gruyère'], 'naan-curry': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'], 'naan-tandoori': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'],
 };
 const SAUCES_G = (max) => ({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte' : 'jusqu’à 2, offertes', min: 0, max, options: o(SAUCES) });
 for (const c of CARTE) for (const i of c.items) {
@@ -135,7 +135,7 @@ for (const c of CARTE) for (const i of c.items) {
   const saucesAvant = (i.groupes || []).find((g) => g.id === 'sauces');
   const requis = autres.filter((g) => (g.min >= 1 || g.id === 'viande2') && g.id !== 'menu' && g.id !== 'taille');
   const reste = autres.filter((g) => !requis.includes(g));
-  i.groupes = [...requis, sans(...STO, ...(PERSO[i.id] || [])), SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2), ...reste];
+  i.groupes = [...requis, ...((PERSO[i.id] || []).length ? [sans(...PERSO[i.id])] : []), SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2), ...reste];
 }
 
 /* ---------------- les formules, element par element (Nicolas, 2026-10-15) ----------------
@@ -145,17 +145,17 @@ for (const c of CARTE) for (const i of c.items) {
 const P = (court, titre, ing, opts = {}) => ({ court, titre, ing, ...opts });
 const choixDe = (titre, liste) => ({ titre, min: 1, max: 1, options: o(liste) });
 const FORMULES = {
-  'formule-classique': [P('Sandwich', 'Le sandwich escalope', [], { choix: choixDe('Assaisonnement', ['Curry', 'Tandoori', 'Paprika']) }),
-    P('Burger', 'Le burger brioché', ['Cornichon', 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Fish']) })],
-  'formule-grill-wrap': [P('Anas Grill', 'L’Anas Grill', ['Cheddar', 'Bacon']), P('Wrap', 'Le wrap poulet', ['Cheddar'])],
-  'formule-turkish': [P('Galette', 'La galette kebab', [], { sauces: 1 }), P('Cheese', 'Le cheese', ['Cornichon', 'Cheddar'])],
-  'formule-mielleux': [P('Burger', 'Le burger chèvre-miel', []), P('Wrap', 'Le wrap poulet-chèvre', [])],
-  'formule-crocs': [P('Croc’s', 'Les deux croc’s bacon', ['Cheddar', 'Bacon']), P('Cheeseburgers', 'Les deux cheeseburgers', ['Cornichon', 'Cheddar'])],
-  'formule-smash': [P('Smash steak', 'Le smash double steak', ['Cornichon', 'Cheddar']), P('Smash tenders', 'Le smash tenders', ['Cheddar'])],
-  'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', ['Cheddar']), P('Burger escalope', 'Le burger matlouh escalope', ['Cheddar'])],
-  'formule-rolls': [P('Roulé', 'Le roulé', [], { choix: choixDe('Viande', ['Steak', 'Curry', 'Tandoori', 'Paprika']) }), P('Croc’s', 'Le croc’s', ['Cheddar', 'Bacon'])],
-  'formule-forestier': [P('Forestier', 'Le sandwich forestier', ['Cheddar']), P('Maxi', 'Le maxi brioché', ['Cornichon', 'Cheddar']), P('Croc’s', 'Le croc’s', ['Cheddar', 'Bacon'])],
-  'formule-mexicain': [P('Fajitas', 'Les deux fajitas', ['Jalapeños', 'Cheddar'])],
+  'formule-classique': [P('Sandwich', 'Le sandwich escalope', [...LEG], { choix: choixDe('Assaisonnement', ['Curry', 'Tandoori', 'Paprika']) }),
+    P('Burger', 'Le burger brioché', [...LEG, 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Fish']) })],
+  'formule-grill-wrap': [P('Anas Grill', 'L’Anas Grill', [...LEG, 'Cheddar', 'Bacon']), P('Wrap', 'Le wrap poulet', [...LEG, 'Cheddar'])],
+  'formule-turkish': [P('Galette', 'La galette kebab', [...LEG], { sauces: 1 }), P('Cheese', 'Le cheese', ['Salade', 'Tomate', 'Cornichon', 'Cheddar'])],
+  'formule-mielleux': [P('Burger', 'Le burger chèvre-miel', [...LEG]), P('Wrap', 'Le wrap poulet-chèvre', ['Salade', 'Oignon'])],
+  'formule-crocs': [P('Croc’s', 'Les deux croc’s bacon', ['Bacon'], { sauces: 0 }), P('Cheeseburgers', 'Les deux cheeseburgers', ['Salade', 'Tomate', 'Cheddar'])],
+  'formule-smash': [P('Smash steak', 'Le smash double steak', [...LEG, 'Cornichon', 'Oignons crispy', 'Cheddar']), P('Smash tenders', 'Le smash tenders', [...LEG, 'Cheddar'])],
+  'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', [...LEG]), P('Burger escalope', 'Le burger matlouh escalope', [...LEG])],
+  'formule-rolls': [P('Roulé', 'Le roulé', [...LEG], { choix: choixDe('Viande', ['Steak', 'Curry', 'Tandoori', 'Paprika']) }), P('Croc’s', 'Le croc’s', [], { sauces: 0, info: 'Jambon et fromage fondu, servi tel quel.' })],
+  'formule-forestier': [P('Forestier', 'Le sandwich forestier', ['Salade']), P('Maxi', 'Le maxi brioché', [...LEG, 'Cheddar']), P('Croc’s', 'Le croc’s', [], { sauces: 0, info: 'Jambon et fromage fondu, servi tel quel.' })],
+  'formule-mexicain': [P('Fajitas', 'Les deux fajitas', [...LEG, 'Jalapeños', 'Cheddar'])],
 };
 for (const c of CARTE) for (const i of c.items) {
   const parts = FORMULES[i.id]; if (!parts) continue;
@@ -163,8 +163,10 @@ for (const c of CARTE) for (const i of c.items) {
     const tag = { partie: p.titre, court: p.court };
     return [
       ...(p.choix ? [{ id: 'choix-' + n, ...p.choix, ...tag }] : []),
-      { ...sans(...STO, ...p.ing), id: 'retirer-' + n, ...tag },
-      { ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag },
+      ...(p.ing.length ? [{ ...sans(...p.ing), id: 'retirer-' + n, ...tag }] : []),
+      ...(p.info ? [{ id: 'info-' + n, type: 'info', texte: p.info, ...tag }] : []),
+      // Un croc's (croque-monsieur) ne prend pas de sauce : pas de carte Sauces.
+      ...(p.sauces === 0 ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
     ];
   });
 }

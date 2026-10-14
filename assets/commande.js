@@ -94,6 +94,7 @@
       '<button type="button" class="feuille-fermer" data-fermer-fiche aria-label="Fermer">×</button></div>' +
       '<div class="feuille-corps"><h3 id="feuille-titre">' + esc(i.n) + '</h3>' + (i.d ? '<p class="feuille-desc">' + esc(i.d) + '</p>' : '') +
       parties(i.groupes, function (g) {
+        if (g.type === 'info') return '<p class="partie-info">' + esc(g.texte) + '</p>';
         if (g.type === 'retirer') {
           return '<fieldset class="groupe groupe-retirer" data-groupe="' + g.id + '" data-retirer><legend><b>' + esc(g.titre) + '</b><small>' + esc(g.aide) + '</small></legend><div class="ings">' +
             g.options.map(function (o) {
