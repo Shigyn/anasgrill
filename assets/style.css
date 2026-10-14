@@ -684,3 +684,17 @@ body::before {
     linear-gradient(180deg, rgba(11, 11, 12, .55), rgba(11, 11, 12, .2) 55%, rgba(11, 11, 12, .45)),
     #0b0b0c url("../photos/fond-grill.webp") center 70% / cover no-repeat;
 }
+
+/* Le fond, version 2 : la photo NETTE et en vraies couleurs (Nicolas : « flou,
+   ca se voit pas bonne qualite, garder le contraste »), rendue discrete par
+   une vraie transparence plutot qu'assombrie dans le fichier. Une couche
+   fixe sous les lueurs ; une version recadree plus legere sur mobile. */
+body::before {
+  background:
+    radial-gradient(60% 45% at 18% -5%, rgba(255, 122, 0, .16), transparent 70%),
+    radial-gradient(50% 40% at 100% 105%, rgba(255, 70, 0, .12), transparent 70%),
+    radial-gradient(rgba(255, 255, 255, .045) 1px, transparent 1.2px) 0 0 / 22px 22px;
+}
+body::after { content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background: url("../photos/fond-grill.webp") center 70% / cover no-repeat; opacity: .16; }
+@media (max-width: 760px) { body::after { background-image: url("../photos/fond-grill-mobile.webp"); background-position: center 60%; } }
