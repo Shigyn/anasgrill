@@ -187,7 +187,7 @@
         '<label class="champ"><span>Étage, code, interphone <small>(facultatif)</small></span><input name="complement" value="' + esc(i.complement) + '"></label>' +
         '<p class="info-zone" data-zone></p>' : '<p class="info-zone ok">À retirer chez Anas Grill ' + esc(SNACK.nom) + ', ' + esc(SNACK.adresse) + '.</p>') +
       '<label class="champ"><span>Prénom</span><input name="prenom" autocomplete="given-name" value="' + esc(i.prenom) + '" required></label>' +
-      '<label class="champ"><span>Téléphone</span><input name="tel" type="tel" inputmode="tel" autocomplete="tel" value="' + esc(i.tel) + '" required></label>' +
+      '<label class="champ"><span>Téléphone <small>' + (liv ? '(le livreur t’appelle à son arrivée)' : '(si la cuisine a besoin de te joindre)') + '</small></span><input name="tel" type="tel" inputmode="tel" autocomplete="tel" value="' + esc(i.tel) + '" required></label>' +
       '<label class="champ"><span>Un mot pour la cuisine <small>(facultatif)</small></span><input name="note" placeholder="Sans oignons, allergie…" value="' + esc(i.note) + '"></label>' +
       '<p class="alerte" data-alerte hidden></p></form>';
     pied.innerHTML = '<div class="total"><span>Total</span><b>' + euros(total()) + '</b></div><button type="button" class="bouton bouton-feu" data-suite>Passer au paiement</button>';
@@ -295,7 +295,7 @@
       (liv
         ? '<h2>Livrée vers <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">dans ' + e.minutes + ' minutes environ</p>' +
           '<p class="conf-lieu">' + esc(i.adresse) + (i.complement ? '<br>' + esc(i.complement) : '') + '</p>' +
-          '<div class="conf-consigne"><b>Le livreur t’appellera quand il sera devant chez toi.</b> Garde ton téléphone près de toi.</div>'
+          '<div class="conf-consigne"><b>Le livreur t’appellera une fois en bas de chez toi</b>, ou s’il y a un souci. Garde ton téléphone près de toi.</div>'
         : '<h2>Rendez-vous à <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">prête dans ' + e.minutes + ' minutes environ</p>' +
           '<p class="conf-lieu">Anas Grill ' + esc(SNACK.nom) + '<br>' + esc(SNACK.adresse) + '</p>' +
           '<div class="conf-consigne"><b>Donne ton numéro ' + num + ' au comptoir.</b> <a href="https://www.google.com/maps/dir/?api=1&destination=' + SNACK.lat + ',' + SNACK.lng + '" target="_blank" rel="noopener">Itinéraire</a></div>') +

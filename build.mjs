@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '1';
+const V = '3';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -103,55 +103,39 @@ const restaurantSchema = (s) => ({
   potentialAction: { '@type': 'OrderAction', target: abs(s.id + '/') },
 });
 
-/* ---------------- La carte dessinee (Nicolas, 2026-10-14 : « tu as qu'a
-   la designer, c'est mieux qu'une API ») ----------------
-   Une carte en SVG a nos couleurs, sans fond de carte ni cle. Les
-   directions sont justes ; les distances sont « adoucies » (racine
-   carree depuis le centre de Lyon) pour que les snacks de Lyon ne
-   s'ecrasent pas les uns sur les autres a cote de Bourgoin. */
-const CENTRE = { lat: 45.76, lng: 4.86 }, ECH = 108, X0 = 300, Y0 = 372, KMLNG = Math.cos(CENTRE.lat * Math.PI / 180) * 111.32;
-function proj(lat, lng) {
-  const dx = (lng - CENTRE.lng) * KMLNG, dy = (lat - CENTRE.lat) * 110.57, r = Math.hypot(dx, dy);
-  const f = r ? Math.sqrt(r) / r : 0;
-  return [Math.round((X0 + dx * f * ECH) * 10) / 10, Math.round((Y0 - dy * f * ECH) * 10) / 10];
-}
-// Courbe lissee (Catmull-Rom) a travers des points [lat, lng].
-function trace(points) {
-  const p = points.map(([la, ln]) => proj(la, ln));
-  let d = `M${p[0][0]},${p[0][1]}`;
-  for (let i = 0; i < p.length - 1; i++) {
-    const a = p[i - 1] || p[i], b = p[i], c = p[i + 1], e = p[i + 2] || c;
-    d += ` C${(b[0] + (c[0] - a[0]) / 6).toFixed(1)},${(b[1] + (c[1] - a[1]) / 6).toFixed(1)} ${(c[0] - (e[0] - b[0]) / 6).toFixed(1)},${(c[1] - (e[1] - b[1]) / 6).toFixed(1)} ${c[0]},${c[1]}`;
-  }
-  return d;
-}
-const RHONE = [[45.83, 5.12], [45.81, 5.04], [45.795, 4.97], [45.785, 4.915], [45.775, 4.865], [45.762, 4.845], [45.748, 4.835], [45.737, 4.818], [45.715, 4.815], [45.69, 4.82], [45.655, 4.81], [45.6, 4.79]];
-const SAONE = [[45.9, 4.85], [45.86, 4.845], [45.82, 4.85], [45.795, 4.84], [45.778, 4.826], [45.765, 4.826], [45.752, 4.828], [45.737, 4.818]];
-// Les noms des snacks disent deja les villes : on ne garde que les reperes.
-const VILLES = [['Lyon', 45.757, 4.835, 'grande'], ['Villeurbanne', 45.766, 4.893]];
+/* ---------------- La carte (Nicolas, 2026-10-14) ----------------
+   « Tu as qu'a la designer, c'est mieux qu'une API », puis « faut qu'elle
+   fasse reel ». Donc : les vrais traces OpenStreetMap (Rhone, Saone,
+   canaux, lacs, autoroutes, grands axes), recuperes une fois par
+   _source/carte_osm.py et dessines a nos couleurs, a l'echelle reelle.
+   Aucune requete a l'affichage. Donnees (c) contributeurs OpenStreetMap. */
+const FOND = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'carte-fond.json'), 'utf8'));
+const CA = FOND.cadre;
+const proj = (lat, lng) => [Math.round((lng - CA.O) / (CA.E - CA.O) * CA.W * 10) / 10, Math.round((CA.N - lat) / (CA.N - CA.S) * CA.H * 10) / 10];
+// Communes sans snack, en repere discret (les snacks portent deja leur nom).
+const REPERES = [['Lyon', 45.7605, 4.832, 'grande'], ['Caluire', 45.797, 4.846], ['Bron', 45.735, 4.914], ['Décines', 45.766, 4.96], ['Meyzieu', 45.768, 5.004], ['Saint-Priest', 45.692, 4.944], ['L’Isle-d’Abeau', 45.621, 5.226], ['Saint-Fons', 45.703, 4.852]];
+// Ou poser le nom de chaque snack pour qu'ils ne se chevauchent pas.
+const ETIQUETTE = { 'lyon-8': 'droite', charpennes: 'haut', 'la-duchere': 'haut', 'rillieux-la-pape': 'haut', 'vaulx-en-velin': 'droite', venissieux: 'bas', 'pont-de-cheruy': 'haut', 'bourgoin-jallieu': 'haut' };
 function carteSvg(r) {
-  const anneaux = [[5, '5 km'], [15, '15 km'], [35, '35 km']].map(([km, t]) => {
-    const rr = Math.sqrt(km) * ECH;
-    return `<circle cx="${X0}" cy="${Y0}" r="${rr.toFixed(0)}" class="anneau"/><text x="${X0 + rr * 0.71 + 6}" y="${Y0 + rr * 0.71 + 4}" class="anneau-t">${t}</text>`;
-  }).join('');
-  const villes = VILLES.map(([n, la, ln, cls]) => { const [x, y] = proj(la, ln); return `<text x="${x}" y="${y + 30}" class="ville${cls ? ' ville-' + cls : ''}" text-anchor="middle">${esc(n)}</text>`; }).join('');
+  const km = CA.W / ((CA.E - CA.O) * Math.cos(((CA.S + CA.N) / 2) * Math.PI / 180) * 111.32);
+  const reperes = REPERES.map(([n, la, ln, cls]) => { const [x, y] = proj(la, ln); return `<text x="${x}" y="${y}" class="ville${cls ? ' ville-' + cls : ''}" text-anchor="middle">${esc(n)}</text>`; }).join('');
   const points = SNACKS.map((s) => {
-    const [x, y] = proj(s.lat, s.lng);
-    return `<a href="${r}${s.id}/" class="marqueur" data-snack="${s.id}" aria-label="Anas Grill ${esc(s.nom)}"><g transform="translate(${x} ${y})"><g class="taille"><circle r="26" class="halo"/><path class="feu" d="M0-26c4 9 15 12 15 25a15 15 0 0 1-30 0c0-9 8-12 8-19 3.5 3 4.5 7.5 4.5 11C1.5-13 2-19 0-26z"/><text y="-34" text-anchor="middle" class="marqueur-nom">${esc(s.nom)}</text></g></g></a>`;
+    const [x, y] = proj(s.lat, s.lng), pos = ETIQUETTE[s.id] || 'haut';
+    const t = pos === 'droite' ? `<text x="20" y="-8" class="marqueur-nom">${esc(s.nom)}</text>` : pos === 'bas' ? `<text y="22" text-anchor="middle" class="marqueur-nom">${esc(s.nom)}</text>` : `<text y="-32" text-anchor="middle" class="marqueur-nom">${esc(s.nom)}</text>`;
+    return `<a href="${r}${s.id}/" class="marqueur" data-snack="${s.id}" aria-label="Anas Grill ${esc(s.nom)}"><g transform="translate(${x} ${y})"><g class="taille"><circle r="24" class="halo"/><path class="feu" d="M0-24c3.6 8 13.5 11 13.5 22.5a13.5 13.5 0 0 1-27 0c0-8 7-11 7-17 3 2.6 4 6.7 4 10C1.4-12 1.8-17.5 0-24z"/>${t}</g></g></a>`;
   }).join('');
-  return `<svg class="carte-svg" viewBox="0 0 1000 800" role="img" aria-label="Carte des restaurants Anas Grill" data-proj='${JSON.stringify({ lat: CENTRE.lat, lng: CENTRE.lng, ech: ECH, x0: X0, y0: Y0, kmlng: KMLNG })}'>
-  <defs><radialGradient id="lueur" cx="${(X0 / 10).toFixed(0)}%" cy="${(Y0 / 8).toFixed(0)}%" r="60%"><stop offset="0" stop-color="#ff7a00" stop-opacity=".18"/><stop offset="1" stop-color="#ff7a00" stop-opacity="0"/></radialGradient>
-  <pattern id="grille" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#fff" stroke-opacity=".035"/></pattern></defs>
-  <rect width="1000" height="800" fill="url(#grille)"/><rect width="1000" height="800" fill="url(#lueur)"/>
-  <g class="anneaux">${anneaux}</g>
-  <path d="${trace(RHONE)}" class="fleuve"/><path d="${trace(SAONE)}" class="fleuve fleuve-fin"/>
-  ${(() => { const [x, y] = proj(45.79, 4.95); const [a, b] = proj(45.86, 4.846); return `<text x="${x}" y="${y - 10}" class="fleuve-t">Rhône</text><text x="${a + 10}" y="${b + 40}" class="fleuve-t">Saône</text>`; })()}
-  <g class="villes">${villes}</g>
+  const D = FOND.d;
+  return `<svg class="carte-svg" viewBox="0 0 ${CA.W} ${CA.H}" role="img" aria-label="Carte des restaurants Anas Grill" data-cadre='${JSON.stringify(CA)}'>
+  <defs><radialGradient id="lueur" cx="28%" cy="38%" r="55%"><stop offset="0" stop-color="#ff7a00" stop-opacity=".16"/><stop offset="1" stop-color="#ff7a00" stop-opacity="0"/></radialGradient></defs>
+  <rect width="${CA.W}" height="${CA.H}" class="terre"/><rect width="${CA.W}" height="${CA.H}" fill="url(#lueur)"/>
+  <path d="${D.axe}" class="axe"/><path d="${D.autoroute}" class="autoroute"/>
+  <path d="${D.eau}" class="eau"/><path d="${D.canal}" class="canal"/><path d="${D.fleuve}" class="fleuve"/>
+  <g class="villes">${reperes}</g>
   <g class="vous" data-vous hidden><circle r="16" class="vous-halo"/><circle r="8" class="vous-point"/></g>
   <g class="marqueurs">${points}</g>
+  <g transform="translate(${CA.W - 40 - 5 * km} ${CA.H - 34})" class="echelle"><path d="M0 0H${(5 * km).toFixed(1)}"/><path d="M0-5V5M${(5 * km).toFixed(1)}-5V5"/><text x="${(2.5 * km).toFixed(1)}" y="-10" text-anchor="middle">5 km</text></g>
 </svg>`;
 }
-
 /* ---------------- 1. Choisis ton restaurant ---------------- */
 const PAGES = [];
 PAGES.push(['', {
@@ -160,15 +144,12 @@ PAGES.push(['', {
   classe: 'page-choix',
   scripts: ['choix.js'],
   corps: (r) => `
-<header class="choix-tete">
-  <div class="cadre choix-tete-in">
-    <a class="marque" href="./">${LOGO}</a>
-    <p class="slogan"><b>Formules à 10&nbsp;€</b> toute l’année</p>
-  </div>
-</header>
+<div class="braises" aria-hidden="true">${'<i></i>'.repeat(14)}</div>
 <main id="contenu" class="choix">
   <section class="choix-panneau">
     <div class="choix-intro">
+      <a class="marque marque-grande" href="./">${LOGO}</a>
+      <p class="ruban">Formules à 10&nbsp;€ toute l’année</p>
       <h1>Choisis <span>ton restaurant</span></h1>
       <p>Livraison ou à emporter, payé en ligne, prêt à l’heure.</p>
       <div class="choix-actions">
@@ -193,7 +174,11 @@ PAGES.push(['', {
       </li>`).join('')}
     </ul>
   </section>
-  <div class="choix-carte" id="carte-snacks">${carteSvg(r)}<p class="carte-legende">Échelle adoucie : les directions sont exactes, les distances sont resserrées.</p></div>
+  <div class="choix-carte" id="carte-snacks">${carteSvg(r)}
+    <aside class="promo" aria-label="Formules à 10 €">
+      <img src="photos/f-classique.webp" alt="Formule Le Classique" width="620" height="250">
+      <div><b>Formules à 10&nbsp;€</b><span>2 sandwichs ou burgers, frites cheddar gruyère, boisson. Dans les ${SNACKS.length} restaurants.</span></div>
+    </aside><p class="carte-legende">© les contributeurs OpenStreetMap</p></div>
 </main>
 <script type="application/json" id="snacks-json">${JSON.stringify(SNACKS.map(({ id, nom, adresse, lat, lng, note }) => ({ id, nom, adresse, lat, lng, note })))}</script>`,
 }]);
@@ -236,9 +221,19 @@ for (const s of SNACKS) {
 <main id="contenu" class="snack-page" data-snack-id="${s.id}">
   <section class="bandeau">
     <div class="cadre bandeau-in">
-      <h1>Anas Grill <span>${esc(s.nom)}</span></h1>
-      <p>${I.pin} ${esc(s.adresse)} · <a href="tel:${s.tel.replace(/\s/g, '')}">${I.tel} ${esc(s.tel)}</a></p>
-      <p class="bandeau-promo"><b>Formules à 10&nbsp;€</b> frites cheddar gruyère et boisson comprises</p>
+      <div class="bandeau-texte">
+        <p class="ruban">Anas Grill</p>
+        <h1>${esc(s.nom)}</h1>
+        <ul class="infos-snack">
+          <li>${I.pin}<span>${esc(s.adresse)}</span></li>
+          <li>${I.tel}<a href="tel:${s.tel.replace(/\s/g, '')}">${esc(s.tel)}</a></li>
+          <li>${I.sac}<span>À emporter · Livraison</span></li>
+        </ul>
+      </div>
+      <a class="bandeau-promo" href="#formules">
+        <img src="../photos/f-classique.webp" alt="" width="620" height="250">
+        <span><b>Formules à 10&nbsp;€</b>frites cheddar gruyère et boisson comprises</span>
+      </a>
     </div>
   </section>
   <div class="cadre carte" id="carte">

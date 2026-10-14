@@ -20,11 +20,8 @@
 
   /* --- La carte dessinee (SVG genere au build, aucune requete) --- */
   var svg = document.querySelector('.carte-svg');
-  var P = JSON.parse(svg.getAttribute('data-proj'));
-  function proj(lat, lng) {
-    var dx = (lng - P.lng) * P.kmlng, dy = (lat - P.lat) * 110.57, r = Math.hypot(dx, dy), f = r ? Math.sqrt(r) / r : 0;
-    return [P.x0 + dx * f * P.ech, P.y0 - dy * f * P.ech];
-  }
+  var C = JSON.parse(svg.getAttribute('data-cadre'));
+  function proj(lat, lng) { return [(lng - C.O) / (C.E - C.O) * C.W, (C.N - lat) / (C.N - C.S) * C.H]; }
 
   function surligner(id) {
     liste.querySelectorAll('.snack').forEach(function (li) { li.classList.toggle('actif', li.getAttribute('data-snack') === id); });
@@ -46,7 +43,7 @@
     surligner(p.s.id);
     // Ta position sur la carte, si elle est dans le cadre.
     var xy = proj(point.lat, point.lng), v = svg.querySelector('[data-vous]');
-    var dedans = xy[0] > 10 && xy[0] < 990 && xy[1] > 10 && xy[1] < 790;
+    var dedans = xy[0] > 10 && xy[0] < C.W - 10 && xy[1] > 10 && xy[1] < C.H - 10;
     v.toggleAttribute('hidden', !dedans);
     if (dedans) v.setAttribute('transform', 'translate(' + xy[0].toFixed(1) + ' ' + xy[1].toFixed(1) + ')');
     // On retient l'adresse pour la livraison (pre-remplie au paiement).

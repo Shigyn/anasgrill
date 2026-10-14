@@ -317,3 +317,94 @@ h1, h2, h3 { font-family: var(--titre); font-weight: 400; letter-spacing: .01em;
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ===================================================================
+   V2 (2026-10-14, retour de Nicolas : la carte doit faire reel, le
+   bandeau du haut n'est pas beau, le fond manque d'un quelque chose,
+   soigner l'arrivee, un site qui ne fait pas IA).
+   Le fond : du bois brule comme leurs panneaux, et des braises.
+   =================================================================== */
+body { background: #0b0b0c url(../photos/bois.webp) center top / 1600px auto repeat; }
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(120% 80% at 50% 115%, rgba(255, 96, 0, .22), transparent 60%), radial-gradient(90% 70% at 50% 40%, transparent 40%, rgba(0, 0, 0, .65)); }
+.choix-intro .ruban, .ruban { color: #1b0d00; }
+.ruban { display: inline-block; margin: 0 0 14px; padding: 7px 14px 6px; font: 700 .86rem/1 var(--etroite); letter-spacing: .14em; text-transform: uppercase; color: #1b0d00; background: var(--feu); clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%, 4% 50%); }
+
+/* --- les braises qui montent, discretes --- */
+.braises { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+.braises i { position: absolute; bottom: -10px; width: 4px; height: 4px; border-radius: 50%; background: #ffb43a; box-shadow: 0 0 8px 2px rgba(255, 120, 0, .7); opacity: 0; animation: braise 9s linear infinite; }
+.braises i:nth-child(odd) { width: 3px; height: 3px; }
+.braises i:nth-child(1) { left: 6%; animation-delay: 0s; } .braises i:nth-child(2) { left: 14%; animation-delay: 3.2s; animation-duration: 11s; }
+.braises i:nth-child(3) { left: 22%; animation-delay: 6.1s; } .braises i:nth-child(4) { left: 31%; animation-delay: 1.4s; animation-duration: 12s; }
+.braises i:nth-child(5) { left: 40%; animation-delay: 7.7s; } .braises i:nth-child(6) { left: 48%; animation-delay: 4.5s; animation-duration: 10s; }
+.braises i:nth-child(7) { left: 57%; animation-delay: 2.3s; } .braises i:nth-child(8) { left: 64%; animation-delay: 8.4s; animation-duration: 13s; }
+.braises i:nth-child(9) { left: 71%; animation-delay: 5.2s; } .braises i:nth-child(10) { left: 78%; animation-delay: .8s; animation-duration: 11s; }
+.braises i:nth-child(11) { left: 85%; animation-delay: 6.9s; } .braises i:nth-child(12) { left: 91%; animation-delay: 3.9s; animation-duration: 12s; }
+.braises i:nth-child(13) { left: 36%; animation-delay: 9.6s; } .braises i:nth-child(14) { left: 68%; animation-delay: 10.8s; animation-duration: 14s; }
+@keyframes braise { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: .9; } 60% { opacity: .5; } 100% { transform: translate(40px, -75vh); opacity: 0; } }
+
+/* --- l'arrivee --- */
+.page-choix { background-color: #0b0b0c; }
+.choix { min-height: 100svh; position: relative; z-index: 2; }
+.choix-panneau { top: 0; max-height: 100svh; background: linear-gradient(180deg, rgba(14, 11, 9, .82), rgba(10, 9, 8, .94)); border-right: 1px solid rgba(255, 160, 60, .14); padding-top: 30px; }
+.marque-grande { width: 92px; margin-bottom: 18px; filter: drop-shadow(0 10px 24px rgba(255, 110, 0, .35)); }
+.choix-intro h1 { font-size: clamp(2.8rem, 2rem + 3vw, 4rem); line-height: .98; }
+.choix-intro h1 span { display: block; }
+.choix-carte { background: transparent; padding: 28px; }
+.carte-svg { border-radius: 22px; box-shadow: 0 30px 80px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 160, 60, .14); background: #101010; }
+.carte-legende { left: 44px; bottom: 36px; font-size: .7rem; }
+/* La carte : vrais traces OpenStreetMap, a nos couleurs. */
+.terre { fill: #121110; }
+.axe { fill: none; stroke: #2a2724; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+.autoroute { fill: none; stroke: #5a4128; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.eau { fill: #24506f; stroke: #24506f; stroke-width: .8; }
+.fleuve { fill: none; stroke: #2a5d82; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
+.canal { fill: none; stroke: #2a5d82; stroke-width: 2.4; stroke-linecap: round; }
+.ville { fill: #fff; fill-opacity: .3; font: 600 11px var(--etroite); letter-spacing: .16em; text-transform: uppercase; paint-order: stroke; stroke: #121110; stroke-width: 3px; }
+.ville-grande { fill-opacity: .55; font-size: 18px; letter-spacing: .32em; }
+.echelle path { stroke: #fff; stroke-opacity: .45; stroke-width: 1.5; fill: none; }
+.echelle text { fill: #fff; fill-opacity: .5; font: 600 11px var(--etroite); letter-spacing: .08em; }
+.marqueur-nom { font-size: 14px; }
+.promo { position: absolute; left: 52px; bottom: 64px; width: 280px; border-radius: 18px; overflow: hidden; background: rgba(16, 13, 10, .92); border: 1px solid rgba(255, 160, 60, .22); box-shadow: var(--ombre); }
+.promo img { width: 100%; height: auto; aspect-ratio: 62 / 25; object-fit: cover; }
+.promo div { padding: 12px 16px 14px; display: grid; gap: 4px; }
+.promo b { font: 400 1.5rem/1 var(--titre); text-transform: uppercase; background: var(--feu); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.promo span { color: var(--doux); font-size: .88rem; line-height: 1.4; }
+.snack a { background: rgba(255, 255, 255, .035); }
+
+/* --- la page d'un snack : l'en-tete et le bandeau refaits --- */
+.entete { background: rgba(10, 9, 8, .9); border-bottom: 1px solid rgba(255, 160, 60, .12); }
+.onglets { background: rgba(14, 12, 10, .95); }
+.bandeau { background: radial-gradient(70% 140% at 85% 50%, rgba(255, 110, 0, .18), transparent 60%); border-bottom: 1px solid rgba(255, 160, 60, .12); padding: 40px 0 36px; }
+.bandeau-in { display: grid; grid-template-columns: 1fr minmax(260px, 380px); gap: 30px; align-items: center; }
+.bandeau h1 { font-size: clamp(3rem, 2.2rem + 3.6vw, 5rem); background: var(--feu); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 0 #5a2400); }
+.infos-snack { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.infos-snack li { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; background: rgba(255, 255, 255, .05); border: 1px solid var(--ligne); font-size: .92rem; color: var(--doux); }
+.infos-snack li a { color: var(--texte); text-decoration: none; font-weight: 600; }
+.infos-snack svg { color: var(--orange); width: 16px; height: 16px; }
+.bandeau-promo { display: grid; grid-template-columns: 1fr; border-radius: 18px; overflow: hidden; text-decoration: none; background: rgba(16, 13, 10, .9); border: 1px solid rgba(255, 160, 60, .22); box-shadow: var(--ombre); transition: transform .2s; }
+.bandeau-promo:hover { transform: translateY(-3px); }
+.bandeau-promo img { width: 100%; height: auto; aspect-ratio: 62 / 22; object-fit: cover; }
+.bandeau-promo span { padding: 12px 16px 14px; color: var(--doux); font-size: .9rem; display: grid; gap: 4px; }
+.bandeau-promo b { font: 400 1.45rem/1 var(--titre); text-transform: uppercase; color: var(--jaune); }
+.plat-bouton { background: linear-gradient(180deg, rgba(42, 36, 30, .92), rgba(20, 18, 16, .96)); }
+
+@media (max-width: 860px) {
+  .choix-intro { padding-top: 26px; }
+  .marque-grande { width: 74px; }
+  .choix-carte { padding: 4px 0 30px; border: 0; }
+  .carte-svg { border-radius: 18px; }
+  .carte-legende { left: 18px; bottom: 10px; }
+  .promo { position: static; width: auto; margin: 12px 0 0; display: grid; grid-template-columns: 120px 1fr; align-items: center; }
+  .promo img { height: 100%; aspect-ratio: auto; }
+  /* Telephone : les snacks de Lyon sont trop proches pour 8 noms ; on
+     montre les flammes, et le nom du snack choisi (la liste dessous a tout). */
+  .marqueur .taille { transform: scale(1.7); }
+  .marqueur .marqueur-nom { display: none; }
+  .marqueur.actif .marqueur-nom { display: block; font-size: 15px; }
+  .ville { font-size: 20px; } .ville-grande { font-size: 30px; }
+  .echelle text { font-size: 22px; }
+  .bandeau-in { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .braises { display: none; } }
+
+.bandeau .ruban { display: inline-block; color: #1b0d00; margin: 0 0 10px; }
