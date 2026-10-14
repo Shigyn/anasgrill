@@ -144,7 +144,7 @@ h1, h2, h3 { font-family: var(--titre); font-weight: 400; letter-spacing: .01em;
 .plat-photo img { width: 100%; height: 100%; object-fit: cover; }
 .plat-texte { padding: 14px 16px 6px; display: grid; gap: 4px; }
 .plat-texte b { font: 700 1.12rem/1.2 var(--texte-police); }
-.plat-texte small { color: var(--doux); font-size: .88rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.plat-texte small { color: var(--doux); font-size: .88rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .plat-bas { margin-top: auto; padding: 8px 16px 14px; display: flex; justify-content: space-between; align-items: center; }
 .prix { font: 700 1.2rem/1 var(--etroite); color: var(--jaune); letter-spacing: .02em; }
 .plat-plus { width: 40px; height: 40px; border-radius: 50%; background: var(--feu); color: #1b0d00; display: grid; place-items: center; }
@@ -523,3 +523,30 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 
 /* 2026-10-15 : plus d encart formule dans le bandeau (repetition avec la carte). */
 .bandeau-in { grid-template-columns: 1fr; }
+
+/* 2026-10-15 : un seul bloc en haut (Nicolas : « les bandeaux en haut font
+   bizarre »). Logo, nom, adresse, appel, changer, puis les categories,
+   d'un seul tenant ; plus de grand bandeau. */
+.entete { background: rgba(11, 11, 12, .92); border-bottom: 1px solid rgba(255, 160, 60, .14); }
+.entete-in { height: 74px; gap: 16px; }
+.marque-petite { width: 52px; }
+.entete-snack { min-width: 0; }
+.entete-snack h1 { font: 400 1.7rem/1 var(--titre); text-transform: uppercase; color: var(--texte); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entete-snack h1 small { font-size: .62em; color: var(--orange); margin-right: 4px; letter-spacing: .02em; }
+.entete-snack p { margin: 4px 0 0; color: var(--pale); font-size: .84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entete-tel { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--ligne-forte); text-decoration: none; font-weight: 600; font-size: .92rem; white-space: nowrap; }
+.entete-tel svg { color: var(--orange); }
+.entete-changer { margin-left: 0; }
+.onglets { background: transparent; border: 0; }
+.onglets-in { padding: 4px 0 12px; }
+.carte { padding-top: 0; }
+.categorie:first-child { padding-top: 28px; }
+@media (max-width: 640px) {
+  .entete-in { height: 64px; gap: 10px; }
+  .marque-petite { width: 42px; }
+  .entete-snack h1 { font-size: 1.3rem; }
+  .entete-snack p { font-size: .76rem; }
+  .entete-tel { padding: 9px; }
+  .entete-tel span { display: none; }
+  .entete-changer { padding: 8px 11px; font-size: .86rem; }
+}

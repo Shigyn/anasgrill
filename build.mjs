@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '12';
+const V = '14';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -216,11 +216,12 @@ for (const s of SNACKS) {
     corps: (r) => `
 <header class="entete" data-entete>
   <div class="cadre entete-in">
-    <a class="marque marque-petite" href="${r}" aria-label="Changer de restaurant">${LOGO}</a>
+    <a class="marque marque-petite" href="${r}" aria-label="Retour au choix du restaurant">${LOGO}</a>
     <div class="entete-snack">
-      <small>Ton restaurant</small>
-      <b>${esc(s.nom)}</b>
+      <h1><small>Anas Grill</small> ${esc(s.nom)}</h1>
+      <p>${esc(s.adresse)}</p>
     </div>
+    <a class="entete-tel" href="tel:${s.tel.replace(/\s/g, '')}" aria-label="Appeler Anas Grill ${esc(s.nom)}">${I.tel}<span>${esc(s.tel)}</span></a>
     <a class="entete-changer" href="${r}">Changer</a>
   </div>
   <nav class="onglets" aria-label="Catégories" data-onglets>
@@ -228,19 +229,6 @@ for (const s of SNACKS) {
   </nav>
 </header>
 <main id="contenu" class="snack-page" data-snack-id="${s.id}">
-  <section class="bandeau">
-    <div class="cadre bandeau-in">
-      <div class="bandeau-texte">
-        <p class="ruban">Anas Grill</p>
-        <h1>${esc(s.nom)}</h1>
-        <ul class="infos-snack">
-          <li>${I.pin}<span>${esc(s.adresse)}</span></li>
-          <li>${I.tel}<a href="tel:${s.tel.replace(/\s/g, '')}">${esc(s.tel)}</a></li>
-          <li>${I.sac}<span>À emporter · Livraison</span></li>
-        </ul>
-      </div>
-    </div>
-  </section>
   <div class="cadre carte" id="carte">
     ${CARTE.map((c) => `
     <section class="categorie" id="${c.id}">
