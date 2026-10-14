@@ -512,3 +512,11 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .ing:has(input:not(:checked)) em { opacity: 1; transform: none; }
 .ing:has(input:focus-visible) { outline: 2px solid var(--jaune); outline-offset: 2px; }
 .groupe-retirer legend { border-bottom: 0; margin-bottom: 2px; }
+
+/* 2026-10-15 : logo agrandi sur l'arrivee, distance sur une ligne, noms
+   des points pres du bord droit poses a gauche du point. */
+.arrivee .marque-grande { width: 136px; margin-bottom: 22px; }
+.resto-bas .snack-distance { white-space: nowrap; }
+.point-gauche span { left: auto; right: -6px; transform: translateY(4px); }
+.point-gauche:hover span, .point-gauche.actif span { transform: none; }
+@media (max-width: 860px) { .arrivee .marque-grande { width: 104px; } }

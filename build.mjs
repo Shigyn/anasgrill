@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '10';
+const V = '11';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -167,7 +167,7 @@ PAGES.push(['', {
     </div>
     <figure class="ensemble" aria-label="Les ${SNACKS.length} restaurants sur la carte">
       <img src="${r}photos/carte-ensemble.svg" alt="" width="${CA.W}" height="${CA.H}">
-      ${SNACKS.map((s) => { const [x, y] = proj(s.lat, s.lng); return `<a class="point" data-snack="${s.id}" href="${r}${s.id}/" style="left:${(x / CA.W * 100).toFixed(2)}%;top:${(y / CA.H * 100).toFixed(2)}%" aria-label="Anas Grill ${esc(s.nom)}"><span>${esc(s.nom)}</span></a>`; }).join('')}
+      ${SNACKS.map((s) => { const [x, y] = proj(s.lat, s.lng); return `<a class="point${x / CA.W > .72 ? ' point-gauche' : ''}" data-snack="${s.id}" href="${r}${s.id}/" style="left:${(x / CA.W * 100).toFixed(2)}%;top:${(y / CA.H * 100).toFixed(2)}%" aria-label="Anas Grill ${esc(s.nom)}"><span>${esc(s.nom)}</span></a>`; }).join('')}
       <span class="point-vous" data-vous hidden></span>
       <figcaption>© les contributeurs OpenStreetMap</figcaption>
     </figure>
