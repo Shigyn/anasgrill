@@ -1,0 +1,11 @@
+Photos des ingredients a retirer (Unsplash, licence libre), choisies le 2026-10-15.
+URL : https://images.unsplash.com/photo-<identifiant>
+ing-salade.webp     1622206151226-18ca2c9ab4a1
+ing-tomate.webp     1615486171815-2611a6e3cd02
+ing-oignon.webp     1575475240735-0b191257c762
+ing-cornichon.webp  1566486189376-d5f21e25aae4
+ing-cheddar.webp    1683314573422-649a3c6ad784
+ing-gruyere.webp    1655662844300-e59c3d2e7587
+ing-kiri.webp       1663447170676-99f1ec83931a
+ing-bacon.webp      1779649577828-a0dc5f7bb095
+ing-sauce.webp      1734989435134-7e4885259231

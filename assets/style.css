@@ -496,3 +496,19 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 
 /* Telephone : la vue d ensemble disparait, les cartes classees suffisent. */
 @media (max-width: 560px) { .ensemble { display: none; } }
+
+/* --- Ingredients a retirer : petites tuiles cote a cote (2026-10-15) ---
+   Cochee = dans le burger ; un toucher la retire (grisee, barree, « Sans »). */
+.ings { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
+.ing { position: relative; padding: 10px 2px 8px; border-radius: 14px; border: 1.5px solid #ff8a1e; background: rgba(255, 122, 0, .14); display: grid; justify-items: center; gap: 5px; cursor: pointer; transition: border-color .2s, background .2s, transform .15s; user-select: none; }
+.ing:active { transform: scale(.95); }
+.ing input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.ing-photo { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px rgba(255, 140, 30, .5); transition: filter .25s, opacity .25s, box-shadow .25s; }
+.ing span { font: 600 .7rem/1.1 var(--etroite); letter-spacing: .03em; text-transform: uppercase; color: var(--texte); text-align: center; }
+.ing em { position: absolute; top: -8px; right: -6px; font: 700 .6rem/1 var(--etroite); letter-spacing: .06em; text-transform: uppercase; font-style: normal; padding: 4px 6px; border-radius: 999px; background: var(--rouge); color: #fff; opacity: 0; transform: scale(.6); transition: opacity .2s, transform .2s; }
+.ing:has(input:not(:checked)) { border: 1.5px dashed rgba(255, 255, 255, .2); background: transparent; }
+.ing:has(input:not(:checked)) .ing-photo { filter: grayscale(1); opacity: .35; box-shadow: 0 0 0 2px rgba(255, 255, 255, .12); }
+.ing:has(input:not(:checked)) span { color: var(--pale); text-decoration: line-through; }
+.ing:has(input:not(:checked)) em { opacity: 1; transform: none; }
+.ing:has(input:focus-visible) { outline: 2px solid var(--jaune); outline-offset: 2px; }
+.groupe-retirer legend { border-bottom: 0; margin-bottom: 2px; }

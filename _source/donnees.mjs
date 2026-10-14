@@ -26,6 +26,12 @@ const SUPPLEMENTS = [['Emmental', 1], ['Kiri', 1], ['Cheddar', 1], ['Boursin', 1
 const GRATINAGE = [['Emmental', 2], ['Raclette', 2], ['Cheddar', 2], ['Chèvre', 2], ['Mozza', 2]];
 const o = (liste) => liste.map((x) => (Array.isArray(x) ? { n: x[0], p: x[1] } : { n: x, p: 0 }));
 
+// Les ingredients qu'on peut retirer (« sans oignon »...), en petites tuiles.
+// Tires des compositions des panneaux ; quand le panneau dit seulement
+// « legumes au choix » ou ne detaille pas (cheese), liste a CONFIRMER
+// avec le client (cahier, question menu).
+const sans = (...n) => ({ id: 'retirer', type: 'retirer', titre: 'Ingrédients', aide: 'touche pour retirer', min: 0, max: n.length, options: n.map((x) => ({ n: x, p: 0 })) });
+
 const G = {
   viande: { id: 'viande', titre: 'Viande au choix', min: 1, max: 1, options: o(VIANDES) },
   // Panneau : « Sandwichs +1 € : merguez, steak, tandoori, curry ; +2 € : tenders, cordon bleu, kebab ».
@@ -66,9 +72,9 @@ export const CARTE = [
   {
     id: 'composer', nom: 'À composer', intro: 'Choisissez la viande, les sauces, les suppléments. En menu : +3 € (frites + boisson), frites cheddar : +1 €.',
     items: [
-      { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Viande au choix, sauces au choix.', groupes: [G.viandeSandwich, G.sauces, G.supplements, G.gratinage, G.menu] },
+      { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Viande au choix, sauces au choix.', groupes: [G.viandeSandwich, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratinage, G.menu] },
       { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'Viande au choix, cheddar automatique, sauces au choix.', groupes: [G.viande, G.maxi, G.sauces, G.supplements, G.menu] },
-      { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'Viande au choix, sauces au choix.', groupes: [G.viande, G.sauces, G.supplements, G.menu] },
+      { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'Viande au choix, sauces au choix.', groupes: [G.viande, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.menu] },
     ],
   },
   {
@@ -85,20 +91,20 @@ export const CARTE = [
   {
     id: 'burgers', nom: 'Les burgers', intro: 'Prix du burger seul.',
     items: [
-      { id: 'cheese', n: 'Cheese', p: 2.5, photo: 'b-cheese' },
-      { id: 'double-cheese', n: 'Double cheese', p: 4, photo: 'b-double-cheese' },
-      { id: 'triple-cheese-bacon', n: 'Triple cheese bacon', p: 6, photo: 'b-triple-cheese' },
-      { id: 'le-240', n: 'Le 240 brioché', p: 7.5, photo: 'b-240', d: '2 steaks, 2 cheddars, sauce et légumes au choix.', groupes: [G.sauces] },
-      { id: 'fish-brioche', n: 'Le Fish brioché', p: 5, photo: 'b-fish', d: 'Filet de poisson, cheddar, salade, sauce fish.' },
-      { id: 'maxi-brioche', n: 'Le Maxi brioché', p: 5, photo: 'b-maxi', d: 'Steaks, cheddar, sauce et légumes au choix.', groupes: [G.sauces] },
-      { id: 'chicken-brioche', n: 'Le Chicken brioché', p: 5, photo: 'b-chicken', d: 'Poulet croustillant, cheddar, sauce et légumes au choix.', groupes: [G.sauces] },
-      { id: 'steak-house', n: 'Le Steak House', p: 7.5, photo: 'b-steak-house', d: 'Steak, deux cheddar, oignons crispy, bacon.' },
-      { id: 'chicken-house', n: 'Le Chicken House', p: 7.5, photo: 'b-chicken-house', d: 'Tranche d’escalope, deux cheddar, oignons crispy, bacon.' },
-      { id: 'anas-grill', n: 'L’Anas Grill', p: 8, photo: 'b-anas-grill', d: 'Steak, tenders, bacon, 2 cheddars, sauce et légumes au choix.', groupes: [G.sauces] },
-      { id: 'naan-beef', n: 'Naan beef', p: 6, photo: 'b-naan-beef', d: 'Steak, gruyère, salade, cheddar.' },
-      { id: 'naan-chicken', n: 'Naan chicken', p: 6, photo: 'b-naan-chicken', d: 'Chicken, gruyère, salade, cheddar.' },
-      { id: 'naan-curry', n: 'Naan curry', p: 6, photo: 'b-naan-curry', d: 'Poulet jaune, kiri, gruyère, salade, cheddar.' },
-      { id: 'naan-tandoori', n: 'Naan tandoori', p: 6, photo: 'b-naan-tandoori', d: 'Poulet rouge, kiri, gruyère, salade, cheddar.' },
+      { id: 'cheese', n: 'Cheese', p: 2.5, photo: 'b-cheese', groupes: [sans('Oignon', 'Cornichon', 'Cheddar')] },
+      { id: 'double-cheese', n: 'Double cheese', p: 4, photo: 'b-double-cheese', groupes: [sans('Oignon', 'Cornichon', 'Cheddar')] },
+      { id: 'triple-cheese-bacon', n: 'Triple cheese bacon', p: 6, photo: 'b-triple-cheese', groupes: [sans('Oignon', 'Cornichon', 'Cheddar', 'Bacon')] },
+      { id: 'le-240', n: 'Le 240 brioché', p: 7.5, photo: 'b-240', d: '2 steaks, 2 cheddars, sauce et légumes au choix.', groupes: [sans('Salade', 'Tomate', 'Oignon', 'Cornichon', 'Cheddar'), G.sauces] },
+      { id: 'fish-brioche', n: 'Le Fish brioché', p: 5, photo: 'b-fish', d: 'Filet de poisson, cheddar, salade, sauce fish.', groupes: [sans('Salade', 'Cheddar', 'Sauce')] },
+      { id: 'maxi-brioche', n: 'Le Maxi brioché', p: 5, photo: 'b-maxi', d: 'Steaks, cheddar, sauce et légumes au choix.', groupes: [sans('Salade', 'Tomate', 'Oignon', 'Cornichon', 'Cheddar'), G.sauces] },
+      { id: 'chicken-brioche', n: 'Le Chicken brioché', p: 5, photo: 'b-chicken', d: 'Poulet croustillant, cheddar, sauce et légumes au choix.', groupes: [sans('Salade', 'Tomate', 'Oignon', 'Cornichon', 'Cheddar'), G.sauces] },
+      { id: 'steak-house', n: 'Le Steak House', p: 7.5, photo: 'b-steak-house', d: 'Steak, deux cheddar, oignons crispy, bacon.', groupes: [sans('Oignon', 'Cheddar', 'Bacon')] },
+      { id: 'chicken-house', n: 'Le Chicken House', p: 7.5, photo: 'b-chicken-house', d: 'Tranche d’escalope, deux cheddar, oignons crispy, bacon.', groupes: [sans('Oignon', 'Cheddar', 'Bacon')] },
+      { id: 'anas-grill', n: 'L’Anas Grill', p: 8, photo: 'b-anas-grill', d: 'Steak, tenders, bacon, 2 cheddars, sauce et légumes au choix.', groupes: [sans('Salade', 'Tomate', 'Oignon', 'Cheddar', 'Bacon'), G.sauces] },
+      { id: 'naan-beef', n: 'Naan beef', p: 6, photo: 'b-naan-beef', d: 'Steak, gruyère, salade, cheddar.', groupes: [sans('Salade', 'Cheddar', 'Gruyère')] },
+      { id: 'naan-chicken', n: 'Naan chicken', p: 6, photo: 'b-naan-chicken', d: 'Chicken, gruyère, salade, cheddar.', groupes: [sans('Salade', 'Cheddar', 'Gruyère')] },
+      { id: 'naan-curry', n: 'Naan curry', p: 6, photo: 'b-naan-curry', d: 'Poulet jaune, kiri, gruyère, salade, cheddar.', groupes: [sans('Salade', 'Cheddar', 'Gruyère', 'Kiri')] },
+      { id: 'naan-tandoori', n: 'Naan tandoori', p: 6, photo: 'b-naan-tandoori', d: 'Poulet rouge, kiri, gruyère, salade, cheddar.', groupes: [sans('Salade', 'Cheddar', 'Gruyère', 'Kiri')] },
     ],
   },
 ];

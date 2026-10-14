@@ -17,6 +17,12 @@
   var $ = function (s, c) { return (c || document).querySelector(s); };
   var euros = function (n) { return (Math.round(n * 100) / 100).toFixed(2).replace('.', ',') + ' €'; };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  // Les ingredients qu'on peut retirer : une petite photo (Unsplash) par ingredient.
+  var iconeDe = function (n) {
+    var k = /salade/i.test(n) ? 'salade' : /tomate/i.test(n) ? 'tomate' : /oignon/i.test(n) ? 'oignon' : /cornichon/i.test(n) ? 'cornichon'
+      : /bacon/i.test(n) ? 'bacon' : /sauce/i.test(n) ? 'sauce' : /gruy/i.test(n) ? 'gruyere' : /kiri/i.test(n) ? 'kiri' : 'cheddar';
+    return '<img class="ing-photo" src="../photos/ing-' + k + '.webp" alt="" width="160" height="160">';
+  };
   var PLATS = {};
   D.carte.forEach(function (c) { c.items.forEach(function (i) { PLATS[i.id] = i; }); });
 
@@ -78,6 +84,12 @@
       '<button type="button" class="feuille-fermer" data-fermer-fiche aria-label="Fermer">×</button></div>' +
       '<div class="feuille-corps"><h3 id="feuille-titre">' + esc(i.n) + '</h3>' + (i.d ? '<p class="feuille-desc">' + esc(i.d) + '</p>' : '') +
       i.groupes.map(function (g) {
+        if (g.type === 'retirer') {
+          return '<fieldset class="groupe groupe-retirer" data-groupe="' + g.id + '" data-retirer><legend><b>' + esc(g.titre) + '</b><small>' + esc(g.aide) + '</small></legend><div class="ings">' +
+            g.options.map(function (o) {
+              return '<label class="ing"><input type="checkbox" value="' + esc(o.n) + '" checked>' + iconeDe(o.n) + '<span>' + esc(o.n) + '</span><em>Sans</em></label>';
+            }).join('') + '</div></fieldset>';
+        }
         var type = g.max === 1 ? 'radio' : 'checkbox';
         return '<fieldset class="groupe" data-groupe="' + g.id + '"><legend><b>' + esc(g.titre) + '</b><small>' +
           (g.min ? 'Obligatoire' : 'Facultatif') + (g.max > 1 && g.aide ? ' · ' + esc(g.aide) : '') + '</small></legend><div class="options">' +
@@ -96,7 +108,7 @@
     $('[data-prix-fiche]', feuille).textContent = euros(prixFiche() * enCours.qte);
     $('[data-q-n]', feuille).textContent = enCours.qte;
     enCours.plat.groupes.forEach(function (g) {
-      if (g.max > 1) {
+      if (g.max > 1 && g.type !== 'retirer') {
         var plein = (enCours.choix[g.id] || []).length >= g.max;
         feuille.querySelectorAll('[data-groupe="' + g.id + '"] input').forEach(function (inp) { inp.disabled = plein && !inp.checked; });
       }
@@ -104,6 +116,10 @@
   }
   feuille.addEventListener('change', function (e) {
     var f = e.target.closest('[data-groupe]'); if (!f) return;
+    if (f.hasAttribute('data-retirer')) {
+      enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:not(:checked)'), function (x) { return x.value; });
+      majFiche(); return;
+    }
     enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:checked'), function (x) { return x.value; }).filter(function (v) { return v !== 'Sans'; });
     majFiche();
   });
@@ -120,6 +136,7 @@
 
   function resume(i, choix) {
     return (i.groupes || []).map(function (g) {
+      if (g.type === 'retirer') return (choix[g.id] || []).map(function (n) { return 'sans ' + n.toLowerCase(); }).join(', ');
       var c = (choix[g.id] || []).filter(function (n) { return !/^Seul$|^Normal$/.test(n); });
       return c.length ? c.join(', ') : '';
     }).filter(Boolean).join(' · ');
