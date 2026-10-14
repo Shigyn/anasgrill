@@ -20,9 +20,13 @@
   // Les ingredients qu'on peut retirer : une petite photo (Unsplash) par ingredient.
   var iconeDe = function (n) {
     var k = /salade/i.test(n) ? 'salade' : /tomate/i.test(n) ? 'tomate' : /oignon/i.test(n) ? 'oignon' : /cornichon/i.test(n) ? 'cornichon'
-      : /bacon/i.test(n) ? 'bacon' : /sauce/i.test(n) ? 'sauce' : /gruy/i.test(n) ? 'gruyere' : /kiri/i.test(n) ? 'kiri' : 'cheddar';
+      : /jalap/i.test(n) ? 'jalapeno' : /piment/i.test(n) ? 'piment' : /bacon/i.test(n) ? 'bacon' : /sauce/i.test(n) ? 'sauce' : /gruy/i.test(n) ? 'gruyere' : /kiri/i.test(n) ? 'kiri' : 'cheddar';
     return '<img class="ing-photo" src="../photos/ing-' + k + '.webp" alt="" width="160" height="160">';
   };
+  // La teinte de chaque sauce, pour le petit pot de sa carte.
+  var TEINTES = { 'Mayo': '#f1dc98', 'Ketchup': '#c3271a', 'Burger': '#e7884f', 'Blanche': '#efebe0', 'Barbecue': '#5b2914', 'Fish': '#e6dfb2',
+    'Algérienne': '#df722b', 'Curry': '#e2ae1c', 'Samouraï': '#e04d1d', 'Harissa': '#9b1c11', 'Gruyère': '#efc556', 'Brazil': '#ef982a', 'Tartare': '#d9d4a4', 'Andalouse': '#ee8638' };
+  var pot = function (n) { return '<i class="sauce-pot" style="--c:' + (TEINTES[n] || '#e2ae1c') + '"></i>'; };
   var PLATS = {};
   D.carte.forEach(function (c) { c.items.forEach(function (i) { PLATS[i.id] = i; }); });
 
@@ -74,7 +78,7 @@
     return p;
   }
   function ouvrirFiche(i) {
-    if (!i.groupes || !i.groupes.length) { ajouter(i, {}, 1); return; }
+    i.groupes = i.groupes || [];
     enCours = { plat: i, choix: {}, qte: 1 };
     i.groupes.forEach(function (g) { if (g.min === 1 && g.max === 1) enCours.choix[g.id] = [g.options[0].n]; });
     // Un choix unique facultatif (le gratine) : « Sans » coche par defaut, pour pouvoir revenir en arriere.
@@ -90,6 +94,14 @@
               return '<label class="ing"><input type="checkbox" value="' + esc(o.n) + '" checked>' + iconeDe(o.n) + '<span>' + esc(o.n) + '</span><em>Sans</em></label>';
             }).join('') + '</div></fieldset>';
         }
+        if (g.type === 'sauces') {
+          return '<fieldset class="groupe groupe-sauces" data-groupe="' + g.id + '" data-sauces>' +
+            '<button type="button" class="sauce-carte" data-sauce-ouvrir aria-expanded="false"><span class="sauce-pots" data-sauce-pots>' + pot('Mayo') + pot('Ketchup') + pot('Algérienne') + '</span>' +
+            '<span class="sauce-texte"><b>' + esc(g.titre) + '</b><small data-sauce-resume>Choisir · ' + esc(g.aide) + '</small></span><span class="sauce-fleche" aria-hidden="true"></span></button>' +
+            '<div class="sauces" data-sauces-liste hidden>' + g.options.map(function (o) {
+              return '<label class="sauce"><input type="checkbox" value="' + esc(o.n) + '">' + pot(o.n) + '<span>' + esc(o.n) + '</span></label>';
+            }).join('') + '</div></fieldset>';
+        }
         var type = g.max === 1 ? 'radio' : 'checkbox';
         return '<fieldset class="groupe" data-groupe="' + g.id + '"><legend><b>' + esc(g.titre) + '</b><small>' +
           (g.min ? 'Obligatoire' : 'Facultatif') + (g.max > 1 && g.aide ? ' · ' + esc(g.aide) : '') + '</small></legend><div class="options">' +
@@ -99,16 +111,23 @@
           }).join('') + '</div></fieldset>';
       }).join('') + '</div>' +
       '<div class="feuille-pied"><div class="qte"><button type="button" data-q="-1" aria-label="Moins">−</button><span data-q-n>1</span><button type="button" data-q="1" aria-label="Plus">+</button></div>' +
-      '<button type="button" class="bouton bouton-feu" data-ajouter-fiche>Ajouter · <span data-prix-fiche>' + euros(i.p) + '</span></button></div>';
+      (i.p == null ? '<button type="button" class="bouton bouton-feu" disabled>Prix bientôt</button></div>'
+        : '<button type="button" class="bouton bouton-feu" data-ajouter-fiche>Ajouter · <span data-prix-fiche>' + euros(i.p) + '</span></button></div>');
     majFiche();
     montrer(feuille);
     feuille.querySelector('.feuille-corps').scrollTop = 0;
   }
   function majFiche() {
-    $('[data-prix-fiche]', feuille).textContent = euros(prixFiche() * enCours.qte);
+    var pf = $('[data-prix-fiche]', feuille); if (pf) pf.textContent = euros(prixFiche() * enCours.qte);
     $('[data-q-n]', feuille).textContent = enCours.qte;
     enCours.plat.groupes.forEach(function (g) {
-      if (g.max > 1 && g.type !== 'retirer') {
+      if (g.type === 'sauces') {
+        var ch = enCours.choix[g.id] || [], f = feuille.querySelector('[data-groupe="' + g.id + '"]');
+        f.querySelector('[data-sauce-resume]').textContent = ch.length ? ch.join(' + ') : 'Choisir · ' + g.aide;
+        f.classList.toggle('choisie', ch.length > 0);
+        f.querySelector('[data-sauce-pots]').innerHTML = (ch.length ? ch : ['Mayo', 'Ketchup', 'Algérienne']).map(pot).join('');
+        if (g.max > 1) f.querySelectorAll('input').forEach(function (inp) { inp.disabled = ch.length >= g.max && !inp.checked; });
+      } else if (g.max > 1 && g.type !== 'retirer') {
         var plein = (enCours.choix[g.id] || []).length >= g.max;
         feuille.querySelectorAll('[data-groupe="' + g.id + '"] input').forEach(function (inp) { inp.disabled = plein && !inp.checked; });
       }
@@ -120,11 +139,20 @@
       enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:not(:checked)'), function (x) { return x.value; });
       majFiche(); return;
     }
+    var gs = enCours.plat.groupes.filter(function (g) { return g.id === f.getAttribute('data-groupe'); })[0];
+    if (gs && gs.type === 'sauces' && gs.max === 1 && e.target.checked) f.querySelectorAll('input').forEach(function (x) { if (x !== e.target) x.checked = false; });
     enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:checked'), function (x) { return x.value; }).filter(function (v) { return v !== 'Sans'; });
     majFiche();
+    if (gs && gs.type === 'sauces' && enCours.choix[gs.id].length >= gs.max) setTimeout(function () { ouvrirSauces(f, false); }, 350);
   });
+  function ouvrirSauces(f, ouvert) {
+    var b = f.querySelector('[data-sauce-ouvrir]'), l = f.querySelector('[data-sauces-liste]');
+    b.setAttribute('aria-expanded', ouvert ? 'true' : 'false'); l.hidden = !ouvert; f.classList.toggle('ouverte', ouvert);
+  }
   feuille.addEventListener('click', function (e) {
     if (e.target.closest('[data-fermer-fiche]')) { cacher(feuille); return; }
+    var so = e.target.closest('[data-sauce-ouvrir]');
+    if (so) { ouvrirSauces(so.closest('[data-sauces]'), so.getAttribute('aria-expanded') !== 'true'); return; }
     var q = e.target.closest('[data-q]');
     if (q) { enCours.qte = Math.max(1, Math.min(20, enCours.qte + +q.getAttribute('data-q'))); majFiche(); return; }
     if (e.target.closest('[data-ajouter-fiche]')) {
@@ -137,6 +165,7 @@
   function resume(i, choix) {
     return (i.groupes || []).map(function (g) {
       if (g.type === 'retirer') return (choix[g.id] || []).map(function (n) { return 'sans ' + n.toLowerCase(); }).join(', ');
+      if (g.type === 'sauces') return (choix[g.id] || []).length ? 'sauce ' + choix[g.id].join(' + ').toLowerCase() : '';
       var c = (choix[g.id] || []).filter(function (n) { return !/^Seul$|^Normal$/.test(n); });
       return c.length ? c.join(', ') : '';
     }).filter(Boolean).join(' · ');

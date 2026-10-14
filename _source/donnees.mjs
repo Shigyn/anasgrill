@@ -108,3 +108,30 @@ export const CARTE = [
     ],
   },
 ];
+
+/* ---------------- tout est personnalisable (Nicolas, 2026-10-15) ----------------
+   Comme sur KSM : chaque plat ouvre sa fiche, avec les ingredients a
+   retirer (salade, tomate, oignon partout, plus ceux du plat) et une
+   carte « Sauces » qui deplie les sauces offertes. Listes A CONFIRMER
+   avec le client (cahier, question « ingredients retirables »). */
+const STO = ['Salade', 'Tomate', 'Oignon'];
+const PERSO = {
+  'formule-classique': ['Cheddar'], 'formule-grill-wrap': ['Cheddar', 'Bacon'], 'formule-turkish': ['Cornichon', 'Cheddar'],
+  'formule-mielleux': [], 'formule-crocs': ['Cornichon', 'Cheddar', 'Bacon'], 'formule-smash': ['Cornichon', 'Cheddar'],
+  'formule-algerien': ['Cheddar'], 'formule-rolls': ['Cheddar', 'Bacon'], 'formule-forestier': ['Cheddar'], 'formule-mexicain': ['Jalapeños', 'Cheddar'],
+  sandwich: [], tacos: ['Cheddar'], roule: [],
+  'sig-dz': ['Cheddar'], 'sig-tajs': ['Kiri', 'Cheddar', 'Piment'], 'sig-bollys': ['Kiri', 'Cheddar'], 'sig-forestiers': ['Cheddar'],
+  'sig-savoyards': ['Bacon'], 'sig-anas-food': ['Cheddar'],
+  cheese: ['Cornichon', 'Cheddar'], 'double-cheese': ['Cornichon', 'Cheddar'], 'triple-cheese-bacon': ['Cornichon', 'Cheddar', 'Bacon'],
+  'le-240': ['Cornichon', 'Cheddar'], 'fish-brioche': ['Cheddar'], 'maxi-brioche': ['Cornichon', 'Cheddar'], 'chicken-brioche': ['Cornichon', 'Cheddar'],
+  'steak-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'chicken-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'anas-grill': ['Cheddar', 'Bacon'],
+  'naan-beef': ['Cheddar', 'Gruyère'], 'naan-chicken': ['Cheddar', 'Gruyère'], 'naan-curry': ['Kiri', 'Cheddar', 'Gruyère'], 'naan-tandoori': ['Kiri', 'Cheddar', 'Gruyère'],
+};
+const SAUCES_G = (max) => ({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte' : 'jusqu’à 2, offertes', min: 0, max, options: o(SAUCES) });
+for (const c of CARTE) for (const i of c.items) {
+  const autres = (i.groupes || []).filter((g) => g.type !== 'retirer' && g.id !== 'sauces');
+  const saucesAvant = (i.groupes || []).find((g) => g.id === 'sauces');
+  const requis = autres.filter((g) => g.min >= 1 && g.id !== 'menu' && g.id !== 'taille');
+  const reste = autres.filter((g) => !requis.includes(g));
+  i.groupes = [...requis, sans(...STO, ...(PERSO[i.id] || [])), SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2), ...reste];
+}

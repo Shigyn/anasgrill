@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '17';
+const V = '18';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -199,7 +199,7 @@ const vignette = (i) => {
 };
 const ligne = (i) => `
         <li class="plat${i.p == null ? ' plat-indispo' : ''}">
-          <button type="button" class="plat-bouton" ${i.p == null ? 'disabled' : `data-plat="${i.id}"`} aria-label="${esc(i.n)}${i.p == null ? ' (prix à confirmer)' : ', ajouter'}">
+          <button type="button" class="plat-bouton" data-plat="${i.id}" aria-label="${esc(i.n)}${i.p == null ? ', voir les ingrédients (prix à confirmer)' : ', personnaliser et ajouter'}">
             <span class="plat-photo">${vignette(i)}</span>
             <span class="plat-texte"><b>${esc(i.n)}</b>${i.d ? `<small>${esc(i.d)}</small>` : ''}</span>
             <span class="plat-bas"><span class="prix">${prix(i.p)}</span>${i.p == null ? '' : `<span class="plat-plus">${I.plus}</span>`}</span>

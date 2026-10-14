@@ -590,3 +590,35 @@ html { scroll-padding-top: 150px; }
 /* « Anas Grill » au-dessus de la ville, avec un petit souffle entre les deux (Nicolas, 2026-10-15). */
 .entete-snack-page .entete-marque { background: none; filter: none; display: block; margin-bottom: 5px; font: 700 .74rem/1 var(--etroite); letter-spacing: .14em; color: var(--orange); }
 @media (max-width: 640px) { .entete-snack-page .entete-marque { font-size: .64rem; margin-bottom: 3px; } }
+
+/* --- Les sauces : une carte qui deplie les sauces en petites cartes (2026-10-15) --- */
+.plat-indispo .plat-bouton { cursor: pointer; }
+.groupe-sauces { border: 0; padding: 0; margin: 18px 0 0; }
+.sauce-carte { width: 100%; display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 16px; border: 1.5px solid var(--ligne-forte); background: rgba(255, 255, 255, .03); color: var(--texte); text-align: left; cursor: pointer; transition: border-color .2s, background .2s; }
+.sauce-carte:hover, .groupe-sauces.ouverte .sauce-carte { border-color: rgba(255, 140, 30, .55); }
+.groupe-sauces.choisie .sauce-carte { border-color: var(--orange); background: rgba(255, 122, 0, .09); }
+.sauce-pots { display: flex; flex: none; }
+.sauce-pots .sauce-pot { width: 26px; height: 26px; }
+.sauce-pots .sauce-pot + .sauce-pot { margin-left: -9px; }
+.sauce-texte { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.sauce-texte b { font: 700 .95rem/1 var(--etroite); letter-spacing: .06em; text-transform: uppercase; }
+.sauce-texte small { color: var(--doux); font-size: .86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.groupe-sauces.choisie .sauce-texte small { color: var(--jaune); font-weight: 600; }
+.sauce-fleche { width: 10px; height: 10px; flex: none; border-right: 2px solid var(--orange); border-bottom: 2px solid var(--orange); transform: rotate(45deg) translate(-2px, -2px); transition: transform .25s; }
+.groupe-sauces.ouverte .sauce-fleche { transform: rotate(-135deg) translate(-2px, -2px); }
+.sauces { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-top: 10px; animation: deplie .28s cubic-bezier(.2, .8, .2, 1); }
+@keyframes deplie { from { opacity: 0; transform: translateY(-6px); } }
+.sauce { position: relative; display: grid; justify-items: center; gap: 7px; padding: 12px 4px 10px; border-radius: 14px; border: 1.5px solid var(--ligne); cursor: pointer; transition: border-color .2s, background .2s, opacity .2s, transform .15s; user-select: none; }
+.sauce:active { transform: scale(.95); }
+.sauce input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.sauce span { font: 600 .76rem/1.1 var(--etroite); letter-spacing: .03em; text-transform: uppercase; text-align: center; color: var(--texte); }
+.sauce:has(input:checked) { border-color: var(--orange); background: rgba(255, 122, 0, .1); }
+.sauce:has(input:checked)::after { content: ''; position: absolute; top: 6px; right: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--feu) center / 10px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2 4 7.6 8.5 2.6' fill='none' stroke='%231b0d00' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.sauce:has(input:disabled) { opacity: .38; cursor: default; }
+.sauce:has(input:focus-visible) { outline: 2px solid var(--jaune); outline-offset: 2px; }
+/* Le petit pot : la sauce dans un ramequin, avec un reflet. */
+.sauce-pot { display: block; width: 36px; height: 36px; border-radius: 50%; border: 3px solid #2b2724;
+  background: radial-gradient(circle at 34% 30%, rgba(255, 255, 255, .55) 0 7%, rgba(255, 255, 255, 0) 26%), radial-gradient(circle at 60% 70%, rgba(0, 0, 0, .22), rgba(0, 0, 0, 0) 60%), var(--c);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, .35), 0 2px 6px rgba(0, 0, 0, .4); }
+@media (prefers-reduced-motion: reduce) { .sauces { animation: none; } }
+.sauces[hidden] { display: none; }
