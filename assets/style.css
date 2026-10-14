@@ -641,3 +641,34 @@ html { scroll-padding-top: 150px; }
 .sauce:focus-visible { outline: 2px solid var(--jaune); outline-offset: 2px; }
 .sauces-aide { margin: 10px 2px 0; font-size: .8rem; color: var(--pale); }
 .partie-info { margin: 6px 0 0; color: var(--doux); font-size: .9rem; }
+
+/* ===================================================================
+   Les cartes de la carte : le gris reste, avec une touche de grill
+   (Nicolas, 2026-10-15). Des marques de grill orange dans le coin qui
+   « chauffent » doucement, et une etincelle qui court parfois le long
+   du bas. Seulement opacity et transform : fluide meme sur un vieux
+   telephone, et rien ne bouge si le visiteur a coupe les animations.
+   =================================================================== */
+.plat-bouton { position: relative; isolation: isolate; }
+.plat-bouton::before { content: ''; position: absolute; right: -6%; bottom: -14%; width: 72%; height: 70%; z-index: -1; pointer-events: none;
+  background: repeating-linear-gradient(-58deg, transparent 0 13px, rgba(255, 128, 20, .9) 13px 16px);
+  -webkit-mask: radial-gradient(closest-side at 72% 72%, #000, transparent); mask: radial-gradient(closest-side at 72% 72%, #000, transparent);
+  opacity: .1; animation: braise 5.5s ease-in-out infinite; transition: opacity .35s; }
+.plat-bouton::after { content: ''; position: absolute; left: 0; bottom: 0; width: 38%; height: 2px; z-index: 2; pointer-events: none; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--orange) 35%, var(--jaune) 50%, var(--orange) 65%, transparent);
+  box-shadow: 0 0 10px rgba(255, 140, 30, .8); transform: translateX(-110%); animation: etincelle 7s cubic-bezier(.45, 0, .25, 1) infinite; }
+.plat-bouton:hover::before { opacity: .32; }
+@keyframes braise { 0%, 100% { opacity: .08; } 50% { opacity: .2; } }
+@keyframes etincelle { 0% { transform: translateX(-110%); } 32%, 100% { transform: translateX(290%); } }
+/* Decalees d'une carte a l'autre : jamais toutes en meme temps. */
+.plat:nth-child(2n) .plat-bouton::after { animation-delay: -2.3s; }
+.plat:nth-child(3n) .plat-bouton::after { animation-delay: -4.6s; }
+.plat:nth-child(4n+1) .plat-bouton::after { animation-duration: 8.5s; }
+.plat:nth-child(2n) .plat-bouton::before { animation-delay: -1.8s; }
+.plat:nth-child(3n) .plat-bouton::before { animation-delay: -3.6s; }
+@media (max-width: 760px) { .plat-bouton::before { width: 55%; height: 120%; bottom: -30%; } }
+@media (prefers-reduced-motion: reduce) { .plat-bouton::before { animation: none; opacity: .12; } .plat-bouton::after { display: none; } }
+/* Un peu plus visible : les marques + une lueur de braise dessous. */
+.plat-bouton::before { background: repeating-linear-gradient(-58deg, transparent 0 12px, rgba(255, 128, 20, .95) 12px 16px), radial-gradient(circle at 78% 82%, rgba(255, 110, 0, .55), transparent 62%); }
+@keyframes braise { 0%, 100% { opacity: .16; } 50% { opacity: .36; } }
+.plat-bouton:hover::before { opacity: .5; }
