@@ -622,3 +622,21 @@ html { scroll-padding-top: 150px; }
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, .35), 0 2px 6px rgba(0, 0, 0, .4); }
 @media (prefers-reduced-motion: reduce) { .sauces { animation: none; } }
 .sauces[hidden] { display: none; }
+
+/* --- Une formule = un bloc par plat, pour savoir a quoi s'applique « sans oignon » (2026-10-15) --- */
+.partie { margin-top: 18px; padding: 14px 14px 16px; border-radius: 18px; border: 1px solid rgba(255, 160, 60, .2); background: rgba(255, 255, 255, .025); }
+.partie + .partie { margin-top: 14px; }
+.partie-titre { margin: 0 0 4px; display: flex; align-items: center; gap: 10px; font: 400 1.25rem/1.1 var(--titre); text-transform: uppercase; color: var(--jaune); }
+.partie-titre::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255, 160, 60, .35), transparent); }
+.partie .groupe:first-of-type { margin-top: 8px; }
+.partie .groupe-sauces { margin-top: 14px; }
+
+/* --- Sauces : un toucher x1, deux touchers x2, trois on retire (2026-10-15) --- */
+.sauce { background: transparent; color: var(--texte); font: inherit; }
+.sauce.prise { border-color: var(--orange); background: rgba(255, 122, 0, .1); }
+.sauce.prise::after { content: ''; position: absolute; top: 6px; right: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--feu) center / 10px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2 4 7.6 8.5 2.6' fill='none' stroke='%231b0d00' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.sauce em { position: absolute; top: 4px; left: 6px; font: 700 .78rem/1 var(--etroite); font-style: normal; color: var(--jaune); letter-spacing: .02em; }
+.sauce em:empty { display: none; }
+.sauce.grisee { opacity: .38; }
+.sauce:focus-visible { outline: 2px solid var(--jaune); outline-offset: 2px; }
+.sauces-aide { margin: 10px 2px 0; font-size: .8rem; color: var(--pale); }

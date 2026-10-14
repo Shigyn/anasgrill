@@ -26,6 +26,12 @@
   // La teinte de chaque sauce, pour le petit pot de sa carte.
   var TEINTES = { 'Mayo': '#f1dc98', 'Ketchup': '#c3271a', 'Burger': '#e7884f', 'Blanche': '#efebe0', 'Barbecue': '#5b2914', 'Fish': '#e6dfb2',
     'Algérienne': '#df722b', 'Curry': '#e2ae1c', 'Samouraï': '#e04d1d', 'Harissa': '#9b1c11', 'Gruyère': '#efc556', 'Brazil': '#ef982a', 'Tartare': '#d9d4a4', 'Andalouse': '#ee8638' };
+  // « Mayo ×2 + Ketchup » : les sauces choisies, la meme pouvant revenir deux fois.
+  var fmtSauces = function (ch) {
+    var n = {}, ordre = [];
+    ch.forEach(function (x) { if (!n[x]) { n[x] = 0; ordre.push(x); } n[x]++; });
+    return ordre.map(function (x) { return x + (n[x] > 1 ? ' ×' + n[x] : ''); }).join(' + ');
+  };
   var pot = function (n) { return '<i class="sauce-pot" style="--c:' + (TEINTES[n] || '#e2ae1c') + '"></i>'; };
   var PLATS = {};
   D.carte.forEach(function (c) { c.items.forEach(function (i) { PLATS[i.id] = i; }); });
@@ -87,7 +93,7 @@
       '<div class="feuille-tete">' + (i.photo ? '<img src="../photos/' + i.photo + '.webp" alt="">' : '') +
       '<button type="button" class="feuille-fermer" data-fermer-fiche aria-label="Fermer">×</button></div>' +
       '<div class="feuille-corps"><h3 id="feuille-titre">' + esc(i.n) + '</h3>' + (i.d ? '<p class="feuille-desc">' + esc(i.d) + '</p>' : '') +
-      i.groupes.map(function (g) {
+      parties(i.groupes, function (g) {
         if (g.type === 'retirer') {
           return '<fieldset class="groupe groupe-retirer" data-groupe="' + g.id + '" data-retirer><legend><b>' + esc(g.titre) + '</b><small>' + esc(g.aide) + '</small></legend><div class="ings">' +
             g.options.map(function (o) {
@@ -98,9 +104,10 @@
           return '<fieldset class="groupe groupe-sauces" data-groupe="' + g.id + '" data-sauces>' +
             '<button type="button" class="sauce-carte" data-sauce-ouvrir aria-expanded="false"><span class="sauce-pots" data-sauce-pots>' + pot('Mayo') + pot('Ketchup') + pot('Algérienne') + '</span>' +
             '<span class="sauce-texte"><b>' + esc(g.titre) + '</b><small data-sauce-resume>Choisir · ' + esc(g.aide) + '</small></span><span class="sauce-fleche" aria-hidden="true"></span></button>' +
-            '<div class="sauces" data-sauces-liste hidden>' + g.options.map(function (o) {
-              return '<label class="sauce"><input type="checkbox" value="' + esc(o.n) + '">' + pot(o.n) + '<span>' + esc(o.n) + '</span></label>';
-            }).join('') + '</div></fieldset>';
+            '<div class="sauces-boite" data-sauces-liste hidden>' + (g.max > 1 ? '<p class="sauces-aide">Touche deux fois une sauce pour la prendre en double.</p>' : '') +
+            '<div class="sauces">' + g.options.map(function (o) {
+              return '<button type="button" class="sauce" data-sauce="' + esc(o.n) + '" aria-pressed="false">' + pot(o.n) + '<span>' + esc(o.n) + '</span><em data-sauce-n></em></button>';
+            }).join('') + '</div></div></fieldset>';
         }
         var type = g.max === 1 ? 'radio' : 'checkbox';
         return '<fieldset class="groupe" data-groupe="' + g.id + '"><legend><b>' + esc(g.titre) + '</b><small>' +
@@ -109,7 +116,7 @@
             var coche = (enCours.choix[g.id] || []).indexOf(o.n) >= 0 || (o.n === 'Sans' && !(enCours.choix[g.id] || []).length);
             return '<label class="option"><input type="' + type + '" name="g-' + g.id + '" value="' + esc(o.n) + '"' + (coche ? ' checked' : '') + '><span>' + esc(o.n) + '</span>' + (o.p ? '<em>+' + (Number.isInteger(o.p) ? o.p + ' €' : euros(o.p)) + '</em>' : '') + '</label>';
           }).join('') + '</div></fieldset>';
-      }).join('') + '</div>' +
+      }) + '</div>' +
       '<div class="feuille-pied"><div class="qte"><button type="button" data-q="-1" aria-label="Moins">−</button><span data-q-n>1</span><button type="button" data-q="1" aria-label="Plus">+</button></div>' +
       (i.p == null ? '<button type="button" class="bouton bouton-feu" disabled>Prix bientôt</button></div>'
         : '<button type="button" class="bouton bouton-feu" data-ajouter-fiche>Ajouter · <span data-prix-fiche>' + euros(i.p) + '</span></button></div>');
@@ -117,16 +124,34 @@
     montrer(feuille);
     feuille.querySelector('.feuille-corps').scrollTop = 0;
   }
+  // Les groupes d'une formule portent « partie » : on les range sous le titre de leur plat.
+  function parties(groupes, rendu) {
+    var html = '', ouverte = null;
+    groupes.forEach(function (g) {
+      if ((g.partie || null) !== ouverte) {
+        if (ouverte) html += '</section>';
+        ouverte = g.partie || null;
+        if (ouverte) html += '<section class="partie"><h4 class="partie-titre">' + esc(ouverte) + '</h4>';
+      }
+      html += rendu(g);
+    });
+    return html + (ouverte ? '</section>' : '');
+  }
   function majFiche() {
     var pf = $('[data-prix-fiche]', feuille); if (pf) pf.textContent = euros(prixFiche() * enCours.qte);
     $('[data-q-n]', feuille).textContent = enCours.qte;
     enCours.plat.groupes.forEach(function (g) {
       if (g.type === 'sauces') {
         var ch = enCours.choix[g.id] || [], f = feuille.querySelector('[data-groupe="' + g.id + '"]');
-        f.querySelector('[data-sauce-resume]').textContent = ch.length ? ch.join(' + ') : 'Choisir · ' + g.aide;
+        f.querySelector('[data-sauce-resume]').textContent = ch.length ? fmtSauces(ch) : 'Choisir · ' + g.aide;
         f.classList.toggle('choisie', ch.length > 0);
         f.querySelector('[data-sauce-pots]').innerHTML = (ch.length ? ch : ['Mayo', 'Ketchup', 'Algérienne']).map(pot).join('');
-        if (g.max > 1) f.querySelectorAll('input').forEach(function (inp) { inp.disabled = ch.length >= g.max && !inp.checked; });
+        f.querySelectorAll('[data-sauce]').forEach(function (b) {
+          var n = ch.filter(function (x) { return x === b.getAttribute('data-sauce'); }).length;
+          b.classList.toggle('prise', n > 0); b.setAttribute('aria-pressed', n > 0 ? 'true' : 'false');
+          b.classList.toggle('grisee', ch.length >= g.max && !n);
+          b.querySelector('[data-sauce-n]').textContent = n > 1 ? '×' + n : '';
+        });
       } else if (g.max > 1 && g.type !== 'retirer') {
         var plein = (enCours.choix[g.id] || []).length >= g.max;
         feuille.querySelectorAll('[data-groupe="' + g.id + '"] input').forEach(function (inp) { inp.disabled = plein && !inp.checked; });
@@ -139,11 +164,8 @@
       enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:not(:checked)'), function (x) { return x.value; });
       majFiche(); return;
     }
-    var gs = enCours.plat.groupes.filter(function (g) { return g.id === f.getAttribute('data-groupe'); })[0];
-    if (gs && gs.type === 'sauces' && gs.max === 1 && e.target.checked) f.querySelectorAll('input').forEach(function (x) { if (x !== e.target) x.checked = false; });
     enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:checked'), function (x) { return x.value; }).filter(function (v) { return v !== 'Sans'; });
     majFiche();
-    if (gs && gs.type === 'sauces' && enCours.choix[gs.id].length >= gs.max) setTimeout(function () { ouvrirSauces(f, false); }, 350);
   });
   function ouvrirSauces(f, ouvert) {
     var b = f.querySelector('[data-sauce-ouvrir]'), l = f.querySelector('[data-sauces-liste]');
@@ -153,6 +175,20 @@
     if (e.target.closest('[data-fermer-fiche]')) { cacher(feuille); return; }
     var so = e.target.closest('[data-sauce-ouvrir]');
     if (so) { ouvrirSauces(so.closest('[data-sauces]'), so.getAttribute('aria-expanded') !== 'true'); return; }
+    var sb = e.target.closest('[data-sauce]');
+    if (sb) {
+      var f = sb.closest('[data-sauces]'), id = f.getAttribute('data-groupe'), nom = sb.getAttribute('data-sauce');
+      var g = enCours.plat.groupes.filter(function (x) { return x.id === id; })[0], ch = (enCours.choix[id] || []).slice();
+      var deja = ch.indexOf(nom) >= 0;
+      if (g.max === 1) ch = deja ? [] : [nom];
+      else if (ch.length < g.max) ch.push(nom);           // x1, puis x2
+      else if (deja) ch = ch.filter(function (x) { return x !== nom; }); // plein : on la retire
+      else { toast('Deux sauces maximum : touche une sauce choisie pour la retirer'); return; }
+      enCours.choix[id] = ch; majFiche();
+      // Complet : on replie, la carte affiche le choix (« Mayo ×2 »).
+      if (ch.length >= g.max) setTimeout(function () { ouvrirSauces(f, false); }, 450);
+      return;
+    }
     var q = e.target.closest('[data-q]');
     if (q) { enCours.qte = Math.max(1, Math.min(20, enCours.qte + +q.getAttribute('data-q'))); majFiche(); return; }
     if (e.target.closest('[data-ajouter-fiche]')) {
@@ -163,9 +199,17 @@
   });
 
   function resume(i, choix) {
-    return (i.groupes || []).map(function (g) {
+    var bouts = {}, ordre = [];
+    (i.groupes || []).forEach(function (g) {
+      var t = resumeGroupe(g, choix); if (!t) return;
+      var k = g.court || ''; if (!bouts[k]) { bouts[k] = []; ordre.push(k); } bouts[k].push(t);
+    });
+    return ordre.map(function (k) { return (k ? k + ' : ' : '') + bouts[k].join(', '); }).join(' · ');
+  }
+  function resumeGroupe(g, choix) {
+    return [g].map(function (g) {
       if (g.type === 'retirer') return (choix[g.id] || []).map(function (n) { return 'sans ' + n.toLowerCase(); }).join(', ');
-      if (g.type === 'sauces') return (choix[g.id] || []).length ? 'sauce ' + choix[g.id].join(' + ').toLowerCase() : '';
+      if (g.type === 'sauces') return (choix[g.id] || []).length ? 'sauce ' + fmtSauces(choix[g.id]).toLowerCase() : '';
       var c = (choix[g.id] || []).filter(function (n) { return !/^Seul$|^Normal$/.test(n); });
       return c.length ? c.join(', ') : '';
     }).filter(Boolean).join(' · ');

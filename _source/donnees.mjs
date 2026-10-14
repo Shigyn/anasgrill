@@ -135,3 +135,34 @@ for (const c of CARTE) for (const i of c.items) {
   const reste = autres.filter((g) => !requis.includes(g));
   i.groupes = [...requis, sans(...STO, ...(PERSO[i.id] || [])), SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2), ...reste];
 }
+
+/* ---------------- les formules, element par element (Nicolas, 2026-10-15) ----------------
+   « On sait pas si ca enleve du burger ou du sandwich » : chaque formule est
+   decoupee en ses plats ; chacun a son bloc dans la fiche (son choix, ses
+   ingredients, ses sauces) et le panier dit « Sandwich : sans oignon ». */
+const P = (court, titre, ing, opts = {}) => ({ court, titre, ing, ...opts });
+const choixDe = (titre, liste) => ({ titre, min: 1, max: 1, options: o(liste) });
+const FORMULES = {
+  'formule-classique': [P('Sandwich', 'Le sandwich escalope', [], { choix: choixDe('Assaisonnement', ['Curry', 'Tandoori', 'Paprika']) }),
+    P('Burger', 'Le burger brioché', ['Cornichon', 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Fish']) })],
+  'formule-grill-wrap': [P('Anas Grill', 'L’Anas Grill', ['Cheddar', 'Bacon']), P('Wrap', 'Le wrap poulet', ['Cheddar'])],
+  'formule-turkish': [P('Galette', 'La galette kebab', [], { sauces: 1 }), P('Cheese', 'Le cheese', ['Cornichon', 'Cheddar'])],
+  'formule-mielleux': [P('Burger', 'Le burger chèvre-miel', []), P('Wrap', 'Le wrap poulet-chèvre', [])],
+  'formule-crocs': [P('Croc’s', 'Les deux croc’s bacon', ['Cheddar', 'Bacon']), P('Cheeseburgers', 'Les deux cheeseburgers', ['Cornichon', 'Cheddar'])],
+  'formule-smash': [P('Smash steak', 'Le smash double steak', ['Cornichon', 'Cheddar']), P('Smash tenders', 'Le smash tenders', ['Cheddar'])],
+  'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', ['Cheddar']), P('Burger escalope', 'Le burger matlouh escalope', ['Cheddar'])],
+  'formule-rolls': [P('Roulé', 'Le roulé', [], { choix: choixDe('Viande', ['Steak', 'Curry', 'Tandoori', 'Paprika']) }), P('Croc’s', 'Le croc’s', ['Cheddar', 'Bacon'])],
+  'formule-forestier': [P('Forestier', 'Le sandwich forestier', ['Cheddar']), P('Maxi', 'Le maxi brioché', ['Cornichon', 'Cheddar']), P('Croc’s', 'Le croc’s', ['Cheddar', 'Bacon'])],
+  'formule-mexicain': [P('Fajitas', 'Les deux fajitas', ['Jalapeños', 'Cheddar'])],
+};
+for (const c of CARTE) for (const i of c.items) {
+  const parts = FORMULES[i.id]; if (!parts) continue;
+  i.groupes = parts.flatMap((p, n) => {
+    const tag = { partie: p.titre, court: p.court };
+    return [
+      ...(p.choix ? [{ id: 'choix-' + n, ...p.choix, ...tag }] : []),
+      { ...sans(...STO, ...p.ing), id: 'retirer-' + n, ...tag },
+      { ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag },
+    ];
+  });
+}
