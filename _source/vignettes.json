@@ -1,15 +1,18 @@
 {
 "c-sandwich": {
-"l": 520,
-"h": 190
+"l": 1200,
+"h": 800,
+"client": true
 },
 "c-tacos": {
-"l": 430,
-"h": 170
+"l": 1200,
+"h": 800,
+"client": true
 },
 "c-roule": {
-"l": 680,
-"h": 240
+"l": 1200,
+"h": 800,
+"client": true
 },
 "s-dz": {
 "l": 860,
@@ -37,7 +40,7 @@
 },
 "f-classique": {
 "l": 1200,
-"h": 720,
+"h": 800,
 "client": true
 },
 "f-grill-wrap": {
@@ -46,36 +49,44 @@
 "client": true
 },
 "f-turkish": {
-"l": 400,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true
 },
 "f-mielleux": {
-"l": 400,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true
 },
 "f-crocs": {
-"l": 440,
-"h": 200
+"l": 1200,
+"h": 800,
+"client": true
 },
 "f-smash": {
-"l": 450,
-"h": 160
+"l": 1200,
+"h": 800,
+"client": true
 },
 "f-algerien": {
-"l": 430,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true
 },
 "f-rolls": {
-"l": 430,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true
 },
 "f-forestier": {
-"l": 430,
-"h": 120
+"l": 1200,
+"h": 800,
+"client": true
 },
 "f-mexicain": {
-"l": 450,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true
 },
 "b-cheese": {
 "l": 230,
