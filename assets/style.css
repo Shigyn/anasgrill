@@ -587,3 +587,6 @@ html { scroll-padding-top: 150px; }
   .entete-snack-page .onglets a { padding: 8px 12px; font-size: .84rem; }
   html { scroll-padding-top: 130px; }
 }
+/* « Anas Grill » au-dessus de la ville, avec un petit souffle entre les deux (Nicolas, 2026-10-15). */
+.entete-snack-page .entete-marque { background: none; filter: none; display: block; margin-bottom: 5px; font: 700 .74rem/1 var(--etroite); letter-spacing: .14em; color: var(--orange); }
+@media (max-width: 640px) { .entete-snack-page .entete-marque { font-size: .64rem; margin-bottom: 3px; } }

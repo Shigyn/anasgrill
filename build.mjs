@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '16';
+const V = '17';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -218,7 +218,7 @@ for (const s of SNACKS) {
   <div class="cadre entete-in">
     <a class="marque marque-petite" href="${r}" aria-label="Retour au choix du restaurant">${LOGO}</a>
     <div class="entete-snack">
-      <h1 class="entete-nom"><span class="sr">Anas Grill </span>${esc(s.nom)}</h1>
+      <h1 class="entete-nom"><span class="entete-marque">Anas Grill</span> ${esc(s.nom)}</h1>
       <p class="entete-adresse">${esc(s.adresse)}</p>
     </div>
     <a class="entete-tel" href="tel:${s.tel.replace(/\s/g, '')}" aria-label="Appeler Anas Grill ${esc(s.nom)}">${I.tel}<span>${esc(s.tel)}</span></a>
