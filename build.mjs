@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '11';
+const V = '12';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -239,10 +239,6 @@ for (const s of SNACKS) {
           <li>${I.sac}<span>À emporter · Livraison</span></li>
         </ul>
       </div>
-      <a class="bandeau-promo" href="#formules">
-        <img src="../photos/f-classique.webp" alt="" width="1200" height="720">
-        <span><b>Formules à 10&nbsp;€</b>frites cheddar gruyère et boisson comprises</span>
-      </a>
     </div>
   </section>
   <div class="cadre carte" id="carte">

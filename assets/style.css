@@ -520,3 +520,6 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .point-gauche span { left: auto; right: -6px; transform: translateY(4px); }
 .point-gauche:hover span, .point-gauche.actif span { transform: none; }
 @media (max-width: 860px) { .arrivee .marque-grande { width: 104px; } }
+
+/* 2026-10-15 : plus d encart formule dans le bandeau (repetition avec la carte). */
+.bandeau-in { grid-template-columns: 1fr; }
