@@ -22,7 +22,7 @@ export const SNACKS = [
 /* ---------------- les groupes d'options, partages ---------------- */
 const VIANDES = ['Steak', 'Merguez', 'Escalope', 'Tandoori', 'Curry', 'Tenders', 'Cordon bleu', 'Kebab'];
 const SAUCES = ['Mayo', 'Ketchup', 'Burger', 'Blanche', 'Barbecue', 'Fish', 'Algérienne', 'Curry', 'Samouraï', 'Harissa', 'Gruyère', 'Brazil', 'Tartare', 'Andalouse'];
-const SUPPLEMENTS = [['Emmental', 1], ['Kiri', 1], ['Cheddar', 1], ['Boursin', 1], ['Chakchouka', 1], ['Oignons crispy', 1], ['Bacon fumé', 1], ['Viande en plus', 2.5]];
+const SUPPLEMENTS = [['Emmental', 1], ['Kiri', 1], ['Cheddar', 1], ['Boursin', 1], ['Chakchouka', 1], ['Oignons crispy', 1], ['Bacon fumé', 1]];
 const GRATINAGE = [['Emmental', 2], ['Raclette', 2], ['Cheddar', 2], ['Chèvre', 2], ['Mozza', 2]];
 const o = (liste) => liste.map((x) => (Array.isArray(x) ? { n: x[0], p: x[1] } : { n: x, p: 0 }));
 
@@ -40,6 +40,8 @@ const G = {
   supplements: { id: 'supplements', titre: 'Suppléments', min: 0, max: 8, options: o(SUPPLEMENTS) },
   gratinage: { id: 'gratinage', titre: 'Gratiné', min: 0, max: 1, options: o(GRATINAGE) },
   menu: { id: 'menu', titre: 'En menu ?', min: 1, max: 1, options: o([['Seul', 0], ['En menu (frites + boisson)', 3], ['En menu, frites cheddar', 4]]) },
+  // « Viande en plus » du panneau (+2,50 €), mais en disant laquelle (Nicolas, 2026-10-15). Prix a confirmer.
+  viande2: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])) },
   maxi: { id: 'taille', titre: 'Taille', min: 1, max: 1, options: o([['Normal', 0], ['Maxi tacos', 3]]) },
 };
 
@@ -72,9 +74,9 @@ export const CARTE = [
   {
     id: 'composer', nom: 'À composer', intro: 'Choisis ta viande, tes sauces et tes suppléments. En menu avec frites et boisson : 3 € de plus, et 1 € pour passer aux frites cheddar.',
     items: [
-      { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Garni de la viande de ton choix, avec tes sauces préférées.', groupes: [G.viandeSandwich, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratinage, G.menu] },
-      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', groupes: [G.viande, G.maxi, G.sauces, G.supplements, G.menu] },
-      { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'La viande de ton choix et tes sauces, roulées dans une galette.', groupes: [G.viande, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.menu] },
+      { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Garni de la viande de ton choix, avec tes sauces préférées.', groupes: [G.viandeSandwich, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratinage, G.menu] },
+      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', groupes: [G.viande, G.viande2, G.maxi, G.sauces, G.supplements, G.menu] },
+      { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'La viande de ton choix et tes sauces, roulées dans une galette.', groupes: [G.viande, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.menu] },
     ],
   },
   {
@@ -131,7 +133,7 @@ const SAUCES_G = (max) => ({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'T
 for (const c of CARTE) for (const i of c.items) {
   const autres = (i.groupes || []).filter((g) => g.type !== 'retirer' && g.id !== 'sauces');
   const saucesAvant = (i.groupes || []).find((g) => g.id === 'sauces');
-  const requis = autres.filter((g) => g.min >= 1 && g.id !== 'menu' && g.id !== 'taille');
+  const requis = autres.filter((g) => (g.min >= 1 || g.id === 'viande2') && g.id !== 'menu' && g.id !== 'taille');
   const reste = autres.filter((g) => !requis.includes(g));
   i.groupes = [...requis, sans(...STO, ...(PERSO[i.id] || [])), SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2), ...reste];
 }
