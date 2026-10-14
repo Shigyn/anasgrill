@@ -550,3 +550,40 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
   .entete-tel span { display: none; }
   .entete-changer { padding: 8px 11px; font-size: .86rem; }
 }
+
+/* ===================================================================
+   L'EN-TETE DES PAGES SNACK, version definitive (2026-10-15). Toutes les
+   regles precedentes sur .entete sont remplacees par ce bloc : deux
+   lignes, des hauteurs qui suivent le contenu (plus de hauteur fixe qui
+   ecrase), rien en double avec le logo.
+   =================================================================== */
+.entete-snack-page { position: sticky; top: 0; z-index: 30; background: rgba(11, 11, 12, .94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 160, 60, .14); }
+.entete-snack-page .entete-in { display: flex; align-items: center; gap: 14px; height: auto; min-height: 76px; padding: 12px 0; }
+.entete-snack-page .marque-petite { width: 46px; flex: none; }
+.entete-snack-page .entete-snack { flex: 1; min-width: 0; display: grid; gap: 4px; padding-left: 14px; border-left: 1px solid rgba(255, 255, 255, .1); }
+.entete-snack-page .entete-nom { margin: 0; font: 400 1.75rem/1.05 var(--titre); text-transform: uppercase; letter-spacing: .01em; color: var(--texte); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entete-snack-page .entete-adresse { margin: 0; font-size: .86rem; line-height: 1.3; color: var(--doux); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entete-snack-page .entete-tel, .entete-snack-page .entete-changer { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; margin: 0; border-radius: 999px; border: 1px solid var(--ligne-forte); text-decoration: none; font: 600 .92rem/1 var(--texte-police); white-space: nowrap; transition: border-color .2s, background .2s; }
+.entete-snack-page .entete-tel { color: var(--texte); }
+.entete-snack-page .entete-tel svg { width: 16px; height: 16px; color: var(--orange); }
+.entete-snack-page .entete-changer { color: var(--jaune); }
+.entete-snack-page .entete-tel:hover, .entete-snack-page .entete-changer:hover { border-color: var(--orange); background: rgba(255, 122, 0, .08); }
+.entete-snack-page .onglets { background: transparent; border: 0; border-top: 1px solid rgba(255, 255, 255, .06); }
+.entete-snack-page .onglets-in { padding: 10px 0; gap: 8px; }
+.entete-snack-page .onglets a { padding: 9px 15px; }
+.snack-page .carte { padding-top: 6px; }
+.snack-page .categorie:first-child { padding-top: 30px; }
+html { scroll-padding-top: 150px; }
+@media (max-width: 640px) {
+  .entete-snack-page .entete-in { min-height: 64px; padding: 10px 0; gap: 10px; }
+  .entete-snack-page .marque-petite { width: 38px; }
+  .entete-snack-page .entete-snack { padding-left: 10px; gap: 2px; }
+  .entete-snack-page .entete-nom { font-size: 1.3rem; }
+  .entete-snack-page .entete-adresse { font-size: .76rem; }
+  .entete-snack-page .entete-tel { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  .entete-snack-page .entete-tel span { display: none; }
+  .entete-snack-page .entete-changer { height: 40px; padding: 0 12px; font-size: .84rem; }
+  .entete-snack-page .onglets-in { padding: 8px 0; }
+  .entete-snack-page .onglets a { padding: 8px 12px; font-size: .84rem; }
+  html { scroll-padding-top: 130px; }
+}
