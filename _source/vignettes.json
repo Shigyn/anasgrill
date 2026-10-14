@@ -36,12 +36,14 @@
 "h": 190
 },
 "f-classique": {
-"l": 620,
-"h": 250
+"l": 1200,
+"h": 720,
+"client": true
 },
 "f-grill-wrap": {
-"l": 520,
-"h": 270
+"l": 1200,
+"h": 720,
+"client": true
 },
 "f-turkish": {
 "l": 400,

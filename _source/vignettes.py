@@ -42,5 +42,14 @@ for panneau, boites in DECOUPES.items():
         c = ImageEnhance.Contrast(ImageEnhance.Color(c).enhance(1.08)).enhance(1.04)
         c.save(os.path.join(DST, nom + '.webp'), 'WEBP', quality=82, method=6)
         dims[nom] = {'l': c.width, 'h': c.height}
+# Les vraies photos du client (_source/photos-client/<nom>.webp) passent
+# avant les decoupes des panneaux : on ne les ecrase jamais.
+CLIENT = os.path.join(ICI, 'photos-client')
+for f in sorted(os.listdir(CLIENT)) if os.path.isdir(CLIENT) else []:
+    nom = os.path.splitext(f)[0]
+    im = Image.open(os.path.join(CLIENT, f)).convert('RGB')
+    if im.width > 1200: im = im.resize((1200, round(im.height * 1200 / im.width)), Image.LANCZOS)
+    im.save(os.path.join(DST, nom + '.webp'), 'WEBP', quality=82, method=6)
+    dims[nom] = {'l': im.width, 'h': im.height, 'client': True}
 json.dump(dims, open(os.path.join(ICI, 'vignettes.json'), 'w'), indent=0)
 print(len(dims), 'vignettes')

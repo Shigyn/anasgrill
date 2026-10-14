@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '3';
+const V = '4';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -176,7 +176,7 @@ PAGES.push(['', {
   </section>
   <div class="choix-carte" id="carte-snacks">${carteSvg(r)}
     <aside class="promo" aria-label="Formules à 10 €">
-      <img src="photos/f-classique.webp" alt="Formule Le Classique" width="620" height="250">
+      <img src="photos/f-classique.webp" alt="Formule Le Classique" width="1200" height="720">
       <div><b>Formules à 10&nbsp;€</b><span>2 sandwichs ou burgers, frites cheddar gruyère, boisson. Dans les ${SNACKS.length} restaurants.</span></div>
     </aside><p class="carte-legende">© les contributeurs OpenStreetMap</p></div>
 </main>
@@ -231,7 +231,7 @@ for (const s of SNACKS) {
         </ul>
       </div>
       <a class="bandeau-promo" href="#formules">
-        <img src="../photos/f-classique.webp" alt="" width="620" height="250">
+        <img src="../photos/f-classique.webp" alt="" width="1200" height="720">
         <span><b>Formules à 10&nbsp;€</b>frites cheddar gruyère et boisson comprises</span>
       </a>
     </div>

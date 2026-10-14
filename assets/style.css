@@ -365,7 +365,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .echelle text { fill: #fff; fill-opacity: .5; font: 600 11px var(--etroite); letter-spacing: .08em; }
 .marqueur-nom { font-size: 14px; }
 .promo { position: absolute; left: 52px; bottom: 64px; width: 280px; border-radius: 18px; overflow: hidden; background: rgba(16, 13, 10, .92); border: 1px solid rgba(255, 160, 60, .22); box-shadow: var(--ombre); }
-.promo img { width: 100%; height: auto; aspect-ratio: 62 / 25; object-fit: cover; }
+.promo img { width: 100%; height: auto; aspect-ratio: 5 / 3; object-fit: cover; }
 .promo div { padding: 12px 16px 14px; display: grid; gap: 4px; }
 .promo b { font: 400 1.5rem/1 var(--titre); text-transform: uppercase; background: var(--feu); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .promo span { color: var(--doux); font-size: .88rem; line-height: 1.4; }
@@ -383,7 +383,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .infos-snack svg { color: var(--orange); width: 16px; height: 16px; }
 .bandeau-promo { display: grid; grid-template-columns: 1fr; border-radius: 18px; overflow: hidden; text-decoration: none; background: rgba(16, 13, 10, .9); border: 1px solid rgba(255, 160, 60, .22); box-shadow: var(--ombre); transition: transform .2s; }
 .bandeau-promo:hover { transform: translateY(-3px); }
-.bandeau-promo img { width: 100%; height: auto; aspect-ratio: 62 / 22; object-fit: cover; }
+.bandeau-promo img { width: 100%; height: auto; aspect-ratio: 5 / 3; object-fit: cover; }
 .bandeau-promo span { padding: 12px 16px 14px; color: var(--doux); font-size: .9rem; display: grid; gap: 4px; }
 .bandeau-promo b { font: 400 1.45rem/1 var(--titre); text-transform: uppercase; color: var(--jaune); }
 .plat-bouton { background: linear-gradient(180deg, rgba(42, 36, 30, .92), rgba(20, 18, 16, .96)); }
