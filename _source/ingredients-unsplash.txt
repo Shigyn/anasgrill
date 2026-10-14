@@ -11,3 +11,4 @@ ing-bacon.webp      1779649577828-a0dc5f7bb095
 ing-sauce.webp      1734989435134-7e4885259231
 ing-jalapeno.webp   1597115580039-b849ed2d6398
 ing-piment.webp     1622993361024-ae1c39cda16c
+fond-grill.webp     1588182657969-777d766e31ab  (fond de page, assombri a 22 %, flou 2,5 px)

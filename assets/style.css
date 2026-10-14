@@ -672,3 +672,15 @@ html { scroll-padding-top: 150px; }
 .plat-bouton::before { background: repeating-linear-gradient(-58deg, transparent 0 12px, rgba(255, 128, 20, .95) 12px 16px), radial-gradient(circle at 78% 82%, rgba(255, 110, 0, .55), transparent 62%); }
 @keyframes braise { 0%, 100% { opacity: .16; } 50% { opacity: .36; } }
 .plat-bouton:hover::before { opacity: .5; }
+
+/* Le fond : une photo de grill tres assombrie, a peine devinee derriere les
+   lueurs (Nicolas, 2026-10-15). Fixe, une seule couche : rien a recalculer
+   au defilement. Unsplash 1588182657969, assombrie a l'avance (photos/). */
+body::before {
+  background:
+    radial-gradient(60% 45% at 18% -5%, rgba(255, 122, 0, .16), transparent 70%),
+    radial-gradient(50% 40% at 100% 105%, rgba(255, 70, 0, .12), transparent 70%),
+    radial-gradient(rgba(255, 255, 255, .045) 1px, transparent 1.2px) 0 0 / 22px 22px,
+    linear-gradient(180deg, rgba(11, 11, 12, .55), rgba(11, 11, 12, .2) 55%, rgba(11, 11, 12, .45)),
+    #0b0b0c url("../photos/fond-grill.webp") center 70% / cover no-repeat;
+}
