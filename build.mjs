@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '4';
+const V = '6';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -139,21 +139,24 @@ function carteSvg(r) {
 /* ---------------- 1. Choisis ton restaurant ---------------- */
 const PAGES = [];
 PAGES.push(['', {
-  titre: 'Anas Grill — Commande en ligne, formules à 10 € · Lyon et Isère',
-  description: `Commandez chez Anas Grill en ligne : formules à 10 €, sandwichs, tacos, burgers. ${SNACKS.length} restaurants à Lyon, Villeurbanne, Vénissieux, Vaulx-en-Velin, Rillieux, Bourgoin-Jallieu et Pont-de-Chéruy.`,
+  titre: 'Anas Grill — Commande en ligne · Lyon et Isère',
+  description: `Commandez chez Anas Grill en ligne : sandwichs, tacos, burgers, formules à 10 €. ${SNACKS.length} restaurants à Lyon, Villeurbanne, Vénissieux, Vaulx-en-Velin, Rillieux, Bourgoin-Jallieu et Pont-de-Chéruy.`,
   classe: 'page-choix',
   scripts: ['choix.js'],
+  // Arrivee (retour de Nicolas, 2026-10-14) : la carte reduite au minimum,
+  // les restaurants en cartes, rien d'autre. Chaque mini-carte est une
+  // image SVG statique (photos/carte-<id>.svg) : chargee a la demande,
+  // mise en cache, aucun calcul dans la page.
   corps: (r) => `
-<div class="braises" aria-hidden="true">${'<i></i>'.repeat(14)}</div>
-<main id="contenu" class="choix">
-  <section class="choix-panneau">
-    <div class="choix-intro">
+<div class="braises" aria-hidden="true">${'<i></i>'.repeat(10)}</div>
+<main id="contenu" class="arrivee">
+  <section class="cadre arrivee-tete">
+    <div class="arrivee-texte">
       <a class="marque marque-grande" href="./">${LOGO}</a>
-      <p class="ruban">Formules à 10&nbsp;€ toute l’année</p>
       <h1>Choisis <span>ton restaurant</span></h1>
       <p>Livraison ou à emporter, payé en ligne, prêt à l’heure.</p>
       <div class="choix-actions">
-        <button class="bouton bouton-feu" type="button" data-localiser>${I.cible} Trouver le plus proche</button>
+        <button class="bouton bouton-feu" type="button" data-localiser>${I.cible} Le plus proche de moi</button>
         <form class="adresse-form" data-adresse-form autocomplete="off">
           <label class="sr" for="adresse-recherche">Ton adresse</label>
           <input id="adresse-recherche" name="adresse" placeholder="Ou tape ton adresse…" data-adresse-champ>
@@ -162,25 +165,31 @@ PAGES.push(['', {
       </div>
       <p class="choix-note" data-choix-note aria-live="polite"></p>
     </div>
-    <ul class="snacks" data-snacks>
-      ${SNACKS.map((s) => `
-      <li class="snack" data-snack="${s.id}">
+    <figure class="ensemble" aria-label="Les ${SNACKS.length} restaurants sur la carte">
+      <img src="${r}photos/carte-ensemble.svg" alt="" width="${CA.W}" height="${CA.H}">
+      ${SNACKS.map((s) => { const [x, y] = proj(s.lat, s.lng); return `<a class="point" data-snack="${s.id}" href="${r}${s.id}/" style="left:${(x / CA.W * 100).toFixed(2)}%;top:${(y / CA.H * 100).toFixed(2)}%" aria-label="Anas Grill ${esc(s.nom)}"><span>${esc(s.nom)}</span></a>`; }).join('')}
+      <span class="point-vous" data-vous hidden></span>
+      <figcaption>© les contributeurs OpenStreetMap</figcaption>
+    </figure>
+  </section>
+  <section class="cadre">
+    <ul class="restos" data-snacks>
+      ${SNACKS.map((s, k) => `
+      <li class="snack resto" data-snack="${s.id}" style="--i:${k}">
         <a href="${r}${s.id}/">
-          <span class="snack-flamme" aria-hidden="true"></span>
-          <span class="snack-texte"><b>${esc(s.nom)}</b><small>${esc(s.adresse)}</small></span>
-          <span class="snack-meta">${s.note ? `<span class="snack-note">${I.etoile}${s.note}</span>` : ''}<span class="snack-distance" data-distance></span></span>
-          <span class="snack-go">${I.fleche}</span>
+          <span class="resto-carte"><img src="${r}photos/carte-${s.id}.svg" alt="" width="2500" height="1560" loading="lazy" decoding="async"><span class="resto-pin" aria-hidden="true"></span></span>
+          <span class="resto-corps">
+            <small>Anas Grill</small>
+            <b>${esc(s.nom)}</b>
+            <span class="resto-adresse">${esc(s.adresse)}</span>
+            <span class="resto-bas">${s.note ? `<span class="snack-note">${I.etoile}${s.note}<em>(${s.avis})</em></span>` : '<span class="snack-note snack-nouveau">Nouveau</span>'}<span class="snack-distance" data-distance></span><span class="resto-go">Commander ${I.fleche}</span></span>
+          </span>
         </a>
       </li>`).join('')}
     </ul>
   </section>
-  <div class="choix-carte" id="carte-snacks">${carteSvg(r)}
-    <aside class="promo" aria-label="Formules à 10 €">
-      <img src="photos/f-classique.webp" alt="Formule Le Classique" width="1200" height="720">
-      <div><b>Formules à 10&nbsp;€</b><span>2 sandwichs ou burgers, frites cheddar gruyère, boisson. Dans les ${SNACKS.length} restaurants.</span></div>
-    </aside><p class="carte-legende">© les contributeurs OpenStreetMap</p></div>
 </main>
-<script type="application/json" id="snacks-json">${JSON.stringify(SNACKS.map(({ id, nom, adresse, lat, lng, note }) => ({ id, nom, adresse, lat, lng, note })))}</script>`,
+<script type="application/json" id="snacks-json">${JSON.stringify({ cadre: CA, snacks: SNACKS.map(({ id, nom, adresse, lat, lng }) => ({ id, nom, adresse, lat, lng })) })}</script>`,
 }]);
 
 /* ---------------- 2. La carte d'un snack ---------------- */

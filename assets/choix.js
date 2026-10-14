@@ -1,52 +1,51 @@
 /* ===================================================================
-   Anas Grill — « Choisis ton restaurant » (LocWeb, 2026-10-14)
-   La carte des snacks, le plus proche mis en avant : par la position
-   du telephone (avec permission) ou par l'adresse tapee (Base Adresse
-   Nationale, gratuite, sans cle). Sans JavaScript, la liste suffit.
+   Anas Grill — l'arrivee « Choisis ton restaurant » (LocWeb, 2026-10-14)
+   Les 8 restaurants en cartes, classees par distance : par la position
+   du telephone (avec permission) ou l'adresse tapee (Base Adresse
+   Nationale, gratuite). Leger : pas de carte interactive, des images
+   statiques et quelques classes CSS. Sans JavaScript, tout reste cliquable.
    =================================================================== */
 (function () {
   'use strict';
-  var SNACKS = JSON.parse(document.getElementById('snacks-json').textContent);
+  var J = JSON.parse(document.getElementById('snacks-json').textContent);
+  var SNACKS = J.snacks, C = J.cadre;
   var note = document.querySelector('[data-choix-note]');
   var liste = document.querySelector('[data-snacks]');
+  var ensemble = document.querySelector('.ensemble');
+  var LOIN = 40; // au-dela, on dit franchement qu'il n'y a pas d'Anas Grill a cote
 
   function km(a, b) {
-    var R = 6371, r = Math.PI / 180;
-    var dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+    var R = 6371, r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
     var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
     return 2 * R * Math.asin(Math.sqrt(x));
   }
-  var fmtKm = function (d) { return d < 1 ? Math.round(d * 1000) + ' m' : d.toFixed(1).replace('.', ',') + ' km'; };
-
-  /* --- La carte dessinee (SVG genere au build, aucune requete) --- */
-  var svg = document.querySelector('.carte-svg');
-  var C = JSON.parse(svg.getAttribute('data-cadre'));
-  function proj(lat, lng) { return [(lng - C.O) / (C.E - C.O) * C.W, (C.N - lat) / (C.N - C.S) * C.H]; }
+  var fmtKm = function (d) { return d < 1 ? Math.round(d * 1000) + ' m' : (d < 10 ? d.toFixed(1).replace('.', ',') : Math.round(d)) + ' km'; };
 
   function surligner(id) {
-    liste.querySelectorAll('.snack').forEach(function (li) { li.classList.toggle('actif', li.getAttribute('data-snack') === id); });
-    svg.querySelectorAll('.marqueur').forEach(function (m) { m.classList.toggle('actif', m.getAttribute('data-snack') === id); });
+    document.querySelectorAll('[data-snack]').forEach(function (el) { el.classList.toggle('actif', el.getAttribute('data-snack') === id); });
   }
-  liste.addEventListener('mouseover', function (e) { var li = e.target.closest('.snack'); if (li) surligner(li.getAttribute('data-snack')); });
+  document.addEventListener('mouseover', function (e) { var el = e.target.closest('[data-snack]'); if (el) surligner(el.getAttribute('data-snack')); });
 
-  /* --- Classer par distance depuis un point --- */
   function classer(point, libelle) {
     var tries = SNACKS.map(function (s) { return { s: s, d: km(point, s) }; }).sort(function (a, b) { return a.d - b.d; });
     tries.forEach(function (t, i) {
-      var li = liste.querySelector('[data-snack="' + t.s.id + '"]');
+      var li = liste.querySelector('li[data-snack="' + t.s.id + '"]');
       li.querySelector('[data-distance]').textContent = fmtKm(t.d);
-      li.classList.toggle('proche', i === 0);
+      li.classList.toggle('proche', i === 0 && t.d < LOIN);
+      li.style.setProperty('--i', i);
       liste.appendChild(li);
     });
-    var p = tries[0];
-    note.innerHTML = 'Le plus proche ' + (libelle ? 'de <b>' + libelle + '</b>' : 'de toi') + ' : <a href="' + ANAS.racine + p.s.id + '/">Anas Grill ' + p.s.nom + '</a> à ' + fmtKm(p.d) + '.';
+    // On rejoue l'apparition dans le nouvel ordre.
+    liste.classList.remove('rejoue'); void liste.offsetWidth; liste.classList.add('rejoue');
+    var p = tries[0], lien = '<a href="' + ANAS.racine + p.s.id + '/">Anas Grill ' + p.s.nom + '</a>';
+    note.innerHTML = p.d < LOIN
+      ? 'Le plus proche ' + (libelle ? 'de <b>' + libelle + '</b>' : 'de toi') + ' : ' + lien + ', à ' + fmtKm(p.d) + '.'
+      : 'Pas encore d’Anas Grill ' + (libelle ? 'près de <b>' + libelle + '</b>' : 'près de toi') + '. Le plus proche est ' + lien + ', à ' + fmtKm(p.d) + '.';
     surligner(p.s.id);
-    // Ta position sur la carte, si elle est dans le cadre.
-    var xy = proj(point.lat, point.lng), v = svg.querySelector('[data-vous]');
-    var dedans = xy[0] > 10 && xy[0] < C.W - 10 && xy[1] > 10 && xy[1] < C.H - 10;
-    v.toggleAttribute('hidden', !dedans);
-    if (dedans) v.setAttribute('transform', 'translate(' + xy[0].toFixed(1) + ' ' + xy[1].toFixed(1) + ')');
-    // On retient l'adresse pour la livraison (pre-remplie au paiement).
+    // Ton point sur la petite carte, s'il tombe dedans.
+    var x = (point.lng - C.O) / (C.E - C.O) * 100, y = (C.N - point.lat) / (C.N - C.S) * 100, v = ensemble.querySelector('[data-vous]');
+    v.hidden = !(x > 1 && x < 99 && y > 1 && y < 99);
+    v.style.left = x + '%'; v.style.top = y + '%';
     try { if (libelle) localStorage.setItem('anas-adresse', JSON.stringify({ label: libelle, lat: point.lat, lng: point.lng })); } catch (e) {}
   }
 
@@ -58,19 +57,17 @@
     navigator.geolocation.getCurrentPosition(function (pos) {
       b.disabled = false; classer({ lat: pos.coords.latitude, lng: pos.coords.longitude });
     }, function () {
-      b.disabled = false; note.textContent = 'Position refusée ou introuvable : tape ton adresse juste au-dessus.';
+      b.disabled = false; note.textContent = 'Position refusée ou introuvable : tape ton adresse juste à côté.';
     }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
   });
 
-  /* --- L'adresse tapee (Base Adresse Nationale) --- */
-  var champ = document.querySelector('[data-adresse-champ]');
-  var sugg = document.querySelector('[data-suggestions]');
-  var minuterie = null;
+  /* --- L'adresse tapee --- */
+  var champ = document.querySelector('[data-adresse-champ]'), sugg = document.querySelector('[data-suggestions]'), minut = null;
   champ.addEventListener('input', function () {
-    clearTimeout(minuterie);
+    clearTimeout(minut);
     var q = champ.value.trim();
     if (q.length < 4) { sugg.hidden = true; return; }
-    minuterie = setTimeout(function () {
+    minut = setTimeout(function () {
       fetch('https://api-adresse.data.gouv.fr/search/?limit=5&autocomplete=1&lat=45.76&lon=4.95&q=' + encodeURIComponent(q))
         .then(function (r) { return r.json(); })
         .then(function (j) {
@@ -79,7 +76,7 @@
           }).join('');
           sugg.hidden = !sugg.children.length;
         }).catch(function () { sugg.hidden = true; });
-    }, 250);
+    }, 300);
   });
   sugg.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
@@ -90,7 +87,6 @@
     e.preventDefault(); var b = sugg.querySelector('button'); if (b) b.click();
   });
 
-  /* --- Une adresse deja connue : on reclasse tout de suite --- */
   try {
     var memo = JSON.parse(localStorage.getItem('anas-adresse') || 'null');
     if (memo) { champ.value = memo.label; classer(memo, memo.label); }

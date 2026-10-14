@@ -408,3 +408,91 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 @media (prefers-reduced-motion: reduce) { .braises { display: none; } }
 
 .bandeau .ruban { display: inline-block; color: #1b0d00; margin: 0 0 10px; }
+
+/* ===================================================================
+   V3 (2026-10-15, retour de Nicolas) : plus de bois, le fond sombre
+   d'avant avec quelques touches ; l'arrivee = la carte reduite au
+   minimum et les restaurants en cartes ; beau, simple, un peu anime,
+   et fluide (8 snacks, beaucoup de clients) : uniquement des
+   transitions CSS sur transform/opacity, des images statiques.
+   =================================================================== */
+body { background: #0b0b0c; }
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 18% -5%, rgba(255, 122, 0, .16), transparent 70%),
+    radial-gradient(50% 40% at 100% 105%, rgba(255, 70, 0, .12), transparent 70%),
+    radial-gradient(rgba(255, 255, 255, .045) 1px, transparent 1.2px) 0 0 / 22px 22px; }
+
+.arrivee { position: relative; z-index: 2; padding-bottom: 70px; }
+.arrivee-tete { display: grid; grid-template-columns: 1fr minmax(320px, 440px); gap: 40px; align-items: center; padding: 40px 0 34px; }
+.arrivee-texte h1 { font-size: clamp(2.8rem, 2rem + 3.4vw, 4.6rem); line-height: .96; }
+.arrivee-texte h1 span { display: block; }
+.arrivee-texte > p { color: var(--doux); margin: 12px 0 22px; font-size: 1.08rem; }
+.arrivee .choix-actions { grid-template-columns: auto minmax(220px, 360px); align-items: start; gap: 10px; }
+.arrivee .choix-actions .bouton { width: auto; }
+.marque-grande { width: 84px; margin-bottom: 18px; filter: drop-shadow(0 10px 26px rgba(255, 110, 0, .35)); }
+
+/* --- la vue d'ensemble, en petit --- */
+.ensemble { position: relative; margin: 0; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255, 160, 60, .16); box-shadow: 0 24px 60px rgba(0, 0, 0, .55); aspect-ratio: 1000 / 716; background: #141312; }
+.ensemble img { width: 100%; height: 100%; display: block; }
+.ensemble figcaption { position: absolute; right: 10px; bottom: 6px; font-size: .64rem; color: var(--pale); }
+.point { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--orange); border: 2px solid #1b0d00; box-shadow: 0 0 0 4px rgba(255, 122, 0, .2); transition: transform .25s; }
+.point span { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(4px); white-space: nowrap; font: 700 .72rem/1 var(--etroite); letter-spacing: .06em; text-transform: uppercase; padding: 5px 7px; border-radius: 6px; background: #0b0b0c; color: #fff; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
+.point:hover, .point.actif { transform: scale(1.35); background: var(--jaune); z-index: 2; }
+.point:hover span, .point.actif span { opacity: 1; transform: translateX(-50%); }
+.point.actif::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 2px solid var(--jaune); animation: onde 1.6s ease-out infinite; }
+@keyframes onde { from { transform: scale(.5); opacity: .9; } to { transform: scale(1.6); opacity: 0; } }
+.point-vous { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #2f80ff; border: 2px solid #fff; box-shadow: 0 0 0 6px rgba(47, 128, 255, .25); }
+.point-vous[hidden] { display: none; }
+
+/* --- les restaurants en cartes --- */
+.restos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.resto { animation: monte .55s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 55ms + 80ms); }
+.restos.rejoue .resto { animation-name: monte-bis; }
+@keyframes monte { from { opacity: 0; transform: translateY(18px); } }
+@keyframes monte-bis { from { opacity: 0; transform: translateY(14px); } }
+.resto a { display: flex; flex-direction: column; height: 100%; border-radius: 20px; overflow: hidden; text-decoration: none; background: #151413; border: 1px solid rgba(255, 255, 255, .08); transition: transform .3s cubic-bezier(.2, .8, .2, 1), border-color .25s, box-shadow .3s; }
+.resto a:hover, .resto.actif a { transform: translateY(-4px); border-color: rgba(255, 140, 30, .5); box-shadow: 0 22px 50px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 140, 30, .15); }
+.resto-carte { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #141312; }
+.resto-carte img { width: 100%; height: 100%; display: block; transform: scale(1.02); transition: transform .9s cubic-bezier(.2, .8, .2, 1); }
+.resto a:hover .resto-carte img { transform: scale(1.1); }
+.resto-carte::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, #151413); pointer-events: none; }
+.resto-pin { position: absolute; left: 50%; top: 50%; width: 30px; height: 38px; margin: -38px 0 0 -15px; z-index: 1; background: var(--feu); clip-path: path('M15 0c3.5 8 13 11 13 22.5A13 13 0 0 1 2 22.5C2 14 9 11.5 9 5c3 2.5 4 6.5 4 10C16 12 16.5 6 15 0z'); filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .6)); transition: transform .3s; }
+.resto-carte::before { content: ''; position: absolute; left: 50%; top: 50%; width: 46px; height: 14px; margin: -5px 0 0 -23px; border-radius: 50%; background: radial-gradient(rgba(255, 122, 0, .55), transparent 70%); z-index: 1; }
+.resto a:hover .resto-pin, .resto.actif .resto-pin { transform: translateY(-5px); }
+.resto-corps { padding: 2px 18px 16px; display: grid; gap: 4px; flex: 1; }
+.resto-corps small { font: 700 .72rem/1 var(--etroite); letter-spacing: .16em; text-transform: uppercase; color: var(--orange); }
+.resto-corps b { font: 400 1.85rem/1.02 var(--titre); text-transform: uppercase; color: var(--texte); }
+.resto-adresse { color: var(--doux); font-size: .9rem; }
+.resto-bas { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .07); font: 600 .92rem/1 var(--etroite); }
+.resto-bas .snack-note em { font-style: normal; color: var(--pale); margin-left: 3px; }
+.snack-nouveau { color: var(--jaune); letter-spacing: .08em; text-transform: uppercase; font-size: .78rem; }
+.resto-bas .snack-distance { color: var(--doux); }
+.resto-go { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: rgba(255, 140, 30, .12); color: var(--jaune); transition: background .25s, color .25s; }
+.resto a:hover .resto-go { background: var(--feu); color: #1b0d00; }
+.resto.proche a { border-color: var(--jaune); }
+.resto.proche .resto-carte::before { width: 70px; margin-left: -35px; }
+.resto.proche .resto-corps small::after { content: ' · Le plus proche'; color: var(--jaune); }
+
+@media (max-width: 860px) {
+  .arrivee-tete { grid-template-columns: 1fr; gap: 22px; padding-top: 26px; }
+  .ensemble { max-width: 520px; }
+  .arrivee .choix-actions { grid-template-columns: 1fr; }
+  .arrivee .choix-actions .bouton { width: 100%; }
+  .marque-grande { width: 70px; }
+}
+@media (max-width: 560px) {
+  .restos { grid-template-columns: 1fr; gap: 12px; }
+  .resto a { flex-direction: row; }
+  .resto-carte { width: 38%; aspect-ratio: auto; flex: none; }
+  .resto-carte::after { background: linear-gradient(90deg, transparent 60%, #151413); }
+  .resto-pin { width: 24px; height: 30px; margin: -30px 0 0 -12px; clip-path: path('M12 0c2.8 6.4 10.4 8.8 10.4 18A10.4 10.4 0 0 1 1.6 18C1.6 11.2 7.2 9.2 7.2 4c2.4 2 3.2 5.2 3.2 8C12.8 9.6 13.2 4.8 12 0z'); }
+  .resto-corps { padding: 12px 14px; }
+  .resto-corps b { font-size: 1.5rem; }
+  .resto-bas { flex-wrap: wrap; gap: 8px; }
+  .resto-go { padding: 7px 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .resto { animation: none; } .point.actif::after { display: none; } }
+
+/* Telephone : la vue d ensemble disparait, les cartes classees suffisent. */
+@media (max-width: 560px) { .ensemble { display: none; } }
