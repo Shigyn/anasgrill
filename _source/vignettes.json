@@ -192,5 +192,23 @@
 "b-naan-tandoori": {
 "l": 250,
 "h": 150
+},
+"bo-canette": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"bo-eau": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"d-tiramisu": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 }
 }

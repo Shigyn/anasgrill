@@ -206,6 +206,29 @@ for (const c of CARTE) for (const i of c.items) {
   });
 }
 
+/* ---------------- boissons et desserts (Hakim, 15/10) ----------------
+   Canettes 2 EUR, eau 50 cl 1 EUR, tiramisu 4 EUR. La boisson des formules et
+   des menus se choisit parmi les canettes (et l'eau). Dans « a composer »,
+   on ne la demande que si le client prend « en menu ». Noms Oasis « FF » et
+   « PP » : abreviations de Hakim, A CONFIRMER. */
+const CANETTES = ['Dada Cola', 'Dada Cherry', 'Dada Zéro', 'Oasis Tropical', 'Oasis Pomme Cassis Framboise', 'Oasis FF', 'Oasis PP',
+  'Schweppes Agrumes', 'Schweppes Pomme', 'Schweppes Lemon', 'Orangina'];
+const G_BOISSON = { id: 'boisson', titre: 'Ta boisson', min: 1, max: 1, options: o([...CANETTES, 'Eau 50 cl']) };
+for (const c of CARTE) for (const i of c.items) {
+  if (FORMULES[i.id]) i.groupes.push({ ...G_BOISSON });
+  const m = (i.groupes || []).findIndex((g) => g.id === 'menu');
+  if (m >= 0) i.groupes.splice(m + 1, 0, { ...G_BOISSON, titre: 'Ta boisson (menu)', siChoix: { groupe: 'menu', sauf: 'Seul' } });
+}
+CARTE.push(
+  { id: 'desserts', nom: 'Desserts', intro: '', items: [
+    { id: 'tiramisu', n: 'Tiramisu', p: 4, photo: 'd-tiramisu', d: 'Le tiramisu maison, au café et au mascarpone.', groupes: [] },
+  ] },
+  { id: 'boissons', nom: 'Boissons', intro: 'Canettes 33 cl bien fraîches.', items: [
+    { id: 'canette', n: 'Canette', p: 2, photo: 'bo-canette', d: 'Dada, Oasis, Schweppes ou Orangina.', groupes: [{ id: 'parfum', titre: 'Ta canette', min: 1, max: 1, options: o(CANETTES) }] },
+    { id: 'eau', n: 'Eau 50 cl', p: 1, photo: 'bo-eau', d: 'Une petite bouteille d’eau.', groupes: [] },
+  ] },
+);
+
 /* ---------------- les allergenes (Nicolas, 2026-10-15) ----------------
    Un bouton « Allergenes » sur chaque fiche. Deduits de la composition
    connue (pain, fromages, poisson) ; les sauces apportent souvent oeufs et
@@ -213,6 +236,8 @@ for (const c of CARTE) for (const i of c.items) {
 const FROMAGES = /cheddar|gruy|kiri|raclette|chèvre|fromage|cheese|croc|mozza|emmental/i;
 const PAIN_BURGER = /burger|brioch|cheese|smash|house|anas grill|240/i;
 for (const c of CARTE) for (const i of c.items) {
+  if (c.id === 'boissons') { i.allergenes = null; continue; }
+  if (i.id === 'tiramisu') { i.allergenes = { contient: ['Gluten (biscuits)', 'Lait (mascarpone)', 'Œufs'], peut: [] }; continue; }
   const texte = [i.n, i.d || '', ...(i.groupes || []).flatMap((g) => (g.type === 'retirer' ? g.options.map((x) => x.n) : []))].join(' ');
   const contient = ['Gluten (pain, galette, panure)'];
   if (FROMAGES.test(texte) || c.id.startsWith('formules')) contient.push('Lait (fromages' + (c.id.startsWith('formules') ? ', frites cheddar gruyère' : '') + ')');

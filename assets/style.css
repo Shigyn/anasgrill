@@ -756,3 +756,4 @@ body::after { opacity: .19; }
 .cookies-boutons .bouton { width: 100%; padding: 11px 10px; }
 body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
 @media (prefers-reduced-motion: reduce) { .cookies { transition: none; } }
+.groupe[hidden] { display: none; }

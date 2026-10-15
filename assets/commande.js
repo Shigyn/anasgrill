@@ -85,11 +85,12 @@
   });
   // « Comprise dans le maxi » : la 2e viande ne coute rien et devient obligatoire.
   function inclus(g) { return !!(g.inclusSi && (enCours.choix[g.inclusSi.groupe] || [])[0] === g.inclusSi.option); }
-  function minDe(g) { return inclus(g) ? 1 : g.min; }
+  function visible(g) { return !g.siChoix || ((enCours.choix[g.siChoix.groupe] || [])[0] || g.siChoix.sauf) !== g.siChoix.sauf; }
+  function minDe(g) { return !visible(g) ? 0 : inclus(g) ? 1 : g.min; }
   function prixFiche() {
     var i = enCours.plat, p = i.p;
     (i.groupes || []).forEach(function (g) {
-      if (inclus(g)) return;
+      if (inclus(g) || !visible(g)) return;
       if (g.offertes != null) p += Math.max(0, (enCours.choix[g.id] || []).length - g.offertes) * (g.prixSup || 0);
       (enCours.choix[g.id] || []).forEach(function (n) { var o = g.options.filter(function (x) { return x.n === n; })[0]; if (o) p += o.p; });
     });
@@ -98,7 +99,7 @@
   function ouvrirFiche(i) {
     i.groupes = i.groupes || [];
     enCours = { plat: i, choix: {}, qte: 1 };
-    i.groupes.forEach(function (g) { if (g.min === 1 && g.max === 1) enCours.choix[g.id] = [g.options[0].n]; });
+    i.groupes.forEach(function (g) { if (g.min === 1 && g.max === 1 && g.id !== 'boisson' && g.id !== 'parfum') enCours.choix[g.id] = [g.options[0].n]; });
     // Un choix unique facultatif (le gratine) : « Sans » coche par defaut, pour pouvoir revenir en arriere.
     var optionsDe = function (g) { return g.max === 1 && g.min === 0 ? [{ n: 'Sans', p: 0 }].concat(g.options) : g.options; };
     feuille.innerHTML =
@@ -156,6 +157,11 @@
     var pf = $('[data-prix-fiche]', feuille); if (pf) pf.textContent = euros(prixFiche() * enCours.qte);
     $('[data-q-n]', feuille).textContent = enCours.qte;
     enCours.plat.groupes.forEach(function (g) {
+      if (g.siChoix) {
+        var fs = feuille.querySelector('[data-groupe="' + g.id + '"]'), vu = visible(g);
+        fs.hidden = !vu;
+        if (!vu && (enCours.choix[g.id] || []).length) { enCours.choix[g.id] = []; fs.querySelectorAll('input').forEach(function (x) { x.checked = false; }); }
+      }
       if (g.inclusSi) {
         var fi = feuille.querySelector('[data-groupe="' + g.id + '"]'), inc = inclus(g);
         fi.querySelector('legend small').textContent = inc ? 'Comprise dans le maxi · obligatoire' : 'Facultatif';
@@ -229,7 +235,7 @@
     var a = i.allergenes, li = function (l) { return '<ul>' + l.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; };
     var d = document.createElement('div'); d.className = 'allerg-pop';
     d.innerHTML = '<div class="allerg-boite" role="dialog" aria-modal="true" aria-label="Allergènes"><button type="button" class="feuille-fermer" data-allerg-fermer aria-label="Fermer">×</button>' +
-      '<h4>Allergènes · ' + esc(i.n) + '</h4><b>Contient</b>' + li(a.contient) + '<b>Peut contenir</b>' + li(a.peut) +
+      '<h4>Allergènes · ' + esc(i.n) + '</h4><b>Contient</b>' + li(a.contient) + (a.peut.length ? '<b>Peut contenir</b>' + li(a.peut) : '') +
       '<p>Une allergie ? Appelle le restaurant avant de commander : <a href="tel:' + SNACK.tel.replace(/\s/g, '') + '">' + esc(SNACK.tel) + '</a>.</p></div>';
     feuille.appendChild(d); d.querySelector('[data-allerg-fermer]').focus();
   }
@@ -242,6 +248,7 @@
     return ordre.map(function (k) { return (k ? k + ' : ' : '') + bouts[k].join(', '); }).join(' · ');
   }
   function resumeGroupe(g, choix) {
+    if (g.siChoix && ((choix[g.siChoix.groupe] || [])[0] || g.siChoix.sauf) === g.siChoix.sauf) return '';
     return [g].map(function (g) {
       if (g.type === 'retirer') return (choix[g.id] || []).map(function (n) { return 'sans ' + n.toLowerCase(); }).join(', ');
       if (g.type === 'sauces') return (choix[g.id] || []).length ? 'sauce ' + fmtSauces(choix[g.id]).toLowerCase() : '';

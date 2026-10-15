@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '36';
+const V = '37';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, livraison: false, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 2, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -294,3 +294,24 @@ fs.writeFileSync(path.join(ICI, 'sitemap.xml'), `<?xml version="1.0" encoding="U
 fs.writeFileSync(path.join(ICI, 'robots.txt'), PROD ? `User-agent: *\nAllow: /\n\nSitemap: ${URL_SITE}sitemap.xml\n` : `# Apercu : pas d'indexation.\nUser-agent: *\nDisallow: /\n`);
 fs.writeFileSync(path.join(ICI, '.nojekyll'), '');
 console.log(`${PAGES.length} pages, ${SNACKS.length} snacks, ${CARTE.reduce((n, c) => n + c.items.length, 0)} plats — ${PROD ? 'PRODUCTION' : 'apercu'}`);
+
+// La carte cote serveur (fonctions ag-* de supabase-functions) : le serveur
+// recalcule chaque prix a partir de CE fichier, jamais a partir de ce que le
+// navigateur envoie. Regenere a chaque build : site et serveur partent
+// toujours de la meme carte. Les photos et descriptions n'y servent pas.
+const CARTE_SERVEUR = {
+  reglages: REGLAGES,
+  snacks: SNACKS.map(({ id, nom, ouverture, fermeture }) => ({ id, nom, ouverture, fermeture })),
+  plats: Object.fromEntries(CARTE.flatMap((c) => c.items).map((i) => [i.id, {
+    n: i.n, p: i.p,
+    groupes: (i.groupes || []).filter((g) => g.type !== 'info').map((g) => ({
+      id: g.id, type: g.type || null, titre: g.titre, court: g.court || null, min: g.min, max: g.max,
+      options: g.options.map((o) => ({ n: o.n, p: o.p })),
+      ...(g.inclusSi ? { inclusSi: g.inclusSi } : {}), ...(g.offertes != null ? { offertes: g.offertes, prixSup: g.prixSup } : {}),
+      ...(g.prefixe ? { prefixe: g.prefixe } : {}),
+      ...(g.siChoix ? { siChoix: g.siChoix } : {}),
+    })),
+  }])),
+};
+const DEST_SERVEUR = path.join(ICI, '..', 'supabase-functions', 'supabase', 'functions', '_partage', 'ag-carte.ts');
+fs.writeFileSync(DEST_SERVEUR, `// GENERE par anas-grill/build.mjs — ne pas modifier a la main.\nexport const CARTE: any = ${JSON.stringify(CARTE_SERVEUR)};\n`);
