@@ -128,3 +128,49 @@ body.cuisine::before, body.cuisine::after, body.gerant::before, body.gerant::aft
 .ge-alerte-boite h2 { margin: 0; font: 400 1.5rem/1.1 var(--titre); text-transform: uppercase; color: #ffb4ac; }
 .ge-alerte-boite ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
 .ge-alerte-boite p { margin: 0; color: var(--doux); }
+
+/* Un element cache reste cache, meme s'il a un display (le panneau « Fermer »). */
+.cuisine [hidden], .gerant [hidden], .cuisine-code [hidden] { display: none !important; }
+
+/* --- cuisine : menu de gauche en petites cartes --- */
+body.cuisine #app { display: grid; grid-template-columns: 248px 1fr; min-height: 100svh; }
+.cu-menu { position: sticky; top: 0; height: 100svh; overflow-y: auto; padding: 16px 12px; background: #100f0e; border-right: 1px solid rgba(255, 160, 60, .16); display: grid; align-content: start; gap: 18px; }
+.cu-marque { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; padding: 0 4px; }
+.cu-logo .logo { width: 56px; height: 56px; }
+.cu-marque small { font: 700 .72rem/1 var(--etroite); letter-spacing: .14em; text-transform: uppercase; color: var(--orange); }
+.cu-marque h1 { margin: 3px 0 6px; font: 400 1.25rem/1.05 var(--titre); text-transform: uppercase; overflow-wrap: anywhere; }
+.cu-marque .cu-etat { padding: 4px 9px; font-size: .7rem; }
+.cu-cartes { display: grid; gap: 8px; }
+.cu-carte { display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center; width: 100%; min-height: 60px; padding: 9px 12px 9px 9px; border-radius: 14px; border: 1px solid var(--ligne); background: #1a1714; color: var(--texte); text-align: left; cursor: pointer; transition: border-color .15s, background .15s; }
+.cu-carte:hover { border-color: rgba(255, 140, 30, .55); }
+.cu-carte:focus-visible { outline: 2px solid var(--jaune); outline-offset: 2px; }
+.cu-ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: rgba(255, 122, 0, .12); color: var(--orange); }
+.cu-ico svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cu-carte-txt { display: grid; gap: 3px; min-width: 0; }
+.cu-carte-txt b { font: 700 .98rem/1.1 var(--texte-police); }
+.cu-carte-txt small { font-size: .8rem; line-height: 1.2; color: var(--doux); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cu-carte-on { border-color: var(--orange); background: linear-gradient(135deg, rgba(255, 122, 0, .2), rgba(255, 122, 0, .05)); }
+.cu-carte-on .cu-ico { background: var(--feu); color: #1b0d00; }
+.cu-carte-alerte { border-color: rgba(255, 190, 40, .7); background: rgba(255, 190, 40, .12); }
+.cu-carte-alerte .cu-ico { background: #ffbe28; color: #1b0d00; }
+.cu-carte-alerte small { color: #ffd36a; }
+.cu-carte[data-carte="maj"] { border-color: var(--orange); }
+.cu-zone { min-width: 0; }
+body.cuisine .cu-colonnes { grid-template-columns: 1.25fr 1fr; }
+.cu-remises { padding: 16px; }
+.cu-remises h2 { margin: 0 0 10px; font: 400 1.3rem/1 var(--titre); text-transform: uppercase; color: var(--jaune); }
+.cu-remises h2 span { color: var(--doux); font-size: .9em; }
+.cu-remises > div { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; align-items: start; }
+.cu-remises .cu-cmd { opacity: .8; }
+
+/* Tablette en portrait, telephone : le menu passe en bandeau qui defile. */
+@media (max-width: 900px) {
+  body.cuisine #app { grid-template-columns: 1fr; align-content: start; }
+  .cu-menu { position: sticky; z-index: 5; height: auto; padding: 10px 12px; gap: 10px; border-right: 0; border-bottom: 1px solid rgba(255, 160, 60, .16); }
+  .cu-marque { grid-template-columns: 40px 1fr; }
+  .cu-logo .logo { width: 40px; height: 40px; }
+  .cu-marque h1 { margin: 2px 0 4px; font-size: 1.1rem; }
+  .cu-cartes { display: flex; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .cu-carte { flex: 0 0 auto; width: 186px; min-height: 54px; }
+  body.cuisine .cu-colonnes { grid-template-columns: 1fr; }
+}

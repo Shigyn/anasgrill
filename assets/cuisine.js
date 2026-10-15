@@ -76,19 +76,28 @@
   function demarrer() {
     document.body.className = 'cuisine';
     $('#app').innerHTML =
-      '<header class="cu-tete"><div><small>Anas Grill · Cuisine</small><h1>' + esc(session.snack.nom) + '</h1></div>' +
-      '<span class="cu-etat" data-etat>Connexion…</span>' +
-      '<button type="button" class="cu-bouton" data-pause>Pause</button>' +
-      '<button type="button" class="cu-bouton" data-epuises>Plats épuisés</button>' +
-      (APPLI ? '' : '<button type="button" class="cu-bouton cu-feu" data-installer>Installer l’appli</button>') +
-      '<button type="button" class="cu-bouton cu-feu" data-appliquer hidden>Mise à jour prête · appliquer</button>' +
-      '<button type="button" class="cu-bouton cu-aide" data-aide>Aide</button>' +
-      '<button type="button" class="cu-bouton cu-discret" data-reglages aria-label="Réglages">Réglages</button></header>' +
-      '<p class="cu-alerte" data-alerte hidden></p>' +
-      '<main class="cu-colonnes"><section><h2>À préparer <span data-n-recue></span></h2><div data-col="recue"></div></section>' +
-      '<section><h2>Prêtes <span data-n-prete></span></h2><div data-col="prete"></div></section>' +
-      '<section class="cu-remises"><h2>Remises aujourd’hui <span data-n-remise></span></h2><div data-col="remise"></div></section></main>' +
+      '<aside class="cu-menu">' +
+        '<div class="cu-marque"><div class="cu-logo">' + document.querySelector('[data-logo]').innerHTML + '</div>' +
+          '<div><small>Cuisine</small><h1>' + esc(session.snack.nom) + '</h1><span class="cu-etat" data-etat>Connexion…</span></div></div>' +
+        '<nav class="cu-cartes" aria-label="Menu de la cuisine">' +
+          carteMenu('data-vue="commandes"', 'commandes', 'Commandes') +
+          carteMenu('data-vue="remises"', 'remises', 'Remises du jour') +
+          carteMenu('data-pause', 'pause', 'Pause') +
+          carteMenu('data-epuises', 'epuises', 'Plats épuisés') +
+          carteMenu('data-reglages', 'reglages', 'Réglages') +
+          carteMenu('data-aide', 'aide', 'Aide') +
+          (APPLI ? '' : carteMenu('data-installer', 'installer', 'Installer l’appli')) +
+          carteMenu('data-appliquer hidden', 'maj', 'Mise à jour prête') +
+        '</nav></aside>' +
+      '<main class="cu-zone">' +
+        '<p class="cu-alerte" data-alerte hidden></p>' +
+        '<div class="cu-colonnes" data-ecran="commandes">' +
+          '<section><h2>À préparer <span data-n-recue></span></h2><div data-col="recue"></div></section>' +
+          '<section><h2>Prêtes <span data-n-prete></span></h2><div data-col="prete"></div></section></div>' +
+        '<section class="cu-remises" data-ecran="remises" hidden><h2>Remises aujourd’hui <span data-n-remise></span></h2><div data-col="remise"></div></section>' +
+      '</main>' +
       '<div class="cu-voile" data-voile hidden></div><div class="cu-panneau" data-panneau hidden></div>';
+    montrer(vue);
     rafraichir();
     boucle(); // signe de vie + filet de securite
     clearInterval(minuteurVersion); minuteurVersion = setInterval(verifierPage, 30 * 60000);
@@ -96,6 +105,52 @@
     else if (APPLI && principale() && window.LocWebImprimante.chercher && !reglage.ip) setTimeout(function () { panneauRecherche(); }, 800);
     ecouter();
     garderEcranAllume();
+  }
+
+  // Le menu de gauche : des petites cartes (icone, nom, et ce qu'il y a dedans).
+  var ICONES = {
+    commandes: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    remises: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="m9.5 14 2 2 3.5-3.5"/>',
+    pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
+    epuises: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
+    reglages: '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
+    aide: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14"/><path d="M12 17.5v.01"/>',
+    installer: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
+    maj: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'
+  };
+  function carteMenu(attr, cle, nom) {
+    return '<button type="button" class="cu-carte" ' + attr + ' data-carte="' + cle + '">' +
+      '<span class="cu-ico" aria-hidden="true"><svg viewBox="0 0 24 24">' + ICONES[cle] + '</svg></span>' +
+      '<span class="cu-carte-txt"><b data-c-nom>' + nom + '</b><small data-c-sous></small></span></button>';
+  }
+  function sousCarte(cle, t, nom) {
+    var c = $('[data-carte="' + cle + '"]'); if (!c) return null;
+    c.querySelector('[data-c-sous]').textContent = t;
+    if (nom) c.querySelector('[data-c-nom]').textContent = nom;
+    return c;
+  }
+  function majMenu() {
+    var n = { recue: 0, prete: 0, remise: 0 };
+    donnees.commandes.forEach(function (c) { if (n[c.statut] != null) n[c.statut]++; });
+    sousCarte('commandes', n.recue + ' à préparer · ' + n.prete + ' prête' + (n.prete > 1 ? 's' : ''));
+    sousCarte('remises', n.remise ? n.remise + ' aujourd’hui' : 'Aucune pour l’instant');
+    var pause = donnees.snack && donnees.snack.pause;
+    var cp = sousCarte('pause', pause ? 'Touche pour reprendre' : 'Commandes ouvertes', pause ? 'En pause' : 'Pause');
+    if (cp) cp.classList.toggle('cu-carte-alerte', !!pause);
+    var ep = ((donnees.snack || {}).epuises || []).length;
+    sousCarte('epuises', ep ? ep + ' plat' + (ep > 1 ? 's' : '') + ' retiré' + (ep > 1 ? 's' : '') : 'Tout est disponible');
+    sousCarte('reglages', reglage.impression === 'appli' ? (reglage.ip ? 'Imprime sur ' + reglage.ip : 'Imprimante à choisir')
+      : reglage.impression === 'navigateur' ? 'Imprime depuis ce PC' : reglage.impression === 'a-choisir' ? 'À régler' : 'Regarde seulement');
+    sousCarte('aide', 'Que faire si…');
+    sousCarte('installer', 'Pour la tablette Android');
+    sousCarte('maj', 'Touche pour l’appliquer');
+  }
+  // Deux ecrans : les commandes en cours, et les remises du jour (sur demande).
+  var vue = 'commandes';
+  function montrer(v) {
+    vue = v;
+    document.querySelectorAll('[data-ecran]').forEach(function (e) { e.hidden = e.getAttribute('data-ecran') !== v; });
+    document.querySelectorAll('[data-vue]').forEach(function (b) { b.classList.toggle('cu-carte-on', b.getAttribute('data-vue') === v); });
   }
 
   // Le direct : un message sur le canal du snack = « va voir, il y a du nouveau ».
@@ -133,7 +188,7 @@
       donnees = j; horsLigne = false;
       if (premiere) { ecouter(); setTimeout(majAuLancement, 3000); }
       var nouvelles = j.commandes.filter(function (c) { return !avant[c.id] && c.statut === 'recue'; });
-      if (nouvelles.length && !premiere) sonner();
+      if (nouvelles.length && !premiere) { sonner(); if (vue !== 'commandes') montrer('commandes'); }
       afficher();
       imprimerEnAttente();
     }).catch(function (e) { horsLigne = true; majEtat(e.message); });
@@ -144,7 +199,7 @@
     var pause = donnees.snack && donnees.snack.pause;
     e.textContent = horsLigne ? 'Hors ligne' : pause ? 'En pause' : 'En ligne';
     e.className = 'cu-etat ' + (horsLigne ? 'cu-rouge' : pause ? 'cu-jaune' : 'cu-vert');
-    var b = $('[data-pause]'); if (b) { b.textContent = pause ? 'Reprendre les commandes' : 'Pause'; b.classList.toggle('cu-actif', !!pause); }
+    majMenu();
     var a = $('[data-alerte]');
     var nonImp = donnees.commandes.filter(function (c) { return !c.imprimee_le && c.statut === 'recue'; }).length;
     var t = horsLigne ? 'Connexion perdue : les commandes arrivent quand même, elles s’afficheront au retour du réseau.' + (msg ? ' (' + msg + ')' : '')
@@ -363,7 +418,7 @@
 
   /* ---------------- panneaux : epuises, reglages ---------------- */
   function panneau(html) { $('[data-panneau]').innerHTML = html; $('[data-panneau]').hidden = false; $('[data-voile]').hidden = false; }
-  function fermerPanneau() { $('[data-panneau]').hidden = true; $('[data-voile]').hidden = true; }
+  function fermerPanneau() { $('[data-panneau]').hidden = true; $('[data-voile]').hidden = true; if (session && donnees.snack) majMenu(); }
   function panneauEpuises() {
     var ep = donnees.snack.epuises || [];
     panneau('<h2>Plats épuisés aujourd’hui</h2><p>Touche un plat pour le retirer du site (ou le remettre).</p><div class="cu-plats">' +
@@ -446,6 +501,7 @@
   document.addEventListener('click', function (e) {
     var t = e.target;
     if (t.closest('[data-voile]') || t.closest('[data-fermer]')) { fermerPanneau(); return; }
+    var vu = t.closest('[data-vue]'); if (vu) { montrer(vu.getAttribute('data-vue')); return; }
     if (t.closest('[data-epuises]')) { panneauEpuises(); return; }
     if (t.closest('[data-reglages]')) { panneauReglages(); return; }
     if (t.closest('[data-aide]')) { panneauAide(); return; }
