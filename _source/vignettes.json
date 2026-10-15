@@ -101,6 +101,42 @@
 "client": true,
 "min": true
 },
+"s-effiloches": {
+"l": 1400,
+"h": 260
+},
+"s-keftas": {
+"l": 1400,
+"h": 290
+},
+"s-bresiliens": {
+"l": 1440,
+"h": 220
+},
+"s-normands": {
+"l": 1500,
+"h": 212
+},
+"g-camembert": {
+"l": 300,
+"h": 220
+},
+"g-tenders": {
+"l": 300,
+"h": 230
+},
+"g-nuggets": {
+"l": 320,
+"h": 240
+},
+"e-cheese": {
+"l": 510,
+"h": 152
+},
+"e-nuggets": {
+"l": 510,
+"h": 172
+},
 "b-cheese": {
 "l": 230,
 "h": 140

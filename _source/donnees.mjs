@@ -97,6 +97,26 @@ export const CARTE = [
       { id: 'sig-forestiers', n: 'Les Forestiers', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-forestiers', d: 'Escalope à la sauce forestière et cheddar, nappés de sauce gruyère.' },
       { id: 'sig-savoyards', n: 'Les Savoyards', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-savoyards', d: 'Poulet, bacon et raclette, nappés de sauce gruyère.' },
       { id: 'sig-anas-food', n: 'Les Anas Food', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-anas-food', d: 'Steak, chakchouka et cheddar, avec la sauce de ton choix et une sauce gruyère.' },
+      // 2e panneau des signatures, envoye par Hakim le 15/10.
+      { id: 'sig-effiloches', n: 'Les Effilochés', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-effiloches', d: 'Effiloché de bœuf, cheddar et bacon, avec une sauce gruyère, des frites, la sauce et les légumes de ton choix.' },
+      { id: 'sig-keftas', n: 'Les Keftas', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-keftas', d: 'Bœuf assaisonné et cheddar, avec une sauce gruyère, des frites, la sauce et les légumes de ton choix.' },
+      { id: 'sig-bresiliens', n: 'Les Brésiliens', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-bresiliens', d: 'Steak, salade, Boursin, bacon et cheddar, avec une sauce brazil et une sauce gruyère.' },
+      { id: 'sig-normands', n: 'Les Normands', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-normands', d: 'Poulet, tranche de jambon de dinde, salade, oignons crispy et frites, avec une sauce Boursin et une sauce fromagère maison.' },
+    ],
+  },
+  {
+    id: 'a-grignoter', nom: 'À grignoter', intro: 'Pour accompagner, ou pour les petites faims.',
+    items: [
+      { id: 'bouchees-camembert', n: 'Bouchées camembert', p: 4.5, photo: 'g-camembert', d: '5 bouchées de camembert panées et croustillantes.' },
+      { id: 'gr-tenders', n: 'Tenders', p: 3.5, photo: 'g-tenders', d: '3 tenders de poulet croustillants.' },
+      { id: 'gr-nuggets', n: 'Nuggets', p: 4, photo: 'g-nuggets', d: '5 nuggets de poulet.' },
+    ],
+  },
+  {
+    id: 'menu-enfant', nom: 'Menu enfant', intro: 'Avec des frites et un Capri-Sun.',
+    items: [
+      { id: 'enfant-cheese', n: 'Menu enfant cheese', p: 5, photo: 'e-cheese', d: 'Un cheese, des frites et un Capri-Sun.' },
+      { id: 'enfant-nuggets', n: 'Menu enfant nuggets', p: 5, photo: 'e-nuggets', d: 'Des nuggets, des frites et un Capri-Sun.' },
     ],
   },
   {
@@ -133,18 +153,22 @@ const PERSO = {
   sandwich: [...LEG], tacos: ['Cheddar'], roule: [...LEG],
   'sig-dz': ['Cheddar'], 'sig-tajs': ['Salade', 'Tomate', 'Kiri', 'Cheddar', 'Piment'], 'sig-bollys': ['Kiri', 'Cheddar'], 'sig-forestiers': ['Cheddar'],
   'sig-savoyards': ['Bacon'], 'sig-anas-food': ['Cheddar'],
+  'sig-effiloches': [...LEG, 'Cheddar', 'Bacon'], 'sig-keftas': [...LEG, 'Cheddar'], 'sig-bresiliens': ['Salade', 'Bacon', 'Cheddar'], 'sig-normands': ['Salade', 'Oignons crispy'],
+  'enfant-cheese': ['Oignon', 'Cornichon', 'Cheddar'],
   cheese: ['Oignon', 'Cornichon', 'Cheddar'], 'double-cheese': ['Oignon', 'Cornichon', 'Cheddar'], 'triple-cheese-bacon': ['Oignon', 'Cornichon', 'Cheddar', 'Bacon'],
   'le-240': [...LEG, 'Cornichon', 'Cheddar'], 'fish-brioche': ['Salade', 'Cheddar'], 'maxi-brioche': [...LEG, 'Cornichon', 'Cheddar'], 'chicken-brioche': [...LEG, 'Cornichon', 'Cheddar'],
   'steak-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'chicken-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'anas-grill': [...LEG, 'Cheddar', 'Bacon'],
   'naan-beef': ['Salade', 'Cheddar', 'Gruyère'], 'naan-chicken': ['Salade', 'Cheddar', 'Gruyère'], 'naan-curry': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'], 'naan-tandoori': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'],
 };
+// A grignoter et menus enfant : une sauce (a confirmer avec Hakim).
+const UNE_SAUCE = ['bouchees-camembert', 'gr-tenders', 'gr-nuggets', 'enfant-cheese', 'enfant-nuggets'];
 const SAUCES_G = (max) => ({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte' : 'jusqu’à 2, offertes', min: 0, max, options: o(SAUCES) });
 for (const c of CARTE) for (const i of c.items) {
   const autres = (i.groupes || []).filter((g) => g.type !== 'retirer' && g.id !== 'sauces');
   const saucesAvant = (i.groupes || []).find((g) => g.id === 'sauces');
   const requis = autres.filter((g) => (g.min >= 1 || g.id === 'viande2') && g.id !== 'menu');
   const reste = autres.filter((g) => !requis.includes(g));
-  i.groupes = [...requis, ...((PERSO[i.id] || []).length ? [sans(...PERSO[i.id])] : []), SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2), ...reste];
+  i.groupes = [...requis, ...((PERSO[i.id] || []).length ? [sans(...PERSO[i.id])] : []), SAUCES_G((saucesAvant && saucesAvant.max === 1) || UNE_SAUCE.includes(i.id) ? 1 : 2), ...reste];
 }
 
 /* ---------------- les formules, element par element (Nicolas, 2026-10-15) ----------------

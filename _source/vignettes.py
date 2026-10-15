@@ -24,6 +24,12 @@ DECOUPES = {
         'f-turkish': (95, 330, 200, 70), 'f-mielleux': (305, 335, 200, 70), 'f-crocs': (495, 300, 220, 100), 'f-smash': (720, 320, 225, 80),
         'f-algerien': (60, 440, 215, 70), 'f-rolls': (290, 440, 215, 70), 'f-forestier': (510, 450, 215, 60), 'f-mexicain': (720, 440, 225, 70),
     },
+    'menu-signatures-2.jpg': {  # 2e panneau signatures + a grignoter + menu enfant (1600 px, envoye par Hakim le 15/10)
+        's-effiloches': (65, 242, 700, 130), 's-keftas': (870, 232, 700, 145),
+        's-bresiliens': (40, 497, 720, 110), 's-normands': (825, 502, 750, 106),
+        'g-camembert': (55, 705, 150, 110), 'g-tenders': (200, 700, 150, 115), 'g-nuggets': (340, 695, 160, 120),
+        'e-cheese': (515, 704, 255, 76), 'e-nuggets': (515, 822, 255, 86),
+    },
     'menu-c19.jpg': {  # burgers
         'b-cheese': (160, 150, 115, 70), 'b-double-cheese': (305, 150, 120, 70), 'b-triple-cheese': (455, 140, 110, 80),
         'b-240': (590, 140, 125, 55), 'b-fish': (740, 125, 125, 75),
