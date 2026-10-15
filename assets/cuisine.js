@@ -80,6 +80,7 @@
       '<div class="cu-voile" data-voile hidden></div><div class="cu-panneau" data-panneau hidden></div>';
     rafraichir();
     clearInterval(minuteur); minuteur = setInterval(rafraichir, 60000); // signe de vie + filet de securite
+    if (APPLI && window.LocWebImprimante.chercher && !reglage.ip) setTimeout(function () { panneauRecherche(); }, 800);
     ecouter();
     garderEcranAllume();
   }
@@ -185,6 +186,44 @@
     if (r !== 'ok') { alerteImpression(r); return false; }
     return true;
   }
+  /* Trouver la bonne imprimante (appli Android) :
+     1. l'appli scanne le reseau et ne garde que les imprimantes a tickets
+        (celles qui repondent a la demande d'etat ESC/POS ; les imprimantes
+        de bureau sont ecartees sans rien leur envoyer) ;
+     2. la preuve physique : chaque candidate imprime un ticket avec un gros
+        numero, et la cuisine dit lequel est sorti CHEZ ELLE. */
+  var CANDIDATES = [];
+  function octetsNumero(n) {
+    var ESC = '\x1b', GS = '\x1d';
+    return ESC + '@' + ESC + 'a1' + GS + '!' + '\x11' + 'IMPRIMANTE\n' + GS + '!' + '\x77' + n + '\n' + GS + '!' + '\x00' +
+      '\nSi ce ticket sort en CUISINE,\ntouche le numero ' + n + ' sur la tablette.\n\n\n\n' + GS + 'V' + '\x42' + '\x00';
+  }
+  function envoyerBrut(ip, octets) { return window.LocWebImprimante.imprimer(ip, 9100, btoa(octets)); }
+  function panneauRecherche() {
+    panneau('<h2>Trouver l’imprimante</h2><p>On cherche l’imprimante à tickets sur le réseau du snack… (quelques secondes)</p>' +
+      '<span class="cu-attente" aria-hidden="true"></span><div class="cu-actions"><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
+    window.__agImprimantes = function (liste) {
+      var tickets = liste.filter(function (x) { return x.ticket; });
+      var muettes = liste.filter(function (x) { return !x.ticket && !x.bureau; });
+      var bureau = liste.filter(function (x) { return x.bureau; });
+      CANDIDATES = tickets.length ? tickets : muettes;   // si aucune ne repond, on essaie celles qui se taisent
+      if (!CANDIDATES.length) {
+        panneau('<h2>Aucune imprimante à tickets trouvée</h2><p>Vérifie que l’imprimante est <b>allumée</b> et reliée à la <b>box par un câble réseau</b>, et que la tablette est sur le <b>même Wi-Fi</b> que la box.</p>' +
+          (bureau.length ? '<p>' + bureau.length + ' imprimante(s) de bureau trouvée(s), écartée(s).</p>' : '') +
+          '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Chercher encore</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
+        return;
+      }
+      CANDIDATES.forEach(function (c, i) { setTimeout(function () { envoyerBrut(c.ip, octetsNumero(i + 1)); }, i * 1200); });
+      panneau('<h2>Quel ticket est sorti en cuisine ?</h2><p>' + (CANDIDATES.length > 1
+          ? 'On a trouvé ' + CANDIDATES.length + ' imprimantes. Chacune vient d’imprimer un ticket avec un gros numéro. Touche le numéro du ticket sorti <b>dans la cuisine</b>.'
+          : 'L’imprimante trouvée vient d’imprimer un ticket avec le numéro 1. Est-il sorti <b>dans la cuisine</b> ?') + '</p>' +
+        '<div class="cu-plats">' + CANDIDATES.map(function (c, i) {
+          return '<button type="button" class="cu-plat cu-numero" data-choisir-ip="' + c.ip + '"><b>' + (i + 1) + '</b><small>' + (c.nom ? c.nom + ' · ' : '') + c.ip + '</small></button>';
+        }).join('') + '</div>' +
+        '<div class="cu-actions"><button type="button" class="cu-bouton" data-chercher>Aucun n’est sorti en cuisine : chercher encore</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
+    };
+    try { window.LocWebImprimante.chercher('__agImprimantes'); } catch (e) { panneau('<h2>Recherche impossible</h2><p>' + esc(e.message) + '</p><div class="cu-actions"><button type="button" class="cu-bouton" data-fermer>Fermer</button></div>'); }
+  }
   function alerteImpression(t) { var a = $('[data-alerte]'); if (a) { a.hidden = false; a.textContent = t; } }
   function viaRawBT(c) {
     // RawBT (Android) recoit le ticket par un lien « intent » et l'imprime sans fenetre.
@@ -271,7 +310,8 @@
     panneau('<h2>Réglages de la tablette</h2><label class="cu-choix"><span>Impression</span><select data-imp>' +
       (APPLI ? [['appli', 'Appli (imprimante réseau)']] : []).concat([['rawbt', 'RawBT (tablette Android)'], ['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']]).map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
       '</select></label>' +
-      (APPLI ? '<label class="cu-choix"><span>Adresse de l’imprimante</span><input data-ip inputmode="decimal" placeholder="192.168.1.87" value="' + esc(reglage.ip) + '"></label>' : '') +
+      (APPLI ? '<label class="cu-choix"><span>Adresse de l’imprimante</span><input data-ip inputmode="decimal" placeholder="192.168.1.87" value="' + esc(reglage.ip) + '"></label>' +
+        (window.LocWebImprimante.chercher ? '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Chercher l’imprimante</button></div>' : '') : '') +
       '<label class="cu-choix"><span>Sonnerie</span><input type="checkbox" data-son' + (reglage.son ? ' checked' : '') + '></label>' +
       '<div class="cu-actions"><button type="button" class="cu-bouton" data-test-imp>Ticket de test</button><button type="button" class="cu-bouton" data-test-son>Tester le son</button></div>' +
       '<div class="cu-actions"><button type="button" class="cu-bouton cu-discret" data-deco>Se déconnecter</button><button type="button" class="cu-bouton" data-fermer>Fermer</button></div>');
@@ -283,6 +323,14 @@
     if (t.closest('[data-epuises]')) { panneauEpuises(); return; }
     if (t.closest('[data-reglages]')) { panneauReglages(); return; }
     if (t.closest('[data-aide]')) { panneauAide(); return; }
+    if (t.closest('[data-chercher]')) { panneauRecherche(); return; }
+    var ch = t.closest('[data-choisir-ip]');
+    if (ch) {
+      reglage.ip = ch.getAttribute('data-choisir-ip'); reglage.port = 9100; reglage.impression = 'appli'; ecrire('ag-cuisine-reglage', reglage);
+      panneau('<h2>Imprimante réglée ✓</h2><p>Les tickets sortiront sur l’imprimante <b>' + esc(reglage.ip) + '</b>. Tu peux la retrouver à tout moment dans <b>Réglages → Chercher l’imprimante</b>.</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-fermer>Terminé</button></div>');
+      imprimerEnAttente();
+      return;
+    }
     if (t.closest('[data-aide-imprimer]')) { imprimerAide(); return; }
     if (t.closest('[data-deco]')) { if (confirm('Se déconnecter de cette tablette ? Il faudra retaper le code.')) deconnecter(); return; }
     if (t.closest('[data-test-son]')) { var s0 = reglage.son; reglage.son = true; sonner(); reglage.son = s0; return; }
