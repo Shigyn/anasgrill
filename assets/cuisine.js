@@ -3,10 +3,9 @@
    Ouverte toute la journee a cote de la caisse. Code du snack (8
    chiffres) tape une seule fois. Les commandes PAYEES arrivent en direct
    (canal Realtime du snack), sonnent, et s'impriment toutes seules :
-     - « RawBT » (tablette Android + POSwink en reseau ou USB) : le ticket
-       part vers l'appli RawBT, sans fenetre ;
-     - « Navigateur » : la fenetre d'impression du navigateur (PC Windows
-       lance avec --kiosk-printing : sans fenetre non plus).
+     - « Appli » (l'appli Android LocWeb de la tablette) : le ticket part
+       directement a l'imprimante par le reseau du restaurant, sans fenetre ;
+     - « Navigateur » (secours, sur un PC) : la fenetre d'impression.
    Un ticket qui ne sort pas reste marque « non imprime » : sonnerie, bouton
    Reimprimer, et nouvel essai a chaque rafraichissement.
    =================================================================== */
@@ -23,9 +22,9 @@
 
   var session = lire('ag-cuisine', null);         // {jeton, snack}
   var APPLI = !!(window.LocWebImprimante && window.LocWebImprimante.version);
-  // Par defaut : l'appli si on est dedans, RawBT sur Android, rien sur un ordinateur (on regarde seulement).
-  var reglage = lire('ag-cuisine-reglage', { impression: APPLI ? 'appli' : /android/i.test(navigator.userAgent) ? 'rawbt' : 'aucune', son: true, ip: '', port: 9100 });
-  if (APPLI && reglage.impression === 'rawbt') reglage.impression = 'appli';
+  // Par defaut : l'appli si on est dedans, sinon rien (on regarde seulement).
+  var reglage = lire('ag-cuisine-reglage', { impression: APPLI ? 'appli' : 'aucune', son: true, ip: '', port: 9100 });
+  if (reglage.impression === 'rawbt') reglage.impression = APPLI ? 'appli' : 'aucune';
   var donnees = { commandes: [], snack: null, carte: [] };
   var imprimees = {};                               // deja envoyees cette session (evite les doublons)
   var canal = null, client = null, minuteur = null, horsLigne = false;
@@ -156,7 +155,7 @@
   }
   function imprimer(c) {
     imprimees[c.id] = true;
-    var ok = reglage.impression === 'appli' ? viaAppli(c) : reglage.impression === 'rawbt' ? viaRawBT(c) : viaNavigateur(c);
+    var ok = reglage.impression === 'appli' ? viaAppli(c) : viaNavigateur(c);
     Promise.resolve(ok).then(function (fait) {
       if (fait === false) { imprimees[c.id] = false; majEtat(); return; }
       appel('imprimee', { id: c.id }).then(function () { c.imprimee_le = new Date().toISOString(); afficher(); }).catch(function () {});
@@ -264,17 +263,6 @@
       : '<h2>La mise à jour n’a pas abouti</h2><p>' + esc(m) + '</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-maj-go>Réessayer</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
   };
   function alerteImpression(t) { var a = $('[data-alerte]'); if (a) { a.hidden = false; a.textContent = t; } }
-  function viaRawBT(c) {
-    // RawBT (Android) recoit le ticket par un lien « intent » et l'imprime sans fenetre.
-    // A VERIFIER sur la tablette avec la POSwink avant achat de la licence.
-    try {
-      var b64 = btoa(unescape(encodeURIComponent(ticketTexte(c))));
-      var a = document.createElement('a');
-      a.href = 'intent:base64,' + b64 + '#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;';
-      document.body.appendChild(a); a.click(); a.remove();
-      return true;
-    } catch (e) { return false; }
-  }
   function viaNavigateur(c) {
     var f = document.createElement('iframe'); f.className = 'cu-iframe'; document.body.appendChild(f);
     var d = f.contentDocument;
@@ -370,7 +358,7 @@
 
   function panneauReglages() {
     panneau('<h2>Réglages de la tablette</h2><label class="cu-choix"><span>Impression</span><select data-imp>' +
-      (APPLI ? [['appli', 'Appli (imprimante réseau)']] : []).concat([['rawbt', 'RawBT (tablette Android)'], ['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']]).map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+      (APPLI ? [['appli', 'Appli (imprimante réseau)']] : []).concat([['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']]).map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
       '</select></label>' +
       (APPLI ? '<label class="cu-choix"><span>Adresse de l’imprimante</span><input data-ip inputmode="decimal" placeholder="192.168.1.87" value="' + esc(reglage.ip) + '"></label>' +
         (window.LocWebImprimante.chercher ? '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Chercher l’imprimante</button></div>' : '') : '') +
@@ -434,7 +422,7 @@
   function imprimerTest() {
     var c = { id: 'test', numero: 0, heure_prevue: new Date(Date.now() + 900000).toISOString(), creneau: null, prenom: 'Test', telephone: '06 00 00 00 00', note: 'Ticket de test : si tu le lis, l’impression marche.', total_cents: 1000,
       lignes: [{ qte: 1, n: 'Le Classique', resume: 'Sandwich : Curry, sauce mayo ×2 · Burger : Steak, sans cornichon' }] };
-    var r = reglage.impression === 'appli' ? viaAppli(c) : reglage.impression === 'rawbt' ? viaRawBT(c) : viaNavigateur(c);
+    var r = reglage.impression === 'appli' ? viaAppli(c) : viaNavigateur(c);
     if (r && reglage.impression === 'appli') alerteImpression('Ticket de test envoyé à ' + reglage.ip + '.');
   }
 
