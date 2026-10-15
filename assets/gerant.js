@@ -37,16 +37,66 @@
     });
   }
 
+  // Le menu de gauche (memes petites cartes que la cuisine) et ses ecrans.
+  var ICONES = {
+    resume: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    commandes: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    snacks: '<path d="M4 10h16l-1.5-5h-13z"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
+    rembourse: '<path d="M4 12a8 8 0 1 0 2.3-5.7"/><path d="M4 4v5h5"/><path d="M12 8v8M9.5 10.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/>',
+    offre: '<path d="M3 11l15-6v14L3 13z"/><path d="M7 13.5V18a2 2 0 0 0 4 0v-3"/>',
+    fermetures: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m10 14 4 4M14 14l-4 4"/>',
+    export: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
+    sortir: '<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4M6 12h10"/>'
+  };
+  var ECRANS = {
+    resume: 'Vue d’ensemble', commandes: 'Commandes', snacks: 'Snacks et tablettes', rembourse: 'Remboursements',
+    offre: 'Offre du moment', fermetures: 'Fermetures exceptionnelles'
+  };
+  var AVEC_PERIODE = { resume: 1, commandes: 1, rembourse: 1 };
+  var vue = 'resume';
+  function carteMenu(attr, cle, nom) {
+    return '<button type="button" class="cu-carte" ' + attr + ' data-carte="' + cle + '">' +
+      '<span class="cu-ico" aria-hidden="true"><svg viewBox="0 0 24 24">' + ICONES[cle] + '</svg></span>' +
+      '<span class="cu-carte-txt"><b>' + nom + '</b><small data-c-sous></small></span></button>';
+  }
+  function sousCarte(cle, t) { var c = $('[data-carte="' + cle + '"]'); if (c) c.querySelector('[data-c-sous]').textContent = t; return c; }
+  function montrer(v) {
+    vue = v;
+    document.querySelectorAll('[data-ecran]').forEach(function (e) { e.hidden = e.getAttribute('data-ecran') !== v; });
+    document.querySelectorAll('[data-vue]').forEach(function (b) { b.classList.toggle('cu-carte-on', b.getAttribute('data-vue') === v); });
+    $('[data-titre]').textContent = ECRANS[v];
+    $('[data-periode-zone]').hidden = !AVEC_PERIODE[v];
+    window.scrollTo(0, 0);
+  }
+
   function demarrer() {
     document.body.className = 'gerant';
-    $('#app').innerHTML = '<header class="cu-tete"><div><small>Anas Grill</small><h1>Gérant</h1></div>' +
-      '<div class="ge-periode" role="group" aria-label="Période">' + [['jour', 'Aujourd’hui'], ['hier', 'Hier'], ['7', '7 jours'], ['mois', 'Ce mois']].map(function (p) { return '<button type="button" class="cu-bouton cu-discret" data-per="' + p[0] + '">' + p[1] + '</button>'; }).join('') +
-      '<input type="date" data-du aria-label="Du"><input type="date" data-au aria-label="Au"></div>' +
-      '<button type="button" class="cu-bouton" data-export>Export Excel</button></header>' +
-      '<main class="ge"><div class="ge-kpi" data-kpi></div><section><h2>Par snack</h2><div class="ge-table-zone"><table class="ge-table" data-snacks></table></div></section>' +
-      '<section><h2>Commandes <select data-filtre aria-label="Snack"></select></h2><div class="ge-table-zone"><table class="ge-table" data-cmds></table></div></section>' +
-      '<section><h2>Offre du moment</h2><form class="ge-offre" data-offre><select data-offre-snack aria-label="Snack"></select><input data-offre-titre maxlength="60" placeholder="Titre (ex. Formule du soir)"><input data-offre-texte maxlength="200" placeholder="Texte (facultatif)"><button class="cu-bouton cu-feu">Publier</button><button type="button" class="cu-bouton cu-discret" data-offre-retirer>Retirer</button></form></section>' +
-      '<section><h2>Fermetures exceptionnelles</h2><form class="ge-offre" data-ferm><select data-ferm-snack aria-label="Snack"></select><input type="datetime-local" data-ferm-du aria-label="Du"><input type="datetime-local" data-ferm-au aria-label="Au"><input data-ferm-motif maxlength="80" placeholder="Motif (ex. Congés)"><button class="cu-bouton cu-feu">Ajouter</button></form><ul class="ge-ferm" data-ferm-liste></ul></section></main>';
+    $('#app').innerHTML =
+      '<aside class="cu-menu">' +
+        '<div class="cu-marque"><div class="cu-logo">' + $('[data-logo]').innerHTML + '</div>' +
+          '<div><small>Espace gérant</small><h1>Les 8 snacks</h1></div></div>' +
+        '<nav class="cu-cartes" aria-label="Menu du gérant">' +
+          carteMenu('data-vue="resume"', 'resume', 'Vue d’ensemble') +
+          carteMenu('data-vue="commandes"', 'commandes', 'Commandes') +
+          carteMenu('data-vue="snacks"', 'snacks', 'Snacks et tablettes') +
+          carteMenu('data-vue="rembourse"', 'rembourse', 'Remboursements') +
+          carteMenu('data-vue="offre"', 'offre', 'Offre du moment') +
+          carteMenu('data-vue="fermetures"', 'fermetures', 'Fermetures') +
+          carteMenu('data-export', 'export', 'Export Excel') +
+          carteMenu('data-sortir', 'sortir', 'Se déconnecter') +
+        '</nav></aside>' +
+      '<main class="ge">' +
+        '<header class="ge-tete"><h2 class="ge-titre" data-titre></h2>' +
+          '<div class="ge-periode" role="group" aria-label="Période" data-periode-zone>' + [['jour', 'Aujourd’hui'], ['hier', 'Hier'], ['7', '7 jours'], ['mois', 'Ce mois']].map(function (p) { return '<button type="button" class="cu-bouton cu-discret" data-per="' + p[0] + '">' + p[1] + '</button>'; }).join('') +
+          '<input type="date" data-du aria-label="Du"><input type="date" data-au aria-label="Au"></div></header>' +
+        '<section data-ecran="resume"><div class="ge-kpi" data-kpi></div><h3>Par snack</h3><div class="ge-table-zone"><table class="ge-table" data-par-snack></table></div></section>' +
+        '<section data-ecran="commandes" hidden><div class="ge-outils"><select data-filtre aria-label="Snack"></select></div><div class="ge-table-zone"><table class="ge-table" data-cmds></table></div></section>' +
+        '<section data-ecran="snacks" hidden><p class="ge-aide">La tablette est « en ligne » quand elle a donné signe de vie il y a moins de 7 minutes. Le paiement doit être « activé » pour encaisser.</p><div class="ge-table-zone"><table class="ge-table" data-snacks></table></div></section>' +
+        '<section data-ecran="rembourse" hidden><p class="ge-aide">Pour rembourser une commande : ouvre <b>Commandes</b> et touche <b>Rembourser</b> sur la ligne. Le client est remboursé sur sa carte sous 5 à 10 jours.</p><div class="ge-table-zone"><table class="ge-table" data-rembs></table></div></section>' +
+        '<section data-ecran="offre" hidden><p class="ge-aide">L’offre s’affiche en haut de la page du snack, sur le site.</p><form class="ge-offre" data-offre><select data-offre-snack aria-label="Snack"></select><input data-offre-titre maxlength="60" placeholder="Titre (ex. Formule du soir)"><input data-offre-texte maxlength="200" placeholder="Texte (facultatif)"><button class="cu-bouton cu-feu">Publier</button><button type="button" class="cu-bouton cu-discret" data-offre-retirer>Retirer</button></form><h3>En ligne en ce moment</h3><ul class="ge-ferm" data-offre-liste></ul></section>' +
+        '<section data-ecran="fermetures" hidden><p class="ge-aide">Pendant une fermeture, le site n’accepte plus de commande pour ce snack.</p><form class="ge-offre" data-ferm><select data-ferm-snack aria-label="Snack"></select><input type="datetime-local" data-ferm-du aria-label="Du"><input type="datetime-local" data-ferm-au aria-label="Au"><input data-ferm-motif maxlength="80" placeholder="Motif (ex. Congés)"><button class="cu-bouton cu-feu">Ajouter</button></form><h3>Prévues</h3><ul class="ge-ferm" data-ferm-liste></ul></section>' +
+      '</main>';
+    montrer(vue);
     choisirPeriode('jour');
   }
 
@@ -69,17 +119,21 @@
     var net = function (c) { return c.total_cents - c.rembourse_cents; };
     var ca = cmds.reduce(function (t, c) { return t + net(c); }, 0);
     var frais = cmds.reduce(function (t, c) { return t + c.commission_cents; }, 0);
-    $('[data-kpi]').innerHTML = [['Chiffre d’affaires', euros(ca)], ['Commandes', cmds.length], ['Panier moyen', cmds.length ? euros(Math.round(ca / cmds.length)) : '—'], ['Remboursé', euros(cmds.reduce(function (t, c) { return t + c.rembourse_cents; }, 0))], ['Frais de paiement en ligne (1 %)', euros(frais)]]
+    $('[data-kpi]').innerHTML = [['Chiffre d’affaires', euros(ca)], ['Commandes', cmds.length], ['Panier moyen', cmds.length ? euros(Math.round(ca / cmds.length)) : '—'], ['Remboursé', euros(cmds.reduce(function (t, c) { return t + c.rembourse_cents; }, 0))], ['Frais paiement en ligne', euros(frais)]]
       .map(function (k) { return '<div><small>' + k[0] + '</small><b>' + k[1] + '</b></div>'; }).join('');
     var vu = function (s) {
       if (!s.cuisine_vue_le) return '<span class="cu-badge cu-rouge">jamais connectée</span>';
       var min = Math.round((Date.now() - new Date(s.cuisine_vue_le)) / 60000);
       return min <= 7 ? '<span class="cu-badge cu-vert">en ligne</span>' : '<span class="cu-badge cu-jaune">vue il y a ' + (min < 120 ? min + ' min' : Math.round(min / 60) + ' h') + '</span>';
     };
-    $('[data-snacks]').innerHTML = '<thead><tr><th>Snack</th><th>CA</th><th>Commandes</th><th>Tablette</th><th>Paiement</th><th>Commandes en ligne</th></tr></thead><tbody>' +
+    $('[data-par-snack]').innerHTML = '<thead><tr><th>Snack</th><th>Chiffre d’affaires</th><th>Commandes</th><th>Panier moyen</th></tr></thead><tbody>' +
       snacks.map(function (s) {
-        var l = cmds.filter(function (c) { return c.etablissement_id === s.id; });
-        return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + euros(l.reduce(function (t, c) { return t + net(c); }, 0)) + '</td><td>' + l.length + '</td><td>' + vu(s) + '</td>' +
+        var l = cmds.filter(function (c) { return c.etablissement_id === s.id; }), t = l.reduce(function (t, c) { return t + net(c); }, 0);
+        return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + euros(t) + '</td><td>' + l.length + '</td><td>' + (l.length ? euros(Math.round(t / l.length)) : '—') + '</td></tr>';
+      }).join('') + '</tbody>';
+    $('[data-snacks]').innerHTML = '<thead><tr><th>Snack</th><th>Tablette</th><th>Paiement</th><th>Commandes en ligne</th></tr></thead><tbody>' +
+      snacks.map(function (s) {
+        return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + vu(s) + '</td>' +
           '<td>' + badgeCompte(s) + '</td>' +
           '<td><button type="button" class="cu-bouton ' + (s.pause ? 'cu-actif' : 'cu-discret') + '" data-pause-snack="' + s.id + '">' + (s.pause ? 'En pause · reprendre' : 'Ouvertes · mettre en pause') + '</button></td></tr>';
       }).join('') + '</tbody>';
@@ -96,8 +150,27 @@
           '<td>' + esc({ recue: 'À préparer', prete: 'Prête', remise: 'Remise', annulee: 'Annulée' }[c.statut] || c.statut) + '</td>' +
           '<td>' + (reste > 0 ? '<button type="button" class="cu-bouton cu-discret" data-rembourser="' + c.id + '" data-reste="' + reste + '">Rembourser</button>' : '') + '</td></tr>';
       }).join('') || '<tr><td colspan="8">Aucune commande sur cette période.</td></tr>') + '</tbody>';
+    var rb = cmds.filter(function (c) { return c.rembourse_cents > 0; });
+    $('[data-rembs]').innerHTML = '<thead><tr><th>Jour</th><th>Snack</th><th>N°</th><th>Client</th><th>Payé</th><th>Remboursé</th></tr></thead><tbody>' +
+      (rb.map(function (c) {
+        return '<tr><td>' + c.jour.slice(8, 10) + '/' + c.jour.slice(5, 7) + '</td><td>' + esc(nom[c.etablissement_id]) + '</td><td>' + c.numero + '</td><td>' + esc(c.prenom) + '</td><td>' + euros(c.total_cents) + '</td><td><b>' + euros(c.rembourse_cents) + '</b></td></tr>';
+      }).join('') || '<tr><td colspan="6">Aucun remboursement sur cette période.</td></tr>') + '</tbody>';
+    var ol = snacks.filter(function (s) { return s.offre_du_moment && s.offre_du_moment.titre; });
+    $('[data-offre-liste]').innerHTML = ol.map(function (s) { return '<li><b>' + esc(s.nom) + '</b> · ' + esc(s.offre_du_moment.titre) + (s.offre_du_moment.texte ? ' — ' + esc(s.offre_du_moment.texte) : '') + '</li>'; }).join('') || '<li>Aucune offre en ligne.</li>';
     var fl = []; snacks.forEach(function (s) { (s.fermetures || []).forEach(function (f, i) { fl.push('<li><b>' + esc(s.nom) + '</b> du ' + new Date(f.du).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + ' au ' + new Date(f.au).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + (f.motif ? ' · ' + esc(f.motif) : '') + ' <button type="button" class="cu-bouton cu-discret" data-ferm-suppr="' + s.id + '|' + i + '">Supprimer</button></li>'); }); });
     $('[data-ferm-liste]').innerHTML = fl.join('') || '<li>Aucune.</li>';
+
+    // Ce que chaque carte du menu resume.
+    var pb = snacks.filter(function (s) { return probleme(s); }).length, enPause = snacks.filter(function (s) { return s.pause; }).length;
+    sousCarte('resume', euros(ca) + ' · ' + cmds.length + ' commande' + (cmds.length > 1 ? 's' : ''));
+    sousCarte('commandes', cmds.length ? cmds.length + ' sur la période' : 'Aucune sur la période');
+    var cs = sousCarte('snacks', pb ? pb + ' problème' + (pb > 1 ? 's' : '') + ' de paiement' : enPause ? enPause + ' en pause' : 'Tout est ouvert');
+    if (cs) cs.classList.toggle('cu-carte-alerte', !!(pb || enPause));
+    sousCarte('rembourse', rb.length ? euros(rb.reduce(function (t, c) { return t + c.rembourse_cents; }, 0)) + ' remboursés' : 'Aucun sur la période');
+    sousCarte('offre', ol.length ? ol.length + ' snack' + (ol.length > 1 ? 's' : '') + ' avec une offre' : 'Aucune en ligne');
+    sousCarte('fermetures', fl.length ? fl.length + ' prévue' + (fl.length > 1 ? 's' : '') : 'Aucune prévue');
+    sousCarte('export', 'Commandes de la période');
+    sousCarte('sortir', 'Quitter cet appareil');
   }
 
   /* L'etat reel du compte Stripe de chaque societe. Un compte restreint (piece
@@ -147,6 +220,11 @@
     var t = e.target, per = t.closest('[data-per]');
     if (per) { choisirPeriode(per.getAttribute('data-per')); return; }
     if (t.closest('[data-export]')) { exporter(); return; }
+    var vv = t.closest('[data-vue]'); if (vv) { montrer(vv.getAttribute('data-vue')); return; }
+    if (t.closest('[data-sortir]')) {
+      if (!confirm('Se déconnecter de l’espace gérant sur cet appareil ?')) return;
+      session = null; try { localStorage.removeItem('ag-gerant'); } catch (x) {} ecranCode(); return;
+    }
     var ps = t.closest('[data-pause-snack]');
     if (ps) { var s = donnees.snacks.filter(function (x) { return x.id === ps.getAttribute('data-pause-snack'); })[0]; appel('pause', { snack: s.id, valeur: !s.pause }).then(charger); return; }
     var rb = t.closest('[data-rembourser]');
