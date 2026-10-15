@@ -23,7 +23,8 @@
 
   var session = lire('ag-cuisine', null);         // {jeton, snack}
   var APPLI = !!(window.LocWebImprimante && window.LocWebImprimante.version);
-  var reglage = lire('ag-cuisine-reglage', { impression: APPLI ? 'appli' : 'rawbt', son: true, ip: '', port: 9100 });
+  // Par defaut : l'appli si on est dedans, RawBT sur Android, rien sur un ordinateur (on regarde seulement).
+  var reglage = lire('ag-cuisine-reglage', { impression: APPLI ? 'appli' : /android/i.test(navigator.userAgent) ? 'rawbt' : 'aucune', son: true, ip: '', port: 9100 });
   if (APPLI && reglage.impression === 'rawbt') reglage.impression = 'appli';
   var donnees = { commandes: [], snack: null, carte: [] };
   var imprimees = {};                               // deja envoyees cette session (evite les doublons)
