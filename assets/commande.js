@@ -38,8 +38,31 @@
     return PHOTO_SAUCE[n] ? '<i class="sauce-pot sauce-pot-photo"><img src="../photos/' + PHOTO_SAUCE[n] + '.webp" alt="" width="160" height="160"></i>'
       : '<i class="sauce-pot" style="--c:' + (TEINTES[n] || '#e2ae1c') + '"></i>';
   };
+  // Le serveur (fonctions ag-* de Supabase) : etat du snack et paiement.
+  var FN = ((window.LOCWEB_CONFIG || {}).supabaseUrl || '') + '/functions/v1/';
+  function appel(fn, corps) {
+    return fetch(FN + fn, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.refus || j.error || 'Le serveur ne répond pas. Réessaie dans un instant.'); return j; }); });
+  }
+  var ETAT = { pause: false, ferme: null, epuises: [], creneaux_pleins: [], offre: null };
+  var STRIPE = R.paiement === 'stripe' && R.stripePk;
   var PLATS = {};
   D.carte.forEach(function (c) { c.items.forEach(function (i) { PLATS[i.id] = i; }); });
+
+  function appliquerEtat() {
+    document.querySelectorAll('[data-plat]').forEach(function (b) {
+      var ep = ETAT.epuises.indexOf(b.getAttribute('data-plat')) >= 0;
+      b.closest('.plat').classList.toggle('plat-epuise', ep);
+    });
+    var bandeau = document.querySelector('[data-etat-snack]');
+    if (!bandeau) { bandeau = document.createElement('div'); bandeau.setAttribute('data-etat-snack', ''); bandeau.className = 'etat-snack cadre'; var m = document.querySelector('.snack-page'); if (m) m.insertBefore(bandeau, m.firstChild); }
+    var msg = ETAT.ferme ? 'Fermé en ce moment (' + esc(ETAT.ferme) + ').'
+      : ETAT.pause ? 'Anas Grill ' + esc(SNACK.nom) + ' ne prend plus de commandes en ligne pour le moment. Réessaie un peu plus tard.' : '';
+    bandeau.innerHTML = (msg ? '<p class="etat-alerte">' + msg + '</p>' : '') +
+      (ETAT.offre ? '<p class="etat-offre"><b>' + esc(ETAT.offre.titre) + '</b>' + (ETAT.offre.texte ? ' ' + esc(ETAT.offre.texte) : '') + '</p>' : '');
+    bandeau.hidden = !msg && !ETAT.offre;
+  }
+  if (FN.indexOf('http') === 0) appel('ag-commande', { action: 'etat', snack: SNACK.id }).then(function (j) { ETAT = j; appliquerEtat(); }).catch(function () {});
 
   /* --- Le panier, garde dans le navigateur, un par snack --- */
   var CLE = 'anas-panier-' + SNACK.id;
@@ -98,6 +121,7 @@
   }
   function ouvrirFiche(i) {
     i.groupes = i.groupes || [];
+    if (ETAT.epuises.indexOf(i.id) >= 0) { toast(i.n + ' est épuisé aujourd’hui'); return; }
     enCours = { plat: i, choix: {}, qte: 1 };
     i.groupes.forEach(function (g) { if (g.min === 1 && g.max === 1 && g.id !== 'boisson' && g.id !== 'parfum') enCours.choix[g.id] = [g.options[0].n]; });
     // Un choix unique facultatif (le gratine) : « Sans » coche par defaut, pour pouvoir revenir en arriere.
@@ -343,7 +367,7 @@
       (choix ? '<div class="segment" role="radiogroup" aria-label="Quand"><label><input type="radio" name="quand" value="vite"' + (i.quand === 'vite' ? ' checked' : '') + '><span>Au plus vite</span></label><label><input type="radio" name="quand" value="plus-tard"' + (i.quand === 'plus-tard' ? ' checked' : '') + '><span>Programmer</span></label></div>'
         : ouvert ? '<p class="quand-note">Au plus vite : c’est bientôt la fermeture.</p>' : '<p class="quand-note">On ouvre à ' + SNACK.ouverture + ' h : choisis l’heure de ta commande.</p>') +
       (i.quand === 'plus-tard' ? '<label class="champ"><span>Heure souhaitée</span><select name="creneau" data-creneau><option value="">Choisis un créneau</option>' +
-        l.map(function (t) { var v = t.toISOString(); return '<option value="' + v + '"' + (i.creneau === v ? ' selected' : '') + '>' + hm(t) + '</option>'; }).join('') + '</select></label>' : '') +
+        l.map(function (t) { var v = t.toISOString(), plein = ETAT.creneaux_pleins.indexOf(v) >= 0; return '<option value="' + v + '"' + (plein ? ' disabled' : i.creneau === v ? ' selected' : '') + '>' + hm(t) + (plein ? ' · complet' : '') + '</option>'; }).join('') + '</select></label>' : '') +
       '</div>';
   }
   function lire() {
@@ -393,6 +417,7 @@
       else if (total() < (R.minimumLivraison || 0)) err = 'La livraison, c’est à partir de ' + euros(R.minimumLivraison) + ' de commande : il te manque ' + euros(R.minimumLivraison - total()) + '. Ajoute un plat, ou passe à emporter.';
     }
     if (!err && !fenetre()) err = 'Les commandes en ligne ouvrent à ' + (R.debutCommandes || 8) + ' h.';
+    if (!err && (ETAT.pause || ETAT.ferme)) err = 'Ce restaurant ne prend plus de commandes en ligne pour le moment.';
     if (!err && i.quand === 'plus-tard' && !i.creneau) err = 'Choisis l’heure de ta commande.';
     if (!err && (i.prenom || '').length < 2) err = 'Indique ton prénom.';
     if (!err && (i.tel || '').replace(/\D/g, '').length < 10) err = 'Indique un numéro de téléphone valide : on t’appelle si besoin.';
@@ -448,11 +473,82 @@
     corps.innerHTML =
       '<div class="recap"><small>' + (liv ? 'Livraison' : 'À emporter') + '</small><b>' + (liv ? 'Chez toi vers ' : 'Prêt à ') + hm(e.heure) + '</b><span>' + esc(liv ? i.adresse + (i.complement ? ' · ' + i.complement : '') : 'Anas Grill ' + SNACK.nom + ', ' + SNACK.adresse) + '</span></div>' +
       '<div class="recap"><small>' + nb() + ' article' + (nb() > 1 ? 's' : '') + '</small>' + etat.lignes.map(function (l) { return '<div class="recap-ligne"><span>' + l.qte + ' × ' + esc(PLATS[l.id].n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '</div>' +
-      '<div class="carte-paiement"><div class="cp-tete"><b>Carte bancaire</b><span class="cp-logos">CB · Visa · Mastercard · Apple Pay</span></div>' +
-      '<div class="cp-champ">•••• •••• •••• 4242</div><div class="cp-deux"><div class="cp-champ">12 / 28</div><div class="cp-champ">•••</div></div>' +
-      '<p class="cp-demo">Aperçu : paiement simulé, rien n’est débité. Une fois en ligne, ce cadre est le paiement sécurisé Stripe.</p></div>';
-    pied.innerHTML = '<div class="total"><span>À payer</span><b>' + euros(total()) + '</b></div><button type="button" class="bouton bouton-feu" data-payer>Payer ' + euros(total()) + '</button>';
+      (STRIPE
+        ? '<div class="carte-paiement"><div class="cp-tete"><b>Paiement sécurisé</b><span class="cp-logos">Carte · Apple Pay · Google Pay</span></div><div class="paiement-stripe" data-ps><p class="ps-attente">Préparation du paiement sécurisé…</p></div></div><p class="alerte" data-alerte-paiement hidden></p>'
+        : '<div class="carte-paiement"><div class="cp-tete"><b>Carte bancaire</b><span class="cp-logos">CB · Visa · Mastercard · Apple Pay</span></div>' +
+          '<div class="cp-champ">•••• •••• •••• 4242</div><div class="cp-deux"><div class="cp-champ">12 / 28</div><div class="cp-champ">•••</div></div>' +
+          '<p class="cp-demo">Aperçu : paiement simulé, rien n’est débité. Une fois en ligne, ce cadre est le paiement sécurisé Stripe.</p></div>');
+    pied.innerHTML = '<div class="total"><span>À payer</span><b data-a-payer>' + euros(total()) + '</b></div><button type="button" class="bouton bouton-feu" data-payer' + (STRIPE ? ' disabled' : '') + '>Payer ' + euros(total()) + '</button>';
+    if (STRIPE) preparerPaiement();
   }
+
+  /* Le paiement : le serveur verifie tout et recalcule le prix (ag-commande),
+     puis le module Stripe s'affiche dans la page (carte, Apple Pay, Google
+     Pay...). Une meme commande n'est preparee qu'une fois tant que le panier
+     et les infos ne changent pas. */
+  var PAIEMENT = null, stripeJs = null;
+  function chargerStripe() {
+    if (window.Stripe) return Promise.resolve();
+    if (!stripeJs) stripeJs = new Promise(function (ok, ko) {
+      var sc = document.createElement('script'); sc.src = 'https://js.stripe.com/v3/'; sc.onload = ok;
+      sc.onerror = function () { stripeJs = null; ko(new Error('Le module de paiement n’a pas pu se charger. Vérifie ta connexion.')); };
+      document.head.appendChild(sc);
+    });
+    return stripeJs;
+  }
+  function alertePaiement(t) { var a = $('[data-alerte-paiement]'); if (a) { a.hidden = !t; a.textContent = t || ''; } }
+  function preparerPaiement() {
+    var i = etat.infos;
+    var demande = { action: 'payer', snack: SNACK.id, prenom: i.prenom, telephone: i.tel, note: i.note || '',
+      creneau: i.quand === 'plus-tard' ? i.creneau : null,
+      lignes: etat.lignes.map(function (l) { return { id: l.id, choix: l.choix, qte: l.qte }; }) };
+    var cle = JSON.stringify(demande);
+    var suite = PAIEMENT && PAIEMENT.cle === cle ? Promise.resolve(PAIEMENT.rep) : appel('ag-commande', demande).then(function (rep) { PAIEMENT = { cle: cle, rep: rep }; return rep; });
+    suite.then(function (rep) { return chargerStripe().then(function () { monter(rep); }); })
+      .catch(function (e) { var z = $('[data-ps]'); if (z) z.innerHTML = ''; alertePaiement(e.message); });
+  }
+  function monter(rep) {
+    var zone = $('[data-ps]'); if (!zone) return;
+    var montant = euros(rep.commande.total_cents / 100);
+    $('[data-a-payer]').textContent = montant;
+    var st = window.Stripe(R.stripePk, rep.stripe_account ? { stripeAccount: rep.stripe_account } : {});
+    var el = st.elements({
+      clientSecret: rep.client_secret, locale: 'fr',
+      fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap' }],
+      appearance: { theme: 'night', variables: { colorPrimary: '#ff8a00', colorBackground: '#141210', colorText: '#f4efe8', colorDanger: '#ff5a4e', fontFamily: 'Barlow, sans-serif', borderRadius: '12px', spacingUnit: '4px' } },
+    });
+    var pe = el.create('payment', { layout: { type: 'tabs' }, wallets: { applePay: 'auto', googlePay: 'auto' } });
+    zone.innerHTML = ''; pe.mount(zone);
+    PAIEMENT.stripe = st; PAIEMENT.elements = el;
+    var b = $('[data-payer]'); b.textContent = 'Payer ' + montant;
+    pe.on('ready', function () { b.disabled = false; });
+  }
+  function payerStripe(b) {
+    var rep = PAIEMENT && PAIEMENT.rep; if (!rep || !PAIEMENT.stripe) return;
+    b.disabled = true; b.textContent = 'Paiement en cours…'; alertePaiement('');
+    // Certains moyens de paiement repartent vers leur banque puis reviennent ici.
+    try { sessionStorage.setItem('anas-paiement', JSON.stringify({ snack: SNACK.id, compte: rep.stripe_account, secret: rep.client_secret, commande: rep.commande, lignes: etat.lignes })); } catch (x) {}
+    PAIEMENT.stripe.confirmPayment({ elements: PAIEMENT.elements, redirect: 'if_required', confirmParams: { return_url: location.origin + location.pathname + '?paiement=retour' } })
+      .then(function (r) {
+        if (r.error) { b.disabled = false; b.textContent = 'Payer ' + euros(rep.commande.total_cents / 100); alertePaiement(r.error.message || 'Le paiement n’est pas passé.'); return; }
+        if (['succeeded', 'processing', 'requires_capture'].indexOf(r.paymentIntent.status) >= 0) { PAIEMENT = null; confirmer(rep.commande); }
+        else { b.disabled = false; b.textContent = 'Payer ' + euros(rep.commande.total_cents / 100); alertePaiement('Le paiement n’est pas terminé. Réessaie.'); }
+      });
+  }
+  // Retour d'une banque (3D Secure ou moyen de paiement avec redirection).
+  (function retourBanque() {
+    var q = new URLSearchParams(location.search); if (q.get('paiement') !== 'retour' || !STRIPE) return;
+    var s0; try { s0 = JSON.parse(sessionStorage.getItem('anas-paiement') || 'null'); } catch (x) {}
+    history.replaceState(null, '', location.pathname);
+    if (!s0 || s0.snack !== SNACK.id) return;
+    chargerStripe().then(function () {
+      var st = window.Stripe(R.stripePk, s0.compte ? { stripeAccount: s0.compte } : {});
+      return st.retrievePaymentIntent(q.get('payment_intent_client_secret') || s0.secret);
+    }).then(function (r) {
+      if (r.paymentIntent && ['succeeded', 'processing'].indexOf(r.paymentIntent.status) >= 0) { etat.lignes = s0.lignes; confirmer(s0.commande); }
+      else toast('Le paiement n’est pas passé : ton panier t’attend.');
+    }).catch(function () {});
+  })();
 
   pied.addEventListener('click', function (e) {
     if (e.target.closest('[data-fermer-tiroir]')) { cacher(tiroir); return; }
@@ -462,7 +558,8 @@
       return;
     }
     var b = e.target.closest('[data-payer]');
-    if (b) {
+    if (b && !b.disabled) {
+      if (STRIPE) { payerStripe(b); return; }
       b.disabled = true; b.textContent = 'Paiement en cours…';
       setTimeout(confirmer, 1300);
     }
@@ -470,10 +567,11 @@
   corps.addEventListener('input', function (e) { if (e.target.closest('[data-form]') && e.target.name !== 'adresse') lire(); });
 
   /* ===================== 3. Commande payee ===================== */
-  function confirmer() {
-    var i = etat.infos, e = estimation(), liv = i.mode === 'livraison';
-    var num = 'AG-' + String(Math.floor(1000 + Math.random() * 9000));
-    var paye = total(), lignes = etat.lignes.slice();
+  function confirmer(srv) {
+    var i = etat.infos, liv = i.mode === 'livraison';
+    var e = srv ? { heure: new Date(srv.heure_prevue), minutes: Math.max(0, Math.round((new Date(srv.heure_prevue) - Date.now()) / 60000)), programme: !!srv.creneau } : estimation();
+    var num = srv ? String(srv.numero) : 'AG-' + String(Math.floor(1000 + Math.random() * 9000));
+    var paye = srv ? srv.total_cents / 100 : total(), lignes = etat.lignes.slice();
     var c = $('[data-confirmation]');
     c.innerHTML = '<div class="conf-in">' +
       '<div class="conf-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></div>' +
@@ -486,7 +584,7 @@
           '<p class="conf-lieu">Anas Grill ' + esc(SNACK.nom) + '<br>' + esc(SNACK.adresse) + '</p>' +
           '<div class="conf-consigne"><b>Donne ton numéro ' + num + ' au comptoir.</b> <a href="https://www.google.com/maps/dir/?api=1&destination=' + SNACK.lat + ',' + SNACK.lng + '" target="_blank" rel="noopener">Itinéraire</a></div>') +
       '<div class="conf-recap">' + lignes.map(function (l) { return '<div><span>' + l.qte + ' × ' + esc(PLATS[l.id].n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '<div class="conf-total"><span>Payé</span><span>' + euros(paye) + '</span></div></div>' +
-      '<p class="conf-demo">Aperçu : paiement simulé, aucune commande n’a été envoyée.</p>' +
+      (srv ? '' : '<p class="conf-demo">Aperçu : paiement simulé, aucune commande n’a été envoyée.</p>') +
       '<a class="bouton bouton-ligne" href="./">Nouvelle commande</a></div>';
     etat.lignes = []; garder(); majBarre();
     cacher(tiroir); c.hidden = false; requestAnimationFrame(function () { c.classList.add('visible'); });

@@ -1,0 +1,273 @@
+/* ===================================================================
+   Anas Grill — la tablette de cuisine (LocWeb, 2026-10-15)
+   Ouverte toute la journee a cote de la caisse. Code du snack (8
+   chiffres) tape une seule fois. Les commandes PAYEES arrivent en direct
+   (canal Realtime du snack), sonnent, et s'impriment toutes seules :
+     - « RawBT » (tablette Android + POSwink en reseau ou USB) : le ticket
+       part vers l'appli RawBT, sans fenetre ;
+     - « Navigateur » : la fenetre d'impression du navigateur (PC Windows
+       lance avec --kiosk-printing : sans fenetre non plus).
+   Un ticket qui ne sort pas reste marque « non imprime » : sonnerie, bouton
+   Reimprimer, et nouvel essai a chaque rafraichissement.
+   =================================================================== */
+(function () {
+  'use strict';
+  var CFG = window.LOCWEB_CONFIG || {};
+  var FN = CFG.supabaseUrl + '/functions/v1/ag-espace';
+  var $ = function (s, c) { return (c || document).querySelector(s); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var euros = function (c) { return (c / 100).toFixed(2).replace('.', ',') + ' €'; };
+  var hm = function (d) { d = new Date(d); return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0'); };
+  var lire = function (k, d) { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } };
+  var ecrire = function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+  var session = lire('ag-cuisine', null);         // {jeton, snack}
+  var reglage = lire('ag-cuisine-reglage', { impression: 'rawbt', son: true });
+  var donnees = { commandes: [], snack: null, carte: [] };
+  var imprimees = {};                               // deja envoyees cette session (evite les doublons)
+  var canal = null, client = null, minuteur = null, horsLigne = false;
+
+  function appel(action, extra) {
+    var corps = Object.assign({ action: action, jeton: session && session.jeton }, extra || {});
+    return fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (r.status === 401 && action !== 'connexion') { deconnecter(); throw new Error(j.refus || 'Reconnecte-toi.'); }
+          if (!r.ok) throw new Error(j.refus || j.error || 'Erreur serveur');
+          return j;
+        });
+      });
+  }
+
+  /* ---------------- connexion ---------------- */
+  function ecranCode(msg) {
+    document.body.className = 'cuisine-code';
+    $('#app').innerHTML = '<form class="code" data-code><div class="code-logo">' + document.querySelector('[data-logo]').innerHTML + '</div>' +
+      '<h1>Cuisine</h1><p>Tape le code à 8 chiffres de ton snack.</p>' +
+      '<input inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="••••••••" data-code-champ aria-label="Code">' +
+      '<button class="bouton bouton-feu" type="submit">Entrer</button><p class="code-err" data-code-err>' + esc(msg || '') + '</p></form>';
+    var f = $('[data-code]'), c = $('[data-code-champ]');
+    c.focus();
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = c.value.replace(/\D/g, '');
+      if (v.length !== 8) { $('[data-code-err]').textContent = 'Le code fait 8 chiffres.'; return; }
+      $('[data-code-err]').textContent = 'Vérification…';
+      appel('connexion', { code: v }).then(function (j) {
+        if (j.role !== 'cuisine') throw new Error('Ce code est celui du gérant : utilise la page Gérant.');
+        session = { jeton: j.jeton, snack: j.snack }; ecrire('ag-cuisine', session); demarrer();
+      }).catch(function (e) { $('[data-code-err]').textContent = e.message; c.select(); });
+    });
+  }
+  function deconnecter() { session = null; try { localStorage.removeItem('ag-cuisine'); } catch (e) {} if (canal) { client.removeChannel(canal); canal = null; } clearInterval(minuteur); ecranCode(); }
+
+  /* ---------------- l'ecran ---------------- */
+  function demarrer() {
+    document.body.className = 'cuisine';
+    $('#app').innerHTML =
+      '<header class="cu-tete"><div><small>Anas Grill · Cuisine</small><h1>' + esc(session.snack.nom) + '</h1></div>' +
+      '<span class="cu-etat" data-etat>Connexion…</span>' +
+      '<button type="button" class="cu-bouton" data-pause>Pause</button>' +
+      '<button type="button" class="cu-bouton" data-epuises>Plats épuisés</button>' +
+      '<button type="button" class="cu-bouton cu-discret" data-reglages aria-label="Réglages">Réglages</button></header>' +
+      '<p class="cu-alerte" data-alerte hidden></p>' +
+      '<main class="cu-colonnes"><section><h2>À préparer <span data-n-recue></span></h2><div data-col="recue"></div></section>' +
+      '<section><h2>Prêtes <span data-n-prete></span></h2><div data-col="prete"></div></section>' +
+      '<section class="cu-remises"><h2>Remises aujourd’hui <span data-n-remise></span></h2><div data-col="remise"></div></section></main>' +
+      '<div class="cu-voile" data-voile hidden></div><div class="cu-panneau" data-panneau hidden></div>';
+    rafraichir();
+    clearInterval(minuteur); minuteur = setInterval(rafraichir, 60000); // signe de vie + filet de securite
+    ecouter();
+    garderEcranAllume();
+  }
+
+  // Le direct : un message sur le canal du snack = « va voir, il y a du nouveau ».
+  function ecouter() {
+    if (!window.supabase || !donnees.snack) return;
+    if (!client) client = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: false } });
+    if (canal) client.removeChannel(canal);
+    canal = client.channel('ag-cuisine-' + donnees.snack.canal)
+      .on('broadcast', { event: 'commande' }, function () { rafraichir(); })
+      .subscribe(function (st) { horsLigne = st !== 'SUBSCRIBED'; majEtat(); if (st === 'SUBSCRIBED') rafraichir(); });
+  }
+
+  function rafraichir() {
+    return appel('commandes').then(function (j) {
+      var avant = {}; donnees.commandes.forEach(function (c) { avant[c.id] = 1; });
+      var premiere = !donnees.snack;
+      donnees = j; horsLigne = false;
+      if (premiere) ecouter();
+      var nouvelles = j.commandes.filter(function (c) { return !avant[c.id] && c.statut === 'recue'; });
+      if (nouvelles.length && !premiere) sonner();
+      afficher();
+      imprimerEnAttente();
+    }).catch(function (e) { horsLigne = true; majEtat(e.message); });
+  }
+
+  function majEtat(msg) {
+    var e = $('[data-etat]'); if (!e) return;
+    var pause = donnees.snack && donnees.snack.pause;
+    e.textContent = horsLigne ? 'Hors ligne' : pause ? 'En pause' : 'En ligne';
+    e.className = 'cu-etat ' + (horsLigne ? 'cu-rouge' : pause ? 'cu-jaune' : 'cu-vert');
+    var b = $('[data-pause]'); if (b) { b.textContent = pause ? 'Reprendre les commandes' : 'Pause'; b.classList.toggle('cu-actif', !!pause); }
+    var a = $('[data-alerte]');
+    var nonImp = donnees.commandes.filter(function (c) { return !c.imprimee_le && c.statut === 'recue'; }).length;
+    var t = horsLigne ? 'Connexion perdue : les commandes arrivent quand même, elles s’afficheront au retour du réseau.' + (msg ? ' (' + msg + ')' : '')
+      : nonImp ? nonImp + ' ticket' + (nonImp > 1 ? 's' : '') + ' non imprimé' + (nonImp > 1 ? 's' : '') + ' : vérifie l’imprimante (papier, câble), puis « Réimprimer ».' : '';
+    a.hidden = !t; a.textContent = t;
+  }
+
+  function afficher() {
+    var cols = { recue: [], prete: [], remise: [] };
+    donnees.commandes.forEach(function (c) { if (cols[c.statut]) cols[c.statut].push(c); });
+    Object.keys(cols).forEach(function (k) {
+      var l = cols[k];
+      if (k === 'remise') l = l.slice().reverse().slice(0, 30);
+      $('[data-col="' + k + '"]').innerHTML = l.map(carte).join('') || '<p class="cu-vide">Rien pour l’instant.</p>';
+      $('[data-n-' + k + ']').textContent = l.length ? '(' + l.length + ')' : '';
+    });
+    majEtat();
+  }
+  function carte(c) {
+    var rb = c.paiement === 'remboursee' ? '<span class="cu-badge cu-rouge">Remboursée</span>' : c.paiement === 'remboursee_partiel' ? '<span class="cu-badge cu-jaune">Remb. ' + euros(c.rembourse_cents) + '</span>' : '<span class="cu-badge cu-vert">Payée</span>';
+    return '<article class="cu-cmd' + (c.imprimee_le ? '' : ' cu-non-imp') + '" data-id="' + c.id + '">' +
+      '<div class="cu-cmd-tete"><b class="cu-num">N° ' + c.numero + '</b><span class="cu-heure">' + (c.creneau ? 'Programmée · ' : '') + 'À remettre à <b>' + hm(c.heure_prevue) + '</b></span>' + rb + '</div>' +
+      '<p class="cu-client">' + esc(c.prenom) + ' · <a href="tel:' + esc(c.telephone) + '">' + esc(c.telephone) + '</a></p>' +
+      '<ul class="cu-lignes">' + c.lignes.map(function (l) { return '<li><b>' + l.qte + ' × ' + esc(l.n) + '</b>' + (l.resume ? '<span>' + esc(l.resume) + '</span>' : '') + '</li>'; }).join('') + '</ul>' +
+      (c.note ? '<p class="cu-note">« ' + esc(c.note) + ' »</p>' : '') +
+      '<div class="cu-actions">' +
+        (c.statut === 'recue' ? '<button type="button" class="cu-bouton cu-feu" data-statut="prete">Prête</button>' : '') +
+        (c.statut === 'prete' ? '<button type="button" class="cu-bouton cu-feu" data-statut="remise">Remise au client</button><button type="button" class="cu-bouton cu-discret" data-statut="recue">Pas prête</button>' : '') +
+        '<button type="button" class="cu-bouton cu-discret" data-reimprimer>' + (c.imprimee_le ? 'Réimprimer' : 'Imprimer') + '</button>' +
+        '<span class="cu-total">' + euros(c.total_cents) + '</span></div></article>';
+  }
+
+  /* ---------------- l'impression ---------------- */
+  function imprimerEnAttente() {
+    if (reglage.impression === 'aucune') return;
+    donnees.commandes.filter(function (c) { return c.statut === 'recue' && !c.imprimee_le && !imprimees[c.id] && c.paiement !== 'remboursee'; })
+      .forEach(function (c, n) { setTimeout(function () { imprimer(c); }, n * 1500); });
+  }
+  function imprimer(c) {
+    imprimees[c.id] = true;
+    var ok = reglage.impression === 'rawbt' ? viaRawBT(c) : viaNavigateur(c);
+    Promise.resolve(ok).then(function (fait) {
+      if (fait === false) { imprimees[c.id] = false; majEtat(); return; }
+      appel('imprimee', { id: c.id }).then(function () { c.imprimee_le = new Date().toISOString(); afficher(); }).catch(function () {});
+    });
+  }
+
+  // Le ticket en texte (80 mm = 48 caracteres), avec quelques commandes ESC/POS.
+  function ticketTexte(c) {
+    var ESC = '\x1b', GS = '\x1d', L = 48;
+    var sans = function (s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'").replace(/[×]/g, 'x').replace(/[«»]/g, '"').replace(/[^\x20-\x7e]/g, ''); };
+    var couper = function (s, larg) { var out = [], m = sans(s).split(' '), l = ''; m.forEach(function (w) { if ((l + ' ' + w).trim().length > larg) { out.push(l); l = w; } else l = (l + ' ' + w).trim(); }); if (l) out.push(l); return out; };
+    var t = ESC + '@' + ESC + 'a1' + GS + '!' + '\x11' + 'N ' + c.numero + '\n' + GS + '!' + '\x00';
+    t += ESC + 'E1' + 'A REMETTRE A ' + sans(hm(c.heure_prevue)) + '\n' + ESC + 'E0';
+    t += (c.creneau ? 'Commande programmee\n' : '') + sans('Anas Grill ' + session.snack.nom) + ' - a emporter\n' + ESC + 'a0' + '-'.repeat(L) + '\n';
+    c.lignes.forEach(function (l) {
+      t += ESC + 'E1' + couper(l.qte + ' x ' + l.n, L).join('\n') + '\n' + ESC + 'E0';
+      if (l.resume) t += couper(l.resume, L - 3).map(function (x) { return '   ' + x; }).join('\n') + '\n';
+    });
+    t += '-'.repeat(L) + '\n';
+    if (c.note) t += ESC + 'E1' + 'NOTE : ' + ESC + 'E0' + couper(c.note, L - 7).join('\n') + '\n';
+    t += sans(c.prenom) + ' - ' + sans(c.telephone) + '\n' + 'PAYE EN LIGNE : ' + sans(euros(c.total_cents)) + '\n\n\n\n' + GS + 'V' + '\x42' + '\x00';
+    return t;
+  }
+  function viaRawBT(c) {
+    // RawBT (Android) recoit le ticket par un lien « intent » et l'imprime sans fenetre.
+    // A VERIFIER sur la tablette avec la POSwink avant achat de la licence.
+    try {
+      var b64 = btoa(unescape(encodeURIComponent(ticketTexte(c))));
+      var a = document.createElement('a');
+      a.href = 'intent:base64,' + b64 + '#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;';
+      document.body.appendChild(a); a.click(); a.remove();
+      return true;
+    } catch (e) { return false; }
+  }
+  function viaNavigateur(c) {
+    var f = document.createElement('iframe'); f.className = 'cu-iframe'; document.body.appendChild(f);
+    var d = f.contentDocument;
+    d.open(); d.write('<!doctype html><meta charset="utf-8"><style>@page{size:80mm auto;margin:0}body{width:72mm;margin:0 4mm;font:13px/1.35 monospace;color:#000}h1{font-size:30px;margin:6px 0;text-align:center}h2{font-size:17px;margin:0 0 6px;text-align:center}hr{border:0;border-top:1px dashed #000}b{font-size:14px}.r{padding-left:10px}</style>' +
+      '<h1>N° ' + c.numero + '</h1><h2>À REMETTRE À ' + hm(c.heure_prevue) + '</h2><div style="text-align:center">' + (c.creneau ? 'Commande programmée<br>' : '') + 'Anas Grill ' + esc(session.snack.nom) + ' · à emporter</div><hr>' +
+      c.lignes.map(function (l) { return '<div><b>' + l.qte + ' × ' + esc(l.n) + '</b>' + (l.resume ? '<div class="r">' + esc(l.resume) + '</div>' : '') + '</div>'; }).join('') + '<hr>' +
+      (c.note ? '<div><b>NOTE :</b> ' + esc(c.note) + '</div>' : '') + '<div>' + esc(c.prenom) + ' · ' + esc(c.telephone) + '</div><div>PAYÉ EN LIGNE : ' + euros(c.total_cents) + '</div>');
+    d.close();
+    setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} setTimeout(function () { f.remove(); }, 5000); }, 250);
+    return true;
+  }
+
+  /* ---------------- son et ecran ---------------- */
+  var audio = null;
+  function sonner() {
+    if (!reglage.son) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      [0, .28, .56].forEach(function (t) {
+        var o = audio.createOscillator(), g = audio.createGain(); o.type = 'square'; o.frequency.value = 880;
+        g.gain.setValueAtTime(.0001, audio.currentTime + t); g.gain.exponentialRampToValueAtTime(.35, audio.currentTime + t + .02); g.gain.exponentialRampToValueAtTime(.0001, audio.currentTime + t + .22);
+        o.connect(g).connect(audio.destination); o.start(audio.currentTime + t); o.stop(audio.currentTime + t + .25);
+      });
+    } catch (e) {}
+  }
+  function garderEcranAllume() {
+    if (!('wakeLock' in navigator)) return;
+    var prendre = function () { navigator.wakeLock.request('screen').catch(function () {}); };
+    prendre(); document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') prendre(); });
+  }
+
+  /* ---------------- panneaux : epuises, reglages ---------------- */
+  function panneau(html) { $('[data-panneau]').innerHTML = html; $('[data-panneau]').hidden = false; $('[data-voile]').hidden = false; }
+  function fermerPanneau() { $('[data-panneau]').hidden = true; $('[data-voile]').hidden = true; }
+  function panneauEpuises() {
+    var ep = donnees.snack.epuises || [];
+    panneau('<h2>Plats épuisés aujourd’hui</h2><p>Touche un plat pour le retirer du site (ou le remettre).</p><div class="cu-plats">' +
+      donnees.carte.map(function (p) { return '<button type="button" class="cu-plat' + (ep.indexOf(p.id) >= 0 ? ' cu-ep' : '') + '" data-plat="' + p.id + '">' + esc(p.n) + '</button>'; }).join('') +
+      '</div><button type="button" class="cu-bouton" data-fermer>Fermer</button>');
+  }
+  function panneauReglages() {
+    panneau('<h2>Réglages de la tablette</h2><label class="cu-choix"><span>Impression</span><select data-imp>' +
+      [['rawbt', 'RawBT (tablette Android)'], ['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']].map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+      '</select></label><label class="cu-choix"><span>Sonnerie</span><input type="checkbox" data-son' + (reglage.son ? ' checked' : '') + '></label>' +
+      '<div class="cu-actions"><button type="button" class="cu-bouton" data-test-imp>Ticket de test</button><button type="button" class="cu-bouton" data-test-son>Tester le son</button></div>' +
+      '<div class="cu-actions"><button type="button" class="cu-bouton cu-discret" data-deco>Se déconnecter</button><button type="button" class="cu-bouton" data-fermer>Fermer</button></div>');
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.closest('[data-voile]') || t.closest('[data-fermer]')) { fermerPanneau(); return; }
+    if (t.closest('[data-epuises]')) { panneauEpuises(); return; }
+    if (t.closest('[data-reglages]')) { panneauReglages(); return; }
+    if (t.closest('[data-deco]')) { if (confirm('Se déconnecter de cette tablette ? Il faudra retaper le code.')) deconnecter(); return; }
+    if (t.closest('[data-test-son]')) { var s0 = reglage.son; reglage.son = true; sonner(); reglage.son = s0; return; }
+    if (t.closest('[data-test-imp]')) { imprimerTest(); return; }
+    var pl = t.closest('[data-plat]');
+    if (pl) {
+      var v = !pl.classList.contains('cu-ep');
+      appel('epuise', { plat: pl.getAttribute('data-plat'), valeur: v }).then(function (j) { donnees.snack.epuises = j.epuises; pl.classList.toggle('cu-ep', v); }).catch(function (x) { alert(x.message); });
+      return;
+    }
+    if (t.closest('[data-pause]')) {
+      var p = !donnees.snack.pause;
+      if (p && !confirm('Mettre les commandes en ligne en pause ? Les commandes déjà payées restent à préparer.')) return;
+      appel('pause', { valeur: p }).then(function () { donnees.snack.pause = p; majEtat(); });
+      return;
+    }
+    var art = t.closest('[data-id]'); if (!art) return;
+    var c = donnees.commandes.filter(function (x) { return x.id === art.getAttribute('data-id'); })[0];
+    var st = t.closest('[data-statut]');
+    if (st) { var nv = st.getAttribute('data-statut'); appel('statut', { id: c.id, statut: nv }).then(function () { c.statut = nv; afficher(); }); return; }
+    if (t.closest('[data-reimprimer]')) { imprimees[c.id] = false; imprimer(c); }
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-imp]')) { reglage.impression = e.target.value; ecrire('ag-cuisine-reglage', reglage); }
+    if (e.target.matches('[data-son]')) { reglage.son = e.target.checked; ecrire('ag-cuisine-reglage', reglage); }
+  });
+  function imprimerTest() {
+    var c = { id: 'test', numero: 0, heure_prevue: new Date(Date.now() + 900000).toISOString(), creneau: null, prenom: 'Test', telephone: '06 00 00 00 00', note: 'Ticket de test : si tu le lis, l’impression marche.', total_cents: 1000,
+      lignes: [{ qte: 1, n: 'Le Classique', resume: 'Sandwich : Curry, sauce mayo ×2 · Burger : Steak, sans cornichon' }] };
+    reglage.impression === 'rawbt' ? viaRawBT(c) : viaNavigateur(c);
+  }
+
+  if (session && session.jeton) demarrer(); else ecranCode();
+})();

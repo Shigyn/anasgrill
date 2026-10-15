@@ -1,0 +1,90 @@
+/* ===================================================================
+   Anas Grill — tablette Cuisine et page Gerant (LocWeb, 2026-10-15)
+   Un outil de travail : gros, lisible de loin, rien de decoratif.
+   Couleurs et polices : celles du site (style.css est charge avant).
+   =================================================================== */
+body.cuisine, body.gerant, body.cuisine-code { background: #0b0b0c; color: var(--texte); min-height: 100svh; }
+body.cuisine::before, body.cuisine::after, body.gerant::before, body.gerant::after, body.cuisine-code::after { display: none; }
+
+/* --- l'ecran du code --- */
+.code { width: min(360px, 100% - 32px); margin: 0 auto; padding: 12vh 0 40px; display: grid; gap: 14px; text-align: center; }
+.code-logo .logo { width: 96px; height: 96px; margin: 0 auto; display: block; }
+.code h1 { margin: 0; font: 400 2.4rem/1 var(--titre); text-transform: uppercase; }
+.code p { margin: 0; color: var(--doux); }
+.code input { text-align: center; font: 600 2rem/1 var(--etroite); letter-spacing: .3em; padding: 16px; border-radius: 16px; border: 1px solid var(--ligne-forte); background: #141210; color: var(--texte); }
+.code input:focus { outline: none; border-color: var(--jaune); }
+.code .bouton { width: 100%; }
+.code-err { min-height: 1.4em; color: #ffb4ac !important; }
+
+/* --- l'en-tete --- */
+.cu-tete { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 16px; background: rgba(11, 11, 12, .96); border-bottom: 1px solid rgba(255, 160, 60, .2); }
+.cu-tete > div:first-child { margin-right: auto; }
+.cu-tete small { font: 700 .74rem/1 var(--etroite); letter-spacing: .14em; text-transform: uppercase; color: var(--orange); }
+.cu-tete h1 { margin: 2px 0 0; font: 400 1.7rem/1 var(--titre); text-transform: uppercase; }
+.cu-bouton { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--ligne-forte); background: #1a1714; color: var(--texte); font: 600 .95rem/1 var(--texte-police); cursor: pointer; }
+.cu-bouton:hover { border-color: var(--orange); }
+.cu-discret { background: transparent; color: var(--doux); }
+.cu-feu { background: var(--feu); color: #1b0d00; border-color: transparent; font-weight: 700; }
+.cu-actif { background: rgba(255, 190, 40, .16); border-color: var(--jaune); color: var(--jaune); }
+.cu-etat, .cu-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font: 700 .8rem/1 var(--etroite); letter-spacing: .08em; text-transform: uppercase; }
+.cu-vert { background: rgba(70, 200, 110, .14); color: #7fe0a0; }
+.cu-jaune { background: rgba(255, 190, 40, .15); color: #ffd36a; }
+.cu-rouge { background: rgba(255, 90, 78, .15); color: #ffb4ac; }
+.cu-alerte { margin: 12px 16px 0; padding: 12px 16px; border-radius: 14px; background: rgba(255, 90, 78, .14); border: 1px solid rgba(255, 90, 78, .5); color: #ffd2cd; font-weight: 600; }
+
+/* --- les colonnes de la cuisine --- */
+.cu-colonnes { display: grid; grid-template-columns: 1.3fr 1fr .8fr; gap: 16px; padding: 16px; align-items: start; }
+.cu-colonnes h2 { margin: 0 0 10px; font: 400 1.3rem/1 var(--titre); text-transform: uppercase; color: var(--jaune); }
+.cu-colonnes h2 span { color: var(--doux); font-size: .9em; }
+.cu-colonnes section > div { display: grid; gap: 12px; }
+.cu-vide { color: var(--pale); margin: 0; }
+.cu-cmd { padding: 14px 16px; border-radius: 16px; background: #171513; border: 1px solid var(--ligne); display: grid; gap: 8px; }
+.cu-cmd.cu-non-imp { border-color: #ff5a4e; box-shadow: 0 0 0 1px rgba(255, 90, 78, .4); }
+.cu-cmd-tete { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.cu-num { font: 400 1.9rem/1 var(--titre); color: var(--texte); }
+.cu-heure { margin-right: auto; color: var(--doux); }
+.cu-heure b { color: var(--jaune); font: 700 1.25rem/1 var(--etroite); }
+.cu-client { margin: 0; color: var(--doux); }
+.cu-client a { color: var(--texte); }
+.cu-lignes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cu-lignes li { display: grid; gap: 2px; }
+.cu-lignes b { font-size: 1.08rem; }
+.cu-lignes span { color: var(--jaune); font-size: .95rem; }
+.cu-note { margin: 0; padding: 8px 10px; border-radius: 10px; background: rgba(255, 190, 40, .1); color: #ffe2a0; font-weight: 600; }
+.cu-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cu-total { margin-left: auto; font: 700 1rem/1 var(--etroite); color: var(--doux); }
+.cu-remises .cu-cmd { opacity: .6; }
+.cu-iframe { position: fixed; width: 0; height: 0; border: 0; visibility: hidden; }
+
+/* --- panneaux (epuises, reglages) --- */
+.cu-voile { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, .7); }
+.cu-panneau { position: fixed; z-index: 21; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(640px, 100% - 24px); max-height: 86svh; overflow: auto; padding: 20px; border-radius: 20px; background: #171513; border: 1px solid rgba(255, 160, 60, .3); display: grid; gap: 14px; }
+.cu-panneau h2 { margin: 0; font: 400 1.5rem/1 var(--titre); text-transform: uppercase; }
+.cu-panneau p { margin: 0; color: var(--doux); }
+.cu-plats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.cu-plat { min-height: 48px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--ligne); background: transparent; color: var(--texte); font: 600 .9rem/1.2 var(--texte-police); text-align: left; cursor: pointer; }
+.cu-plat.cu-ep { border-color: #ff5a4e; background: rgba(255, 90, 78, .14); color: #ffb4ac; text-decoration: line-through; }
+.cu-choix { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.cu-choix select { padding: 10px 12px; border-radius: 10px; background: #0b0b0c; color: var(--texte); border: 1px solid var(--ligne-forte); }
+.cu-choix input { width: 24px; height: 24px; accent-color: var(--orange); }
+
+/* --- la page gerant --- */
+.ge-periode { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ge-periode input { min-height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--ligne-forte); background: #141210; color: var(--texte); color-scheme: dark; }
+.ge { padding: 16px; display: grid; gap: 22px; max-width: 1280px; margin: 0 auto; }
+.ge h2 { margin: 0 0 10px; display: flex; align-items: center; gap: 12px; font: 400 1.4rem/1 var(--titre); text-transform: uppercase; color: var(--jaune); }
+.ge h2 select { font: 600 .9rem/1 var(--texte-police); padding: 8px 10px; border-radius: 10px; background: #141210; color: var(--texte); border: 1px solid var(--ligne-forte); text-transform: none; }
+.ge-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.ge-kpi div { padding: 16px; border-radius: 16px; background: #171513; border: 1px solid var(--ligne); display: grid; gap: 6px; }
+.ge-kpi small { color: var(--doux); font-size: .85rem; }
+.ge-kpi b { font: 700 1.6rem/1 var(--etroite); font-variant-numeric: tabular-nums; }
+.ge-table-zone { overflow-x: auto; border-radius: 14px; border: 1px solid var(--ligne); }
+.ge-table { width: 100%; border-collapse: collapse; font-size: .92rem; font-variant-numeric: tabular-nums; }
+.ge-table th, .ge-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--ligne); vertical-align: top; }
+.ge-table th { font: 700 .76rem/1 var(--etroite); letter-spacing: .1em; text-transform: uppercase; color: var(--doux); background: #141210; }
+.ge-table small { color: var(--doux); }
+.ge-offre { display: flex; flex-wrap: wrap; gap: 8px; }
+.ge-offre input, .ge-offre select { min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--ligne-forte); background: #141210; color: var(--texte); color-scheme: dark; flex: 1 1 180px; }
+.ge-ferm { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; color: var(--doux); }
+
+@media (max-width: 900px) { .cu-colonnes { grid-template-columns: 1fr; } }

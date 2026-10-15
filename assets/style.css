@@ -757,3 +757,16 @@ body::after { opacity: .19; }
 body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
 @media (prefers-reduced-motion: reduce) { .cookies { transition: none; } }
 .groupe[hidden] { display: none; }
+
+/* --- Paiement reel (Stripe integre), etat du snack (2026-10-15) --- */
+.paiement-stripe { min-height: 120px; }
+.ps-attente { margin: 0; color: var(--doux); font-size: .9rem; }
+.plat-epuise .plat-bouton { opacity: .45; filter: grayscale(.7); }
+.plat-epuise .plat-plus { display: none; }
+.plat-epuise .prix::after { content: ' · épuisé'; color: var(--pale); font-size: .8rem; }
+.etat-snack { display: grid; gap: 10px; padding-top: 18px; }
+.etat-snack[hidden] { display: none; }
+.etat-alerte, .etat-offre { margin: 0; padding: 12px 16px; border-radius: 14px; font-size: .95rem; }
+.etat-alerte { background: rgba(255, 90, 78, .12); border: 1px solid rgba(255, 90, 78, .45); color: #ffd2cd; }
+.etat-offre { background: rgba(255, 122, 0, .1); border: 1px solid rgba(255, 140, 30, .45); color: var(--texte); }
+.etat-offre b { color: var(--jaune); margin-right: 6px; }

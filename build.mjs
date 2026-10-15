@@ -19,9 +19,12 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '37';
+const V = '39';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
-const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, livraison: false, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 2, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: PROD ? 'stripe' : 'simule' };
+// Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
+// reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
+const STRIPE_PK = process.env.STRIPE_PK || '';
+const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, livraison: false, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 2, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: STRIPE_PK ? 'stripe' : 'simule', stripePk: STRIPE_PK };
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const abs = (ch) => URL_SITE + ch;
@@ -290,6 +293,28 @@ for (const [ch, o] of PAGES) {
   fs.mkdirSync(path.join(ICI, ch), { recursive: true });
   fs.writeFileSync(path.join(ICI, ch, 'index.html'), page(ch, o));
 }
+// Les espaces Cuisine (tablette de chaque snack) et Gerant : pages a part,
+// sans bandeau cookies (outil de travail, aucune mesure), jamais indexees.
+const espace = (titre, js, avecTempsReel) => `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>${titre} — Anas Grill</title>
+<meta name="theme-color" content="#0b0b0c"><link rel="icon" href="data:image/svg+xml,${encodeURIComponent(LOGO.replace('class="logo" ', ''))}">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=${V}"><link rel="stylesheet" href="../assets/espace.css?v=${V}">
+</head><body>
+<template data-logo>${LOGO}</template>
+<div id="app"></div>
+<script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' };</script>
+${avecTempsReel ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>' : ''}
+<script src="../assets/${js}?v=${V}" defer></script>
+</body></html>
+`;
+for (const [dossier, titre, js, tr] of [['cuisine', 'Cuisine', 'cuisine.js', true], ['gerant', 'Gérant', 'gerant.js', false]]) {
+  fs.mkdirSync(path.join(ICI, dossier), { recursive: true });
+  fs.writeFileSync(path.join(ICI, dossier, 'index.html'), espace(titre, js, tr));
+}
+
 fs.writeFileSync(path.join(ICI, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${PAGES.filter(([c]) => !/mentions|cgv/.test(c)).map(([c]) => `  <url><loc>${abs(c)}</loc></url>`).join('\n')}\n</urlset>\n`);
 fs.writeFileSync(path.join(ICI, 'robots.txt'), PROD ? `User-agent: *\nAllow: /\n\nSitemap: ${URL_SITE}sitemap.xml\n` : `# Apercu : pas d'indexation.\nUser-agent: *\nDisallow: /\n`);
 fs.writeFileSync(path.join(ICI, '.nojekyll'), '');
