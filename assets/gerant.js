@@ -91,7 +91,7 @@
           '<input type="date" data-du aria-label="Du"><input type="date" data-au aria-label="Au"></div></header>' +
         '<section data-ecran="resume"><div class="ge-kpi" data-kpi></div><h3>Par snack</h3><div class="ge-table-zone"><table class="ge-table" data-par-snack></table></div></section>' +
         '<section data-ecran="commandes" hidden><div class="ge-outils"><select data-filtre aria-label="Snack"></select></div><div class="ge-table-zone"><table class="ge-table" data-cmds></table></div></section>' +
-        '<section data-ecran="snacks" hidden><p class="ge-aide">La tablette est « en ligne » quand elle a donné signe de vie il y a moins de 7 minutes. Le paiement doit être « activé » pour encaisser.</p><div class="ge-table-zone"><table class="ge-table" data-snacks></table></div></section>' +
+        '<section data-ecran="snacks" hidden><p class="ge-aide">La tablette est « en ligne » quand elle a donné signe de vie il y a moins de 7 minutes. Le paiement doit être « activé » pour encaisser.</p><p class="ge-test" data-mode-test hidden><b>Mode test</b> : les paiements sont simulés, aucun argent réel n’est encaissé. Les vrais comptes des sociétés seront branchés à l’ouverture.</p><div class="ge-table-zone"><table class="ge-table" data-snacks></table></div></section>' +
         '<section data-ecran="rembourse" hidden><p class="ge-aide">Pour rembourser une commande : ouvre <b>Commandes</b> et touche <b>Rembourser</b> sur la ligne. Le client est remboursé sur sa carte sous 5 à 10 jours.</p><div class="ge-table-zone"><table class="ge-table" data-rembs></table></div></section>' +
         '<section data-ecran="offre" hidden><p class="ge-aide">L’offre s’affiche en haut de la page du snack, sur le site.</p><form class="ge-offre" data-offre><select data-offre-snack aria-label="Snack"></select><input data-offre-titre maxlength="60" placeholder="Titre (ex. Formule du soir)"><input data-offre-texte maxlength="200" placeholder="Texte (facultatif)"><button class="cu-bouton cu-feu">Publier</button><button type="button" class="cu-bouton cu-discret" data-offre-retirer>Retirer</button></form><h3>En ligne en ce moment</h3><ul class="ge-ferm" data-offre-liste></ul></section>' +
         '<section data-ecran="fermetures" hidden><p class="ge-aide">Pendant une fermeture, le site n’accepte plus de commande pour ce snack.</p><form class="ge-offre" data-ferm><select data-ferm-snack aria-label="Snack"></select><input type="datetime-local" data-ferm-du aria-label="Du"><input type="datetime-local" data-ferm-au aria-label="Au"><input data-ferm-motif maxlength="80" placeholder="Motif (ex. Congés)"><button class="cu-bouton cu-feu">Ajouter</button></form><h3>Prévues</h3><ul class="ge-ferm" data-ferm-liste></ul></section>' +
@@ -130,6 +130,7 @@
         var l = cmds.filter(function (c) { return c.etablissement_id === s.id; }), t = l.reduce(function (t, c) { return t + net(c); }, 0);
         return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + euros(t) + '</td><td>' + l.length + '</td><td>' + (l.length ? euros(Math.round(t / l.length)) : '—') + '</td></tr>';
       }).join('') + '</tbody>';
+    $('[data-mode-test]').hidden = !donnees.test;
     $('[data-snacks]').innerHTML = '<thead><tr><th>Snack</th><th>Tablette</th><th>Paiement</th><th>Commandes en ligne</th></tr></thead><tbody>' +
       snacks.map(function (s) {
         return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + vu(s) + '</td>' +
@@ -188,7 +189,8 @@
   function badgeCompte(s) {
     if (!s.stripe_account_id) return '<span class="cu-badge cu-jaune">à activer</span>';
     var pb = probleme(s);
-    return pb ? '<span class="cu-badge cu-rouge">problème</span>' : '<span class="cu-badge cu-vert">activé</span>';
+    if (pb) return '<span class="cu-badge cu-rouge">problème</span>';
+    return donnees.test ? '<span class="cu-badge cu-bleu" title="Compte de test : aucun vrai paiement">activé · test</span>' : '<span class="cu-badge cu-vert">activé</span>';
   }
   function alerteComptes() {
     var l = donnees.snacks.map(function (s) { var pb = probleme(s); return pb ? { nom: s.nom, pb: pb } : null; }).filter(Boolean);

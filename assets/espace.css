@@ -185,3 +185,5 @@ body.gerant .ge { max-width: 1180px; margin: 0; width: 100%; min-width: 0; gap: 
 .ge-aide b { color: var(--texte); }
 .ge-outils select { min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--ligne-forte); background: #141210; color: var(--texte); font: 600 .95rem/1 var(--texte-police); }
 body.gerant .ge-kpi { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); }
+.cu-bleu { background: rgba(90, 160, 255, .15); color: #a9ccff; }
+.ge-test { margin: 0; padding: 10px 14px; border-radius: 12px; background: rgba(90, 160, 255, .1); border: 1px solid rgba(90, 160, 255, .35); color: #cfe0ff; max-width: 70ch; }
