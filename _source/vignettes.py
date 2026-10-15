@@ -51,5 +51,12 @@ for f in sorted(os.listdir(CLIENT)) if os.path.isdir(CLIENT) else []:
     if im.width > 1200: im = im.resize((1200, round(im.height * 1200 / im.width)), Image.LANCZOS)
     im.save(os.path.join(DST, nom + '.webp'), 'WEBP', quality=82, method=6)
     dims[nom] = {'l': im.width, 'h': im.height, 'client': True}
+    # La carte n'affiche la photo qu'en petit (116 px sur telephone, ~300 px
+    # sur ordinateur) : une version 480 px pour la liste, la grande reste
+    # pour la fiche du plat. 2,4 Mo d'images par page -> environ 0,9 Mo.
+    os.makedirs(os.path.join(DST, 'min'), exist_ok=True)
+    pt = im.resize((480, round(im.height * 480 / im.width)), Image.LANCZOS)
+    pt.save(os.path.join(DST, 'min', nom + '.webp'), 'WEBP', quality=78, method=6)
+    dims[nom]['min'] = True
 json.dump(dims, open(os.path.join(ICI, 'vignettes.json'), 'w'), indent=0)
 print(len(dims), 'vignettes')

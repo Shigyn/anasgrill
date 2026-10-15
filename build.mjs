@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '29';
+const V = '30';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, minimumLivraison: 20, paiement: PROD ? 'stripe' : 'simule' };
 
@@ -196,7 +196,11 @@ PAGES.push(['', {
 /* ---------------- 2. La carte d'un snack ---------------- */
 const vignette = (i) => {
   const v = VIGNETTES[i.photo];
-  return v ? `<img src="../photos/${i.photo}.webp" alt="${esc(i.n)}" width="${v.l}" height="${v.h}" loading="lazy" decoding="async">` : '';
+  if (!v) return '';
+  // Petite version pour la liste (photos/min/), la grande reste pour la fiche.
+  return v.min
+    ? `<img src="../photos/min/${i.photo}.webp" srcset="../photos/min/${i.photo}.webp 480w, ../photos/${i.photo}.webp ${v.l}w" sizes="(max-width: 760px) 116px, 300px" alt="${esc(i.n)}" width="${v.l}" height="${v.h}" loading="lazy" decoding="async">`
+    : `<img src="../photos/${i.photo}.webp" alt="${esc(i.n)}" width="${v.l}" height="${v.h}" loading="lazy" decoding="async">`;
 };
 const ligne = (i) => `
         <li class="plat${i.p == null ? ' plat-indispo' : ''}">
