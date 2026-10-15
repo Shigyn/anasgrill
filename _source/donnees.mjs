@@ -209,9 +209,9 @@ for (const c of CARTE) for (const i of c.items) {
 /* ---------------- boissons et desserts (Hakim, 15/10) ----------------
    Canettes 2 EUR, eau 50 cl 1 EUR, tiramisu 4 EUR. La boisson des formules et
    des menus se choisit parmi les canettes (et l'eau). Dans « a composer »,
-   on ne la demande que si le client prend « en menu ». Noms Oasis « FF » et
-   « PP » : abreviations de Hakim, A CONFIRMER. */
-const CANETTES = ['Dada Cola', 'Dada Cherry', 'Dada Zéro', 'Oasis Tropical', 'Oasis Pomme Cassis Framboise', 'Oasis FF', 'Oasis PP',
+   on ne la demande que si le client prend « en menu ». Oasis « FF » = Fraise Framboise (existe) ;
+   « PP » = Pomme Poire, deduit de la gamme Oasis : A CONFIRMER avec Hakim. */
+const CANETTES = ['Dada Cola', 'Dada Cherry', 'Dada Zéro', 'Oasis Tropical', 'Oasis Pomme Cassis Framboise', 'Oasis Fraise Framboise', 'Oasis Pomme Poire',
   'Schweppes Agrumes', 'Schweppes Pomme', 'Schweppes Lemon', 'Orangina'];
 const G_BOISSON = { id: 'boisson', titre: 'Ta boisson', min: 1, max: 1, options: o([...CANETTES, 'Eau 50 cl']) };
 for (const c of CARTE) for (const i of c.items) {
