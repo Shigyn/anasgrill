@@ -20,7 +20,7 @@ export const SNACKS = [
   { id: 'venissieux', nom: 'Vénissieux', ville: 'Vénissieux', adresse: '61 boulevard Laurent Gérin, 69200 Vénissieux', tel: '07 53 91 82 47', lat: 45.7010038, lng: 4.8838309, note: '4,7', avis: 34 },
   { id: 'pont-de-cheruy', nom: 'Pont-de-Chéruy', ville: 'Pont-de-Chéruy', adresse: '42 rue Grammont, 38230 Pont-de-Chéruy', tel: '04 87 83 02 90', lat: 45.750686, lng: 5.170642, note: null, avis: 0 },
   { id: 'bourgoin-jallieu', nom: 'Bourgoin-Jallieu', ville: 'Bourgoin-Jallieu', adresse: '49 avenue Gambetta, 38300 Bourgoin-Jallieu', tel: '07 75 43 84 16', lat: 45.5886073, lng: 5.2727873, note: '4,6', avis: 246 },
-].map((s) => ({ rayonKm: 5, horaires: HORAIRES[s.id] || null, ...s }));
+].map((s) => ({ rayonKm: 5, horaires: HORAIRES[s.id] || null, ouverture: 11, fermeture: s.id === 'vaulx-en-velin' ? 4 : 1, ...s }));
 
 /* ---------------- les groupes d'options, partages ---------------- */
 const VIANDES = ['Steak', 'Merguez', 'Escalope', 'Tandoori', 'Curry', 'Tenders', 'Cordon bleu', 'Kebab'];
@@ -160,15 +160,17 @@ const PERSO = {
   'steak-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'chicken-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'anas-grill': [...LEG, 'Cheddar', 'Bacon'],
   'naan-beef': ['Salade', 'Cheddar', 'Gruyère'], 'naan-chicken': ['Salade', 'Cheddar', 'Gruyère'], 'naan-curry': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'], 'naan-tandoori': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'],
 };
-// A grignoter et menus enfant : une sauce (a confirmer avec Hakim).
+// A grignoter et menus enfant : une sauce offerte, 1 EUR la sauce en plus.
 const UNE_SAUCE = ['bouchees-camembert', 'gr-tenders', 'gr-nuggets', 'enfant-cheese', 'enfant-nuggets'];
 const SAUCES_G = (max) => ({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte' : 'jusqu’à 2, offertes', min: 0, max, options: o(SAUCES) });
+// Une offerte, puis 1 EUR la sauce en plus (jusqu'a 3).
+const SAUCES_PAYANTES = () => ({ ...SAUCES_G(3), titre: 'Tes sauces', aide: '1 offerte, 1 € la sauce en plus', offertes: 1, prixSup: 1 });
 for (const c of CARTE) for (const i of c.items) {
   const autres = (i.groupes || []).filter((g) => g.type !== 'retirer' && g.id !== 'sauces');
   const saucesAvant = (i.groupes || []).find((g) => g.id === 'sauces');
   const requis = autres.filter((g) => (g.min >= 1 || g.id === 'viande2') && g.id !== 'menu');
   const reste = autres.filter((g) => !requis.includes(g));
-  i.groupes = [...requis, ...((PERSO[i.id] || []).length ? [sans(...PERSO[i.id])] : []), SAUCES_G((saucesAvant && saucesAvant.max === 1) || UNE_SAUCE.includes(i.id) ? 1 : 2), ...reste];
+  i.groupes = [...requis, ...((PERSO[i.id] || []).length ? [sans(...PERSO[i.id])] : []), (UNE_SAUCE.includes(i.id) ? SAUCES_PAYANTES() : SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2)), ...reste];
 }
 
 /* ---------------- les formules, element par element (Nicolas, 2026-10-15) ----------------

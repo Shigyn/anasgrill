@@ -19,9 +19,9 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '33';
+const V = '34';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
-const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, minimumLivraison: 20, paiement: PROD ? 'stripe' : 'simule' };
+const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 2, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: PROD ? 'stripe' : 'simule' };
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const abs = (ch) => URL_SITE + ch;
@@ -75,7 +75,7 @@ ${corps(r)}
     <a class="pied-logo" href="${r || './'}">${LOGO}</a>
     <p>Les formules à 10 € toute l’année, dans nos ${SNACKS.length} restaurants de Lyon et d’Isère.</p>
     <nav class="pied-snacks" aria-label="Nos restaurants">${SNACKS.map((s) => `<a href="${r}${s.id}/">${esc(s.nom)}</a>`).join('')}</nav>
-    <p class="pied-bas">© ${new Date().getFullYear()} Anas Grill · <a href="${r}mentions-legales/">Mentions légales</a> · <a href="${r}cgv/">Conditions de vente</a>${PROD ? ' · Site réalisé par <a href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a>' : ''}</p>
+    <p class="pied-bas">© ${new Date().getFullYear()} Anas Grill · <a href="${r}mentions-legales/">Mentions légales</a> · <a href="${r}cgv/">Conditions de vente</a> · <a href="${r}confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a>${PROD ? ' · Site réalisé par <a href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a>' : ''}</p>
   </div>
 </footer>
 <script>
@@ -87,7 +87,7 @@ ${corps(r)}
   };
   window.ANAS = ${JSON.stringify({ racine: r, reglages: REGLAGES })};
 </script>
-<script src="${r}mesure.js" defer></script>
+<script src="${r}assets/cookies.js?v=${V}" defer></script>
 ${scripts.map((s) => `<script src="${r}assets/${s}?v=${V}" defer></script>`).join('\n')}
 </body>
 </html>
@@ -260,6 +260,23 @@ for (const s of SNACKS) {
   }]);
 }
 
+PAGES.push(['confidentialite/', { titre: 'Confidentialité et cookies — Anas Grill', description: 'Ce que le site Anas Grill fait de tes données et de ses cookies.', classe: 'page-texte', corps: () => `
+<main id="contenu" class="cadre etroit texte"><h1>Confidentialité et cookies</h1>
+<p>Le restaurant Anas Grill qui prépare ta commande est responsable de tes données. [Raison sociale, SIRET et adresse de chaque société à compléter avec les KBIS.]</p>
+<h2>Ce qu’on te demande, et pourquoi</h2>
+<p>Pour préparer et te remettre ta commande : ton <b>prénom</b>, ton <b>téléphone</b> (la cuisine ou le livreur t’appelle si besoin), et en livraison ton <b>adresse</b>. Le paiement est traité par <b>Stripe</b> : ta carte bancaire n’est jamais vue ni gardée par le restaurant.</p>
+<h2>Qui les voit</h2>
+<p>Le restaurant que tu as choisi et son livreur, Stripe pour le paiement, et LocWeb, qui fait fonctionner le site pour le restaurant. Rien n’est vendu ni donné à d’autres.</p>
+<h2>Combien de temps</h2>
+<p>Le temps de la commande, puis 3 ans au plus. Les pièces comptables (montant, date) sont gardées 10 ans, comme la loi l’impose.</p>
+<h2>L’adresse que tu tapes</h2>
+<p>Pour te proposer ton adresse pendant que tu l’écris, le site interroge la Base Adresse Nationale (service public, api-adresse.data.gouv.fr). La carte du site est une image fixe : elle ne charge rien.</p>
+<h2>Cookies</h2>
+<p><b>Mesure d’audience</b> (Google Analytics) : seulement si tu as cliqué « Accepter », pour savoir combien de personnes viennent et ce qui sert. Rien de publicitaire. Tu peux changer d’avis à tout moment avec le lien <a href="#" data-cookies>Cookies</a> en bas de page.</p>
+<p><b>Ton panier et ton adresse</b> sont gardés dans ton navigateur pour que tu ne les perdes pas en changeant de page. Ce n’est pas de la mesure : ça ne demande pas ton accord, et ça ne quitte pas ton téléphone.</p>
+<h2>Tes droits</h2>
+<p>Tu peux demander à voir, corriger ou effacer tes données en appelant le restaurant de ta commande. Si la réponse ne te convient pas, tu peux saisir la CNIL (cnil.fr).</p>
+</main>` }]);
 PAGES.push(['mentions-legales/', { titre: 'Mentions légales — Anas Grill', description: 'Mentions légales du site Anas Grill.', classe: 'page-texte', corps: () => `
 <main id="contenu" class="cadre etroit texte"><h1>Mentions légales</h1><p>[Raison sociale, SIRET et adresse de l’éditeur à compléter avec le client.]</p><h2>Hébergement</h2><p>[À compléter à la mise en ligne.]</p><h2>Crédits</h2><p>Visuels : Anas Grill. Réalisation : LocWeb.</p></main>` }]);
 PAGES.push(['cgv/', { titre: 'Conditions générales de vente — Anas Grill', description: 'Conditions de vente des commandes en ligne Anas Grill.', classe: 'page-texte', corps: () => `

@@ -88,6 +88,7 @@
     var i = enCours.plat, p = i.p;
     (i.groupes || []).forEach(function (g) {
       if (inclus(g)) return;
+      if (g.offertes != null) p += Math.max(0, (enCours.choix[g.id] || []).length - g.offertes) * (g.prixSup || 0);
       (enCours.choix[g.id] || []).forEach(function (n) { var o = g.options.filter(function (x) { return x.n === n; })[0]; if (o) p += o.p; });
     });
     return p;
@@ -207,7 +208,7 @@
       if (g.max === 1) ch = deja ? [] : [nom];
       else if (ch.length < g.max) ch.push(nom);           // x1, puis x2
       else if (deja) ch = ch.filter(function (x) { return x !== nom; }); // plein : on la retire
-      else { toast('Deux sauces maximum : touche une sauce choisie pour la retirer'); return; }
+      else { toast(g.max + ' sauces maximum : touche une sauce choisie pour la retirer'); return; }
       enCours.choix[id] = ch; majFiche();
       // Complet : on replie, la carte affiche le choix (« Mayo ×2 »).
       if (ch.length >= g.max) setTimeout(function () { ouvrirSauces(f, false); }, 450);
@@ -309,13 +310,32 @@
       (liv ? '<label class="champ champ-adresse"><span>Adresse de livraison</span><input name="adresse" autocomplete="off" placeholder="Numéro et rue, ville" value="' + esc(i.adresse) + '" data-adr-champ><ul class="suggestions" data-adr-sugg hidden></ul></label>' +
         '<label class="champ"><span>Étage, code, interphone <small>(facultatif)</small></span><input name="complement" value="' + esc(i.complement) + '"></label>' +
         '<p class="info-zone" data-zone></p>' + (total() < (R.minimumLivraison || 0) ? '<p class="info-zone attention">Livraison à partir de ' + euros(R.minimumLivraison) + ' : il te manque ' + euros(R.minimumLivraison - total()) + '.</p>' : '') : '<p class="info-zone ok">À retirer chez Anas Grill ' + esc(SNACK.nom) + ', ' + esc(SNACK.adresse) + '.</p>') +
+      blocQuand() +
       '<label class="champ"><span>Prénom</span><input name="prenom" autocomplete="given-name" value="' + esc(i.prenom) + '" required></label>' +
       '<label class="champ"><span>Téléphone <small>' + (liv ? '(le livreur t’appelle à son arrivée)' : '(si la cuisine a besoin de te joindre)') + '</small></span><input name="tel" type="tel" inputmode="tel" autocomplete="tel" value="' + esc(i.tel) + '" required></label>' +
       '<label class="champ"><span>Un mot pour la cuisine <small>(facultatif)</small></span><input name="note" placeholder="Sans oignons, allergie…" value="' + esc(i.note) + '"></label>' +
       '<p class="alerte" data-alerte hidden></p></form>';
     pied.innerHTML = '<div class="total"><span>Total</span><b>' + euros(total()) + '</b></div><button type="button" class="bouton bouton-feu" data-suite>Passer au paiement</button>';
     corps.querySelectorAll('[name=mode]').forEach(function (r) { r.addEventListener('change', function () { lire(); etat.infos.mode = r.value; garder(); rendre(); }); });
+    corps.querySelectorAll('[name=quand]').forEach(function (r) { r.addEventListener('change', function () { lire(); etat.infos.quand = r.value; garder(); rendre(); }); });
+    var cr = $('[data-creneau]'); if (cr) cr.addEventListener('change', function () { etat.infos.creneau = cr.value || null; garder(); });
     if (liv) { brancherAdresse(); majZone(); }
+  }
+  function blocQuand() {
+    var i = etat.infos, f = fenetre();
+    if (!f) return '<p class="info-zone attention">Les commandes en ligne ouvrent à ' + (R.debutCommandes || 8) + ' h, pour un service à partir de ' + SNACK.ouverture + ' h.</p>';
+    var ouvert = Date.now() >= f.ouv.getTime(), l = creneaux(f);
+    if (!ouvert) i.quand = 'plus-tard';
+    if (i.quand !== 'plus-tard' || !l.length) i.quand = 'vite';
+    var choix = ouvert && l.length > 0; // plus aucun creneau avant la fermeture : seulement « au plus vite »
+    if (i.creneau && !l.some(function (t) { return t.toISOString() === i.creneau; })) i.creneau = null;
+    return '<div class="quand"><span class="quand-titre">Quand ?</span>' +
+      (f.apercu ? '<p class="quand-note">Aperçu : on te laisse tester même si le snack est fermé en ce moment.</p>' : '') +
+      (choix ? '<div class="segment" role="radiogroup" aria-label="Quand"><label><input type="radio" name="quand" value="vite"' + (i.quand === 'vite' ? ' checked' : '') + '><span>Au plus vite</span></label><label><input type="radio" name="quand" value="plus-tard"' + (i.quand === 'plus-tard' ? ' checked' : '') + '><span>Programmer</span></label></div>'
+        : ouvert ? '<p class="quand-note">Au plus vite : c’est bientôt la fermeture.</p>' : '<p class="quand-note">On ouvre à ' + SNACK.ouverture + ' h : choisis l’heure de ta commande.</p>') +
+      (i.quand === 'plus-tard' ? '<label class="champ"><span>Heure souhaitée</span><select name="creneau" data-creneau><option value="">Choisis un créneau</option>' +
+        l.map(function (t) { var v = t.toISOString(); return '<option value="' + v + '"' + (i.creneau === v ? ' selected' : '') + '>' + hm(t) + '</option>'; }).join('') + '</select></label>' : '') +
+      '</div>';
   }
   function lire() {
     var f = $('[data-form]'); if (!f) return;
@@ -363,16 +383,49 @@
       else if (distanceKm(i.lat, i.lng) > SNACK.rayonKm) err = 'Cette adresse est hors de la zone de livraison de ce restaurant.';
       else if (total() < (R.minimumLivraison || 0)) err = 'La livraison, c’est à partir de ' + euros(R.minimumLivraison) + ' de commande : il te manque ' + euros(R.minimumLivraison - total()) + '. Ajoute un plat, ou passe à emporter.';
     }
+    if (!err && !fenetre()) err = 'Les commandes en ligne ouvrent à ' + (R.debutCommandes || 8) + ' h.';
+    if (!err && i.quand === 'plus-tard' && !i.creneau) err = 'Choisis l’heure de ta commande.';
     if (!err && (i.prenom || '').length < 2) err = 'Indique ton prénom.';
     if (!err && (i.tel || '').replace(/\D/g, '').length < 10) err = 'Indique un numéro de téléphone valide : on t’appelle si besoin.';
     var a = $('[data-alerte]'); a.hidden = !err; a.textContent = err;
     return !err;
   }
 
+  /* --- Les horaires (Nicolas, 15/10) ---
+     Commandes en ligne des 8 h ; service de l'ouverture (11 h) a la fermeture
+     (1 h, Vaulx 4 h) ; derniere commande 15 min avant. Avant 11 h, on ne peut
+     que programmer un creneau de 15 min. Production : le serveur n'accepte que
+     2 commandes a l'avance par creneau et masque les creneaux pleins.
+     Apercu : si le snack est ferme, on laisse tester comme s'il etait ouvert. */
+  function fenetre() {
+    var now = new Date();
+    for (var k = -1; k <= 0; k++) {
+      var jour = new Date(now); jour.setHours(0, 0, 0, 0); jour.setDate(jour.getDate() + k);
+      var debut = new Date(jour); debut.setHours(R.debutCommandes || 8);
+      var ouv = new Date(jour); ouv.setHours(SNACK.ouverture || 11);
+      var ferm = new Date(jour); ferm.setHours(SNACK.fermeture); if (SNACK.fermeture <= SNACK.ouverture) ferm.setDate(ferm.getDate() + 1);
+      var fin = new Date(ferm.getTime() - (R.arretAvantFermeture || 15) * 60000);
+      if (now >= debut && now < fin) return { ouv: ouv, fin: fin };
+    }
+    if (R.apercuToujoursOuvert) return { ouv: new Date(now.getTime() - 60000), fin: new Date(now.getTime() + 4 * 3600000), apercu: true };
+    return null;
+  }
+  function creneaux(f) {
+    var pas = R.pasCreneau || 15, t = new Date(Math.max(f.ouv.getTime(), Date.now() + dureeMin() * 60000)), l = [];
+    t.setSeconds(0, 0); t.setMinutes(Math.ceil(t.getMinutes() / pas) * pas);
+    for (; t <= f.fin && l.length < 96; t = new Date(t.getTime() + pas * 60000)) l.push(t);
+    return l;
+  }
+
   /* --- L'heure estimee --- */
-  function estimation() {
+  function dureeMin() {
     var i = etat.infos, min = R.preparation || 15;
     if (i.mode === 'livraison' && i.lat != null) min += (R.departLivreur || 5) + Math.round(distanceKm(i.lat, i.lng) * (R.minutesParKm || 3));
+    return min;
+  }
+  function estimation() {
+    var i = etat.infos, min = dureeMin();
+    if (i.quand === 'plus-tard' && i.creneau) { var h = new Date(i.creneau); return { heure: h, minutes: Math.max(0, Math.round((h - Date.now()) / 60000)), programme: true }; }
     var pas = R.pas || 5, t = new Date(Date.now() + min * 60000);
     t.setSeconds(0, 0); t.setMinutes(Math.ceil(t.getMinutes() / pas) * pas);
     // Production : le serveur reserve ce creneau, ou le suivant s'il est plein.
@@ -417,10 +470,10 @@
       '<div class="conf-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></div>' +
       '<p class="conf-eti">Commande payée · n° ' + num + '</p>' +
       (liv
-        ? '<h2>Livrée vers <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">dans ' + e.minutes + ' minutes environ</p>' +
+        ? '<h2>Livrée vers <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">' + (e.programme ? 'commande programmée' : 'dans ' + e.minutes + ' minutes environ') + '</p>' +
           '<p class="conf-lieu">' + esc(i.adresse) + (i.complement ? '<br>' + esc(i.complement) : '') + '</p>' +
           '<div class="conf-consigne"><b>Le livreur t’appellera une fois en bas de chez toi</b>, ou s’il y a un souci. Garde ton téléphone près de toi.</div>'
-        : '<h2>Rendez-vous à <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">prête dans ' + e.minutes + ' minutes environ</p>' +
+        : '<h2>Rendez-vous à <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">' + (e.programme ? 'commande programmée' : 'prête dans ' + e.minutes + ' minutes environ') + '</p>' +
           '<p class="conf-lieu">Anas Grill ' + esc(SNACK.nom) + '<br>' + esc(SNACK.adresse) + '</p>' +
           '<div class="conf-consigne"><b>Donne ton numéro ' + num + ' au comptoir.</b> <a href="https://www.google.com/maps/dir/?api=1&destination=' + SNACK.lat + ',' + SNACK.lng + '" target="_blank" rel="noopener">Itinéraire</a></div>') +
       '<div class="conf-recap">' + lignes.map(function (l) { return '<div><span>' + l.qte + ' × ' + esc(PLATS[l.id].n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '<div class="conf-total"><span>Payé</span><span>' + euros(paye) + '</span></div></div>' +

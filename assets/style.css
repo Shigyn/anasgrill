@@ -738,3 +738,21 @@ body::after { opacity: .22; }
 /* Le degrade des titres (background-clip: text) s arretait au ras des lettres :
    l accent de « A composer », « Formules a 10 EUR » sortait du cadre et disparaissait. */
 .categorie h2 { padding-top: .18em; margin-top: -.18em; }
+
+/* --- Quand ? : au plus vite ou un creneau de 15 min (2026-10-15) --- */
+.quand { display: grid; gap: 10px; padding: 14px; border-radius: 16px; border: 1px solid var(--ligne); background: rgba(255, 255, 255, .02); }
+.quand-titre { font: 700 .8rem/1 var(--etroite); letter-spacing: .12em; text-transform: uppercase; color: var(--orange); }
+.quand-note { margin: 0; font-size: .86rem; color: var(--doux); }
+.champ select { width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--ligne-forte); background: var(--noir); color: var(--texte); font: 500 1rem/1.2 var(--texte-police); appearance: auto; }
+.champ select:focus { outline: none; border-color: var(--jaune); }
+
+/* --- Le bandeau cookies : discret, en bas, Refuser aussi simple qu'Accepter --- */
+.cookies { position: fixed; z-index: 90; left: 16px; bottom: 16px; width: min(420px, 100% - 32px); padding: 16px 16px 14px; border-radius: 18px; background: #17150f; border: 1px solid rgba(255, 160, 60, .28); box-shadow: 0 20px 50px rgba(0, 0, 0, .6); opacity: 0; transform: translateY(16px); transition: opacity .3s, transform .3s; }
+.cookies.visible { opacity: 1; transform: none; }
+.cookies p { margin: 0; font-size: .88rem; line-height: 1.45; color: var(--doux); }
+.cookies p b { display: block; margin-bottom: 4px; font: 700 .8rem/1 var(--etroite); letter-spacing: .12em; text-transform: uppercase; color: var(--orange); }
+.cookies a { color: var(--jaune); }
+.cookies-boutons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.cookies-boutons .bouton { width: 100%; padding: 11px 10px; }
+body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
+@media (prefers-reduced-motion: reduce) { .cookies { transition: none; } }
