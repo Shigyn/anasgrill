@@ -118,8 +118,7 @@
     var snacks = donnees.snacks, cmds = donnees.commandes;
     var net = function (c) { return c.total_cents - c.rembourse_cents; };
     var ca = cmds.reduce(function (t, c) { return t + net(c); }, 0);
-    var frais = cmds.reduce(function (t, c) { return t + c.commission_cents; }, 0);
-    $('[data-kpi]').innerHTML = [['Chiffre d’affaires', euros(ca)], ['Commandes', cmds.length], ['Panier moyen', cmds.length ? euros(Math.round(ca / cmds.length)) : '—'], ['Remboursé', euros(cmds.reduce(function (t, c) { return t + c.rembourse_cents; }, 0))], ['Frais paiement en ligne', euros(frais)]]
+    $('[data-kpi]').innerHTML = [['Chiffre d’affaires', euros(ca)], ['Commandes', cmds.length], ['Panier moyen', cmds.length ? euros(Math.round(ca / cmds.length)) : '—'], ['Remboursé', euros(cmds.reduce(function (t, c) { return t + c.rembourse_cents; }, 0))]]
       .map(function (k) { return '<div><small>' + k[0] + '</small><b>' + k[1] + '</b></div>'; }).join('');
     var vu = function (s) {
       if (!s.cuisine_vue_le) return '<span class="cu-badge cu-rouge">jamais connectée</span>';
