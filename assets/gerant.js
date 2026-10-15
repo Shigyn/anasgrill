@@ -14,7 +14,7 @@
   var jour = function (d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
   var hm = function (d) { d = new Date(d); return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0'); };
   var session = null; try { session = JSON.parse(localStorage.getItem('ag-gerant') || 'null'); } catch (e) {}
-  var periode = { du: jour(new Date()), au: jour(new Date()) }, filtre = 'tous', donnees = null;
+  var periode = { du: jour(new Date()), au: jour(new Date()) }, filtre = 'tous', donnees = null, alerteVue = false;
 
   function appel(action, extra) {
     return fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ action: action, jeton: session && session.jeton }, extra || {})) })
@@ -61,7 +61,7 @@
     charger();
   }
   function charger() {
-    return appel('tableau', periode).then(function (j) { donnees = j; afficher(); }).catch(function (e) { alert(e.message); });
+    return appel('tableau', periode).then(function (j) { donnees = j; afficher(); if (!alerteVue) { alerteVue = true; alerteComptes(); } }).catch(function (e) { alert(e.message); });
   }
 
   function afficher() {
@@ -74,13 +74,13 @@
     var vu = function (s) {
       if (!s.cuisine_vue_le) return '<span class="cu-badge cu-rouge">jamais connectée</span>';
       var min = Math.round((Date.now() - new Date(s.cuisine_vue_le)) / 60000);
-      return min <= 3 ? '<span class="cu-badge cu-vert">en ligne</span>' : '<span class="cu-badge cu-jaune">vue il y a ' + (min < 120 ? min + ' min' : Math.round(min / 60) + ' h') + '</span>';
+      return min <= 7 ? '<span class="cu-badge cu-vert">en ligne</span>' : '<span class="cu-badge cu-jaune">vue il y a ' + (min < 120 ? min + ' min' : Math.round(min / 60) + ' h') + '</span>';
     };
     $('[data-snacks]').innerHTML = '<thead><tr><th>Snack</th><th>CA</th><th>Commandes</th><th>Tablette</th><th>Paiement</th><th>Commandes en ligne</th></tr></thead><tbody>' +
       snacks.map(function (s) {
         var l = cmds.filter(function (c) { return c.etablissement_id === s.id; });
         return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + euros(l.reduce(function (t, c) { return t + net(c); }, 0)) + '</td><td>' + l.length + '</td><td>' + vu(s) + '</td>' +
-          '<td>' + (s.stripe_account_id ? '<span class="cu-badge cu-vert">activé</span>' : '<span class="cu-badge cu-jaune">à activer</span>') + '</td>' +
+          '<td>' + badgeCompte(s) + '</td>' +
           '<td><button type="button" class="cu-bouton ' + (s.pause ? 'cu-actif' : 'cu-discret') + '" data-pause-snack="' + s.id + '">' + (s.pause ? 'En pause · reprendre' : 'Ouvertes · mettre en pause') + '</button></td></tr>';
       }).join('') + '</tbody>';
     var opts = '<option value="tous">Tous les snacks</option>' + snacks.map(function (s) { return '<option value="' + s.id + '"' + (filtre === s.id ? ' selected' : '') + '>' + esc(s.nom) + '</option>'; }).join('');
@@ -98,6 +98,37 @@
       }).join('') || '<tr><td colspan="8">Aucune commande sur cette période.</td></tr>') + '</tbody>';
     var fl = []; snacks.forEach(function (s) { (s.fermetures || []).forEach(function (f, i) { fl.push('<li><b>' + esc(s.nom) + '</b> du ' + new Date(f.du).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + ' au ' + new Date(f.au).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + (f.motif ? ' · ' + esc(f.motif) : '') + ' <button type="button" class="cu-bouton cu-discret" data-ferm-suppr="' + s.id + '|' + i + '">Supprimer</button></li>'); }); });
     $('[data-ferm-liste]').innerHTML = fl.join('') || '<li>Aucune.</li>';
+  }
+
+  /* L'etat reel du compte Stripe de chaque societe. Un compte restreint (piece
+     d'identite expiree, document manquant) ne peut plus encaisser : le gerant
+     doit le savoir tout de suite, d'ou la fenetre d'alerte. */
+  function probleme(s) {
+    var c = (donnees.comptes || {})[s.id];
+    if (!s.stripe_account_id || !c) return null;
+    if (c.erreur) return 'compte de paiement introuvable';
+    if (!c.encaisse) return 'ne peut plus encaisser les paiements en ligne';
+    if (c.bloque) return 'compte bloqué par Stripe';
+    if ((c.manque || []).length) return 'Stripe demande un document' + (c.echeance ? ' avant le ' + new Date(c.echeance * 1000).toLocaleDateString('fr-FR') : '');
+    if (!c.vire) return 'les virements vers la banque sont suspendus';
+    return null;
+  }
+  function badgeCompte(s) {
+    if (!s.stripe_account_id) return '<span class="cu-badge cu-jaune">à activer</span>';
+    var pb = probleme(s);
+    return pb ? '<span class="cu-badge cu-rouge">problème</span>' : '<span class="cu-badge cu-vert">activé</span>';
+  }
+  function alerteComptes() {
+    var l = donnees.snacks.map(function (s) { var pb = probleme(s); return pb ? { nom: s.nom, pb: pb } : null; }).filter(Boolean);
+    var deja = $('.ge-alerte'); if (deja) deja.remove();
+    if (!l.length) return;
+    var d = document.createElement('div'); d.className = 'ge-alerte';
+    d.innerHTML = '<div class="ge-alerte-boite" role="alertdialog" aria-label="Problème de paiement"><h2>Paiement en ligne : à régler</h2>' +
+      '<ul>' + l.map(function (x) { return '<li><b>Anas Grill ' + esc(x.nom) + '</b> : ' + esc(x.pb) + '.</li>'; }).join('') + '</ul>' +
+      '<p>Connecte-toi à l’espace Stripe de la société concernée (Paramètres → Compte) pour fournir ce qui manque, ou appelle LocWeb.</p>' +
+      '<button type="button" class="cu-bouton cu-feu" data-alerte-ok>J’ai compris</button></div>';
+    document.body.appendChild(d);
+    d.querySelector('[data-alerte-ok]').addEventListener('click', function () { d.remove(); });
   }
 
   function exporter() {

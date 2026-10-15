@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '50';
+const V = '52';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -145,7 +145,7 @@ PAGES.push(['', {
   titre: 'Anas Grill — Commande en ligne · Lyon et Isère',
   description: `Commandez chez Anas Grill en ligne : sandwichs, tacos, burgers, formules à 10 €. ${SNACKS.length} restaurants à Lyon, Villeurbanne, Vénissieux, Vaulx-en-Velin, Rillieux, Bourgoin-Jallieu et Pont-de-Chéruy.`,
   classe: 'page-choix',
-  scripts: ['choix.js'],
+  scripts: ['choix.js', 'retour.js'],
   // Arrivee (retour de Nicolas, 2026-10-14) : la carte reduite au minimum,
   // les restaurants en cartes, rien d'autre. Chaque mini-carte est une
   // image SVG statique (photos/carte-<id>.svg) : chargee a la demande,
@@ -220,7 +220,7 @@ for (const s of SNACKS) {
     description: `Commandez chez Anas Grill ${s.nom} (${s.adresse}) : formules à 10 €, sandwichs, tacos, burgers. À emporter, paiement en ligne, prêt à l’heure.`,
     classe: 'page-snack',
     schemas: [restaurantSchema(s)],
-    scripts: ['commande.js'],
+    scripts: ['commande.js', 'retour.js'],
     corps: (r) => `
 <header class="entete entete-snack-page" data-entete>
   <div class="cadre entete-in">
@@ -305,7 +305,7 @@ const espace = (titre, js, avecTempsReel) => `<!doctype html>
 </head><body>
 <template data-logo>${LOGO}</template>
 <div id="app"></div>
-<script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' };</script>
+<script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' }; window.AG_V = '${V}';</script>
 ${avecTempsReel ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>' : ''}
 <script src="../assets/${js}?v=${V}" defer></script>
 </body></html>
@@ -313,6 +313,8 @@ ${avecTempsReel ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-
 for (const [dossier, titre, js, tr] of [['cuisine', 'Cuisine', 'cuisine.js', true], ['gerant', 'Gérant', 'gerant.js', false]]) {
   fs.mkdirSync(path.join(ICI, dossier), { recursive: true });
   fs.writeFileSync(path.join(ICI, dossier, 'index.html'), espace(titre, js, tr));
+  // La version de la page : la tablette la compare pour se mettre a jour HORS service.
+  fs.writeFileSync(path.join(ICI, dossier, 'version.json'), JSON.stringify({ v: V }));
 }
 
 fs.writeFileSync(path.join(ICI, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${PAGES.filter(([c]) => !/mentions|cgv/.test(c)).map(([c]) => `  <url><loc>${abs(c)}</loc></url>`).join('\n')}\n</urlset>\n`);
@@ -326,7 +328,7 @@ console.log(`${PAGES.length} pages, ${SNACKS.length} snacks, ${CARTE.reduce((n, 
 // toujours de la meme carte. Les photos et descriptions n'y servent pas.
 const CARTE_SERVEUR = {
   reglages: REGLAGES,
-  snacks: SNACKS.map(({ id, nom, ouverture, fermeture }) => ({ id, nom, ouverture, fermeture })),
+  snacks: SNACKS.map(({ id, nom, adresse, lat, lng, ouverture, fermeture }) => ({ id, nom, adresse, lat, lng, ouverture, fermeture })),
   plats: Object.fromEntries(CARTE.flatMap((c) => c.items).map((i) => [i.id, {
     n: i.n, p: i.p,
     groupes: (i.groupes || []).filter((g) => g.type !== 'info').map((g) => ({

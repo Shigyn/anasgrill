@@ -117,3 +117,14 @@ body.cuisine::before, body.cuisine::after, body.gerant::before, body.gerant::aft
 .cu-maj { margin: 12px 16px 0; padding: 10px 14px; border-radius: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: rgba(255, 122, 0, .1); border: 1px solid rgba(255, 140, 30, .5); font-weight: 600; }
 .cu-maj[hidden] { display: none; }
 .cu-maj span { margin-right: auto; }
+.cu-role { display: grid; gap: 6px; padding: 16px; text-align: left; }
+.cu-role b { font-size: 1.05rem; color: var(--jaune); }
+.cu-role small { color: var(--doux); line-height: 1.4; }
+.cu-roles { grid-template-columns: 1fr 1fr; }
+@media (max-width: 560px) { .cu-roles { grid-template-columns: 1fr; } }
+/* --- Alerte des comptes Stripe (page gerant) --- */
+.ge-alerte { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, .75); }
+.ge-alerte-boite { width: min(520px, 100%); padding: 22px; border-radius: 20px; background: #1b1311; border: 2px solid #ff5a4e; display: grid; gap: 12px; }
+.ge-alerte-boite h2 { margin: 0; font: 400 1.5rem/1.1 var(--titre); text-transform: uppercase; color: #ffb4ac; }
+.ge-alerte-boite ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.ge-alerte-boite p { margin: 0; color: var(--doux); }

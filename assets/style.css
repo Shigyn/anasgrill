@@ -770,3 +770,8 @@ body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
 .etat-alerte { background: rgba(255, 90, 78, .12); border: 1px solid rgba(255, 90, 78, .45); color: #ffd2cd; }
 .etat-offre { background: rgba(255, 122, 0, .1); border: 1px solid rgba(255, 140, 30, .45); color: var(--texte); }
 .etat-offre b { color: var(--jaune); margin-right: 6px; }
+
+/* Le client revient : « VOTRE COMMANDE » en grand */
+.retour { z-index: 95; }
+.retour-titre { margin: 0; font: 800 clamp(2.6rem, 1.6rem + 5vw, 4.4rem)/.95 var(--etroite); letter-spacing: .02em; text-transform: uppercase; background: var(--feu); -webkit-background-clip: text; background-clip: text; color: transparent; padding-top: .12em; }
+.retour .conf-recap span small { display: block; font-size: .85rem; opacity: .75; }

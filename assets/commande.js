@@ -431,22 +431,32 @@
      que programmer un creneau de 15 min. Production : le serveur n'accepte que
      2 commandes a l'avance par creneau et masque les creneaux pleins.
      Apercu : si le snack est ferme, on laisse tester comme s'il etait ouvert. */
+  // Un touriste avec son telephone a l'heure anglaise doit voir les creneaux de Paris.
+  var PARIS = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  function partiesParis(t) { var o = {}; PARIS.formatToParts(new Date(t)).forEach(function (x) { if (x.type !== 'literal') o[x.type] = +x.value; }); return o; }
+  // (annee, mois 1-12, jour, heure) a l'heure de Paris -> instant reel (ms).
+  function depuisParis(a, m, j, h) {
+    // Deux passes : la nuit du changement d'heure, le decalage lu a « essai » n'est pas celui du resultat.
+    var essai = Date.UTC(a, m - 1, j, h, 0), r = essai;
+    for (var n = 0; n < 2; n++) { var q = partiesParis(r); r = essai - (Date.UTC(q.year, q.month - 1, q.day, q.hour, q.minute) - r); }
+    return r;
+  }
   function fenetre() {
-    var now = new Date();
+    var now = Date.now(), p = partiesParis(now);
     for (var k = -1; k <= 0; k++) {
-      var jour = new Date(now); jour.setHours(0, 0, 0, 0); jour.setDate(jour.getDate() + k);
-      var debut = new Date(jour); debut.setHours(R.debutCommandes || 8);
-      var ouv = new Date(jour); ouv.setHours(SNACK.ouverture || 11);
-      var ferm = new Date(jour); ferm.setHours(SNACK.fermeture); if (SNACK.fermeture <= SNACK.ouverture) ferm.setDate(ferm.getDate() + 1);
-      var fin = new Date(ferm.getTime() - (R.arretAvantFermeture || 15) * 60000);
-      if (now >= debut && now < fin) return { ouv: ouv, fin: fin };
+      var d = new Date(Date.UTC(p.year, p.month - 1, p.day + k)), a = d.getUTCFullYear(), m = d.getUTCMonth() + 1, jj = d.getUTCDate();
+      var debut = depuisParis(a, m, jj, R.debutCommandes || 8), ouv = depuisParis(a, m, jj, SNACK.ouverture || 11);
+      var l = new Date(Date.UTC(a, m - 1, jj + (SNACK.fermeture <= SNACK.ouverture ? 1 : 0)));
+      var fin = depuisParis(l.getUTCFullYear(), l.getUTCMonth() + 1, l.getUTCDate(), SNACK.fermeture) - (R.arretAvantFermeture || 15) * 60000;
+      if (now >= debut && now < fin) return { ouv: new Date(ouv), fin: new Date(fin) };
     }
-    if (R.apercuToujoursOuvert) return { ouv: new Date(now.getTime() - 60000), fin: new Date(now.getTime() + 4 * 3600000), apercu: true };
+    if (R.apercuToujoursOuvert) return { ouv: new Date(now - 60000), fin: new Date(now + 4 * 3600000), apercu: true };
     return null;
   }
   function creneaux(f) {
-    var pas = R.pasCreneau || 15, t = new Date(Math.max(f.ouv.getTime(), Date.now() + dureeMin() * 60000)), l = [];
-    t.setSeconds(0, 0); t.setMinutes(Math.ceil(t.getMinutes() / pas) * pas);
+    var pas = (R.pasCreneau || 15) * 60000, l = [];
+    var t = new Date(Math.ceil(Math.max(f.ouv.getTime(), Date.now() + dureeMin() * 60000) / pas) * pas);
+    pas = pas / 60000;
     for (; t <= f.fin && l.length < 96; t = new Date(t.getTime() + pas * 60000)) l.push(t);
     return l;
   }
@@ -460,12 +470,11 @@
   function estimation() {
     var i = etat.infos, min = dureeMin();
     if (i.quand === 'plus-tard' && i.creneau) { var h = new Date(i.creneau); return { heure: h, minutes: Math.max(0, Math.round((h - Date.now()) / 60000)), programme: true }; }
-    var pas = R.pas || 5, t = new Date(Date.now() + min * 60000);
-    t.setSeconds(0, 0); t.setMinutes(Math.ceil(t.getMinutes() / pas) * pas);
+    var pas = (R.pas || 5) * 60000, t = new Date(Math.ceil((Date.now() + min * 60000) / pas) * pas);
     // Production : le serveur reserve ce creneau, ou le suivant s'il est plein.
     return { heure: t, minutes: Math.max(min, Math.round((t - Date.now()) / 60000)) };
   }
-  var hm = function (d) { return d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0'); };
+  var hm = function (d) { var q = partiesParis(d.getTime()); return q.hour + 'h' + String(q.minute).padStart(2, '0'); };
 
   /* --- Le paiement (simule dans l'apercu) --- */
   function rendrePaiement() {
@@ -503,7 +512,12 @@
       creneau: i.quand === 'plus-tard' ? i.creneau : null,
       lignes: etat.lignes.map(function (l) { return { id: l.id, choix: l.choix, qte: l.qte }; }) };
     var cle = JSON.stringify(demande);
-    var suite = PAIEMENT && PAIEMENT.cle === cle ? Promise.resolve(PAIEMENT.rep) : appel('ag-commande', demande).then(function (rep) { PAIEMENT = { cle: cle, rep: rep }; return rep; });
+    var suite = PAIEMENT && PAIEMENT.cle === cle ? Promise.resolve(PAIEMENT.rep) : appel('ag-commande', demande).then(function (rep) {
+      PAIEMENT = { cle: cle, rep: rep };
+      // Pour retrouver sa commande s'il ferme son telephone en plein paiement.
+      try { localStorage.setItem('anas-commande', JSON.stringify({ id: rep.commande.id, heure: rep.commande.heure_prevue })); } catch (x) {}
+      return rep;
+    });
     suite.then(function (rep) { return chargerStripe().then(function () { monter(rep); }); })
       .catch(function (e) { var z = $('[data-ps]'); if (z) z.innerHTML = ''; alertePaiement(e.message); });
   }
@@ -568,6 +582,8 @@
 
   /* ===================== 3. Commande payee ===================== */
   function confirmer(srv) {
+    // Le client vient de la voir en grand : pas de fenetre « VOTRE COMMANDE » s'il recharge tout de suite.
+    try { if (srv && srv.id) sessionStorage.setItem('anas-commande-vue', srv.id); } catch (x) {}
     var i = etat.infos, liv = i.mode === 'livraison';
     var e = srv ? { heure: new Date(srv.heure_prevue), minutes: Math.max(0, Math.round((new Date(srv.heure_prevue) - Date.now()) / 60000)), programme: !!srv.creneau } : estimation();
     var num = srv ? String(srv.numero) : 'AG-' + String(Math.floor(1000 + Math.random() * 9000));

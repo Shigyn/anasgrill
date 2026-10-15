@@ -23,7 +23,7 @@
   var session = lire('ag-cuisine', null);         // {jeton, snack}
   var APPLI = !!(window.LocWebImprimante && window.LocWebImprimante.version);
   // Par defaut : l'appli si on est dedans, sinon rien (on regarde seulement).
-  var reglage = lire('ag-cuisine-reglage', { impression: APPLI ? 'appli' : 'aucune', son: true, ip: '', port: 9100 });
+  var reglage = lire('ag-cuisine-reglage', { impression: APPLI ? 'a-choisir' : 'aucune', son: true, ip: '', port: 9100 });
   if (reglage.impression === 'rawbt') reglage.impression = APPLI ? 'appli' : 'aucune';
   var donnees = { commandes: [], snack: null, carte: [] };
   var imprimees = {};                               // deja envoyees cette session (evite les doublons)
@@ -57,11 +57,20 @@
       $('[data-code-err]').textContent = 'Vérification…';
       appel('connexion', { code: v }).then(function (j) {
         if (j.role !== 'cuisine') throw new Error('Ce code est celui du gérant : utilise la page Gérant.');
-        session = { jeton: j.jeton, snack: j.snack }; ecrire('ag-cuisine', session); demarrer();
+        confirmerSnack(j);
       }).catch(function (e) { $('[data-code-err]').textContent = e.message; c.select(); });
     });
   }
-  function deconnecter() { session = null; try { localStorage.removeItem('ag-cuisine'); } catch (e) {} if (canal) { client.removeChannel(canal); canal = null; } clearInterval(minuteur); ecranCode(); }
+  // Un employe qui tourne entre deux snacks ne doit pas se tromper de code.
+  function confirmerSnack(j) {
+    $('#app').innerHTML = '<div class="code"><div class="code-logo">' + document.querySelector('[data-logo]').innerHTML + '</div>' +
+      '<h1>' + esc(j.snack.nom) + '</h1><p>Tu es bien dans la cuisine d’<b>Anas Grill ' + esc(j.snack.nom) + '</b> ?</p>' +
+      '<button class="bouton bouton-feu" type="button" data-oui>Oui, c’est mon snack</button>' +
+      '<button class="bouton bouton-ligne" type="button" data-non>Non, retaper le code</button></div>';
+    $('[data-oui]').addEventListener('click', function () { session = { jeton: j.jeton, snack: j.snack }; ecrire('ag-cuisine', session); demarrer(); });
+    $('[data-non]').addEventListener('click', function () { ecranCode(); });
+  }
+  function deconnecter() { session = null; try { localStorage.removeItem('ag-cuisine'); } catch (e) {} if (canal) { client.removeChannel(canal); canal = null; } clearTimeout(minuteur); ecranCode(); }
 
   /* ---------------- l'ecran ---------------- */
   function demarrer() {
@@ -72,6 +81,7 @@
       '<button type="button" class="cu-bouton" data-pause>Pause</button>' +
       '<button type="button" class="cu-bouton" data-epuises>Plats épuisés</button>' +
       (APPLI ? '' : '<button type="button" class="cu-bouton cu-feu" data-installer>Installer l’appli</button>') +
+      '<button type="button" class="cu-bouton cu-feu" data-appliquer hidden>Mise à jour prête · appliquer</button>' +
       '<button type="button" class="cu-bouton cu-aide" data-aide>Aide</button>' +
       '<button type="button" class="cu-bouton cu-discret" data-reglages aria-label="Réglages">Réglages</button></header>' +
       '<p class="cu-alerte" data-alerte hidden></p>' +
@@ -80,8 +90,10 @@
       '<section class="cu-remises"><h2>Remises aujourd’hui <span data-n-remise></span></h2><div data-col="remise"></div></section></main>' +
       '<div class="cu-voile" data-voile hidden></div><div class="cu-panneau" data-panneau hidden></div>';
     rafraichir();
-    clearInterval(minuteur); minuteur = setInterval(rafraichir, 60000); // signe de vie + filet de securite
-    if (APPLI && window.LocWebImprimante.chercher && !reglage.ip) setTimeout(function () { panneauRecherche(); }, 800);
+    boucle(); // signe de vie + filet de securite
+    clearInterval(minuteurVersion); minuteurVersion = setInterval(verifierPage, 30 * 60000);
+    if (reglage.impression === 'a-choisir') setTimeout(panneauRole, 600);
+    else if (APPLI && principale() && window.LocWebImprimante.chercher && !reglage.ip) setTimeout(function () { panneauRecherche(); }, 800);
     ecouter();
     garderEcranAllume();
   }
@@ -93,11 +105,29 @@
     if (canal) client.removeChannel(canal);
     canal = client.channel('ag-cuisine-' + donnees.snack.canal)
       .on('broadcast', { event: 'commande' }, function () { rafraichir(); })
-      .subscribe(function (st) { horsLigne = st !== 'SUBSCRIBED'; majEtat(); if (st === 'SUBSCRIBED') rafraichir(); });
+      .subscribe(function (st) { canalOk = st === 'SUBSCRIBED'; horsLigne = !canalOk; majEtat(); if (canalOk) rafraichir(); boucle(); });
   }
 
+  // Quota Supabase (il doit tenir 100 clients) : le direct (Realtime) apporte les
+  // commandes et ne compte pas dans les appels. L'appel regulier n'est qu'un
+  // signe de vie, et SEULE la tablette principale (celle qui imprime) le fait :
+  // 5 min quand le direct marche, 1 min sinon. Un telephone ou un ordi qui
+  // regarde ne fait aucun appel regulier ; une page cachee non plus.
+  var canalOk = false, minuteurVersion = null;
+  function principale() { return reglage.impression === 'appli' || reglage.impression === 'navigateur'; }
+  function boucle() {
+    clearTimeout(minuteur);
+    var delai = principale() ? (canalOk && !horsLigne ? 5 * 60000 : 60000) : (canalOk ? 0 : 2 * 60000);
+    if (!delai) return;
+    minuteur = setTimeout(function () {
+      if (document.hidden && !principale()) { boucle(); return; }
+      rafraichir().then(boucle, boucle);
+    }, delai);
+  }
+  // On rouvre la page (telephone sorti de la poche) : une mise a jour, une seule.
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && session && donnees.snack) rafraichir(); });
   function rafraichir() {
-    return appel('commandes').then(function (j) {
+    return appel('commandes', { principal: principale() }).then(function (j) {
       var avant = {}; donnees.commandes.forEach(function (c) { avant[c.id] = 1; });
       var premiere = !donnees.snack;
       donnees = j; horsLigne = false;
@@ -118,7 +148,7 @@
     var a = $('[data-alerte]');
     var nonImp = donnees.commandes.filter(function (c) { return !c.imprimee_le && c.statut === 'recue'; }).length;
     var t = horsLigne ? 'Connexion perdue : les commandes arrivent quand même, elles s’afficheront au retour du réseau.' + (msg ? ' (' + msg + ')' : '')
-      : nonImp ? nonImp + ' ticket' + (nonImp > 1 ? 's' : '') + ' non imprimé' + (nonImp > 1 ? 's' : '') + ' : vérifie l’imprimante (papier, câble), puis « Réimprimer ».' : '';
+      : nonImp ? (alerteImp || nonImp + ' ticket' + (nonImp > 1 ? 's' : '') + ' non imprimé' + (nonImp > 1 ? 's' : '') + ' : vérifie l’imprimante (papier, câble), puis « Réimprimer ».') : '';
     a.hidden = !t; a.textContent = t;
   }
 
@@ -143,23 +173,36 @@
       '<div class="cu-actions">' +
         (c.statut === 'recue' ? '<button type="button" class="cu-bouton cu-feu" data-statut="prete">Prête</button>' : '') +
         (c.statut === 'prete' ? '<button type="button" class="cu-bouton cu-feu" data-statut="remise">Remise au client</button><button type="button" class="cu-bouton cu-discret" data-statut="recue">Pas prête</button>' : '') +
+        (c.statut === 'remise' ? '<button type="button" class="cu-bouton cu-discret" data-statut="prete">Pas encore remise</button>' : '') +
         '<button type="button" class="cu-bouton cu-discret" data-reimprimer>' + (c.imprimee_le ? 'Réimprimer' : 'Imprimer') + '</button>' +
         '<span class="cu-total">' + euros(c.total_cents) + '</span></div></article>';
   }
 
   /* ---------------- l'impression ---------------- */
   function imprimerEnAttente() {
-    if (reglage.impression === 'aucune') return;
+    if (!principale()) return;
     donnees.commandes.filter(function (c) { return c.statut === 'recue' && !c.imprimee_le && !imprimees[c.id] && c.paiement !== 'remboursee'; })
       .forEach(function (c, n) { setTimeout(function () { imprimer(c); }, n * 1500); });
   }
-  function imprimer(c) {
+  // Automatique : la tablette « prend » d'abord la commande au serveur ; si un autre
+  // appareil l'a deja prise, elle n'imprime pas (jamais de ticket en double).
+  // Reimprimer (force) : imprime tout de suite, sans prendre.
+  function imprimer(c, force) {
+    if (!principale() && !force) return;
     imprimees[c.id] = true;
-    var ok = reglage.impression === 'appli' ? viaAppli(c) : viaNavigateur(c);
-    Promise.resolve(ok).then(function (fait) {
-      if (fait === false) { imprimees[c.id] = false; majEtat(); return; }
-      appel('imprimee', { id: c.id }).then(function () { c.imprimee_le = new Date().toISOString(); afficher(); }).catch(function () {});
-    });
+    (force ? Promise.resolve({ pris: true }) : appel('prendre', { id: c.id })).then(function (r) {
+      if (!r.pris) { c.imprimee_le = c.imprimee_le || new Date().toISOString(); afficher(); return; }
+      var fait = reglage.impression === 'appli' ? viaAppli(c) : viaNavigateur(c);
+      if (fait === true) {
+        c.imprimee_le = new Date().toISOString();
+        if (force) appel('imprimee', { id: c.id }).catch(function () {});
+        if (!donnees.commandes.some(function (x) { return x.statut === 'recue' && !x.imprimee_le; })) alerteImp = '';
+        afficher(); return;
+      }
+      imprimees[c.id] = false; c.imprimee_le = null;
+      if (!force) appel('liberer', { id: c.id }).catch(function () {});
+      afficher();
+    }).catch(function () { imprimees[c.id] = false; });
   }
 
   // Le ticket en texte (80 mm = 48 caracteres), avec quelques commandes ESC/POS.
@@ -184,8 +227,21 @@
     if (!APPLI) return false;
     if (!reglage.ip) { majEtat(); alerteImpression('Indique l’adresse de l’imprimante dans Réglages.'); return false; }
     var r = window.LocWebImprimante.imprimer(reglage.ip, +reglage.port || 9100, btoa(ticketTexte(c)));
-    if (r !== 'ok') { alerteImpression(r); return false; }
-    return true;
+    if (r === 'ok') return true;
+    if (r === 'papier') alerteImpression('Plus de papier dans l’imprimante : change la bobine, puis touche « Réimprimer » sur les commandes en rouge.');
+    else if (r === 'papier-fin') alerteImpression('La bobine s’est terminée pendant le ticket N° ' + c.numero + ' : change-la, puis touche « Réimprimer ».');
+    else if (r === 'capot') alerteImpression('Le capot de l’imprimante est ouvert : referme-le, puis touche « Réimprimer ».');
+    else { alerteImpression('L’imprimante ne répond pas (éteinte, câble, ou nouvelle adresse).'); retrouverImprimante(); }
+    return false;
+  }
+  // L'imprimante ne repond plus (la box a pu lui donner une nouvelle adresse) :
+  // on relance la recherche, avec la preuve du ticket numerote. Au plus une fois
+  // toutes les 10 minutes, et jamais par-dessus une autre fenetre.
+  var dernierScan = 0;
+  function retrouverImprimante() {
+    if (!window.LocWebImprimante.chercher || Date.now() - dernierScan < 10 * 60000 || !$('[data-panneau]').hidden) return;
+    dernierScan = Date.now();
+    panneauRecherche();
   }
   /* Trouver la bonne imprimante (appli Android) :
      1. l'appli scanne le reseau et ne garde que les imprimantes a tickets
@@ -237,6 +293,15 @@
     };
     window.LocWebImprimante.verifierMiseAJour('__agMaj');
   }
+  // La page elle-meme : si LocWeb publie une nouvelle version, elle se recharge
+  // toute seule HORS service ; pendant le service, un bouton discret la propose.
+  function verifierPage() {
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.v || j.v === window.AG_V) return;
+      if (!enService()) { location.reload(); return; }
+      var b = $('[data-appliquer]'); if (b) b.hidden = false;
+    }).catch(function () {});
+  }
   // Une seule verification par 24 h, au lancement de l'appli, et JAMAIS pendant le
   // service : relancee en plein rush (apres une coupure), la tablette ne propose rien.
   function enService() {
@@ -262,7 +327,8 @@
       ? '<h2>Appli mise à jour ✓</h2><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-fermer>OK</button></div>'
       : '<h2>La mise à jour n’a pas abouti</h2><p>' + esc(m) + '</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-maj-go>Réessayer</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
   };
-  function alerteImpression(t) { var a = $('[data-alerte]'); if (a) { a.hidden = false; a.textContent = t; } }
+  var alerteImp = '';
+  function alerteImpression(t) { alerteImp = t; var a = $('[data-alerte]'); if (a) { a.hidden = false; a.textContent = t; } }
   function viaNavigateur(c) {
     var f = document.createElement('iframe'); f.className = 'cu-iframe'; document.body.appendChild(f);
     var d = f.contentDocument;
@@ -279,6 +345,7 @@
   var audio = null;
   function sonner() {
     if (!reglage.son) return;
+    if (APPLI && window.LocWebImprimante.volumeMax) window.LocWebImprimante.volumeMax();
     try {
       audio = audio || new (window.AudioContext || window.webkitAudioContext)();
       [0, .28, .56].forEach(function (t) {
@@ -356,9 +423,17 @@
       '<button type="button" class="cu-bouton cu-discret" data-fermer>Fermer</button></div>');
   }
 
+  // Le telephone du patron ne doit pas se prendre pour la tablette de la cuisine.
+  function panneauRole() {
+    panneau('<h2>Cet appareil, c’est…</h2><div class="cu-plats cu-roles">' +
+      '<button type="button" class="cu-plat cu-role" data-role="appli"><b>La tablette de la cuisine</b><small>Elle imprime les tickets. Une seule par snack.</small></button>' +
+      '<button type="button" class="cu-plat cu-role" data-role="aucune"><b>Un autre appareil</b><small>Le téléphone du patron, un ordi… Il regarde seulement, il n’imprime rien.</small></button>' +
+      '</div><p>Tu pourras changer plus tard dans Réglages.</p>');
+  }
+
   function panneauReglages() {
     panneau('<h2>Réglages de la tablette</h2><label class="cu-choix"><span>Impression</span><select data-imp>' +
-      (APPLI ? [['appli', 'Appli (imprimante réseau)']] : []).concat([['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']]).map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+      (APPLI ? [['appli', 'Cet appareil imprime (tablette principale)']] : []).concat([['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune : cet appareil regarde seulement']]).map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
       '</select></label>' +
       (APPLI ? '<label class="cu-choix"><span>Adresse de l’imprimante</span><input data-ip inputmode="decimal" placeholder="192.168.1.87" value="' + esc(reglage.ip) + '"></label>' +
         (window.LocWebImprimante.chercher ? '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Chercher l’imprimante</button></div>' : '') : '') +
@@ -375,6 +450,15 @@
     if (t.closest('[data-reglages]')) { panneauReglages(); return; }
     if (t.closest('[data-aide]')) { panneauAide(); return; }
     if (t.closest('[data-installer]')) { panneauInstaller(); return; }
+    var ro = t.closest('[data-role]');
+    if (ro) {
+      reglage.impression = ro.getAttribute('data-role'); ecrire('ag-cuisine-reglage', reglage);
+      fermerPanneau(); boucle();
+      if (principale() && window.LocWebImprimante && window.LocWebImprimante.chercher && !reglage.ip) panneauRecherche();
+      else if (principale()) imprimerEnAttente();
+      return;
+    }
+    if (t.closest('[data-appliquer]')) { location.reload(); return; }
     if (t.closest('[data-maj-go]')) {
       if (!DERNIERE || !DERNIERE.url) { verifierMaj(true); return; }
       panneau('<h2>Mise à jour en cours…</h2><span class="cu-attente" aria-hidden="true"></span><p>Téléchargement de la nouvelle version. Android va te demander de confirmer : touche <b>Mettre à jour</b>.</p>');
@@ -412,7 +496,7 @@
     var c = donnees.commandes.filter(function (x) { return x.id === art.getAttribute('data-id'); })[0];
     var st = t.closest('[data-statut]');
     if (st) { var nv = st.getAttribute('data-statut'); appel('statut', { id: c.id, statut: nv }).then(function () { c.statut = nv; afficher(); }); return; }
-    if (t.closest('[data-reimprimer]')) { imprimees[c.id] = false; imprimer(c); }
+    if (t.closest('[data-reimprimer]')) { imprimees[c.id] = false; imprimer(c, true); }
   });
   document.addEventListener('change', function (e) {
     if (e.target.matches('[data-imp]')) { reglage.impression = e.target.value; ecrire('ag-cuisine-reglage', reglage); }
