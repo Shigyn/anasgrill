@@ -82,6 +82,7 @@
     rafraichir();
     clearInterval(minuteur); minuteur = setInterval(rafraichir, 60000); // signe de vie + filet de securite
     if (APPLI && window.LocWebImprimante.chercher && !reglage.ip) setTimeout(function () { panneauRecherche(); }, 800);
+    if (MAJ) { verifierMaj(); setInterval(verifierMaj, 6 * 3600000); }
     ecouter();
     garderEcranAllume();
   }
@@ -225,6 +226,29 @@
     };
     try { window.LocWebImprimante.chercher('__agImprimantes'); } catch (e) { panneau('<h2>Recherche impossible</h2><p>' + esc(e.message) + '</p><div class="cu-actions"><button type="button" class="cu-bouton" data-fermer>Fermer</button></div>'); }
   }
+  /* La mise a jour de l'appli : elle regarde s'il existe une nouvelle version
+     (releases GitHub du depot des applis), et l'installe elle-meme apres un
+     toucher. Android demande seulement de confirmer « Mettre a jour ». */
+  var MAJ = APPLI && !!window.LocWebImprimante.verifierMiseAJour, DERNIERE = null;
+  function verifierMaj(manuel) {
+    window.__agMaj = function (r) {
+      DERNIERE = r;
+      if (r.disponible) proposerMaj();
+      else if (manuel) alert(r.erreur ? 'Vérification impossible : ' + r.erreur : 'L’appli est à jour (version ' + r.actuelle + ').');
+    };
+    window.LocWebImprimante.verifierMiseAJour('__agMaj');
+  }
+  // La fenetre « Nouvelle version » ; si une autre fenetre est ouverte, elle attend son tour.
+  function proposerMaj() {
+    if (!$('[data-panneau]').hidden) { setTimeout(proposerMaj, 30000); return; }
+    panneau('<h2>Nouvelle version de l’appli</h2><p>Une mise à jour de l’appli de la cuisine est disponible. Elle s’installe en quelques secondes ; Android te demandera juste de confirmer.</p>' +
+      '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-maj-go>Mettre à jour</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
+  }
+  window.__agMajEtat = function (m) {
+    panneau(m === 'ok'
+      ? '<h2>Appli mise à jour ✓</h2><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-fermer>OK</button></div>'
+      : '<h2>La mise à jour n’a pas abouti</h2><p>' + esc(m) + '</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-maj-go>Réessayer</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
+  };
   function alerteImpression(t) { var a = $('[data-alerte]'); if (a) { a.hidden = false; a.textContent = t; } }
   function viaRawBT(c) {
     // RawBT (Android) recoit le ticket par un lien « intent » et l'imprime sans fenetre.
@@ -337,6 +361,7 @@
       (APPLI ? '<label class="cu-choix"><span>Adresse de l’imprimante</span><input data-ip inputmode="decimal" placeholder="192.168.1.87" value="' + esc(reglage.ip) + '"></label>' +
         (window.LocWebImprimante.chercher ? '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Chercher l’imprimante</button></div>' : '') : '') +
       '<label class="cu-choix"><span>Sonnerie</span><input type="checkbox" data-son' + (reglage.son ? ' checked' : '') + '></label>' +
+      (MAJ ? '<div class="cu-choix"><span>Version de l’appli : ' + window.LocWebImprimante.versionAppli() + '</span><button type="button" class="cu-bouton" data-maj-verifier>Vérifier les mises à jour</button></div>' : '') +
       '<div class="cu-actions"><button type="button" class="cu-bouton" data-test-imp>Ticket de test</button><button type="button" class="cu-bouton" data-test-son>Tester le son</button></div>' +
       '<div class="cu-actions"><button type="button" class="cu-bouton cu-discret" data-deco>Se déconnecter</button><button type="button" class="cu-bouton" data-fermer>Fermer</button></div>');
   }
@@ -348,6 +373,13 @@
     if (t.closest('[data-reglages]')) { panneauReglages(); return; }
     if (t.closest('[data-aide]')) { panneauAide(); return; }
     if (t.closest('[data-installer]')) { panneauInstaller(); return; }
+    if (t.closest('[data-maj-go]')) {
+      if (!DERNIERE || !DERNIERE.url) { verifierMaj(true); return; }
+      panneau('<h2>Mise à jour en cours…</h2><span class="cu-attente" aria-hidden="true"></span><p>Téléchargement de la nouvelle version. Android va te demander de confirmer : touche <b>Mettre à jour</b>.</p>');
+      window.LocWebImprimante.mettreAJour(DERNIERE.url);
+      return;
+    }
+    if (t.closest('[data-maj-verifier]')) { fermerPanneau(); verifierMaj(true); return; }
     var cp = t.closest('[data-copier-lien]');
     if (cp) { try { navigator.clipboard.writeText(APK); cp.textContent = 'Lien copié ✓'; } catch (x) { prompt('Lien de l’appli :', APK); } return; }
     if (t.closest('[data-chercher]')) { panneauRecherche(); return; }
