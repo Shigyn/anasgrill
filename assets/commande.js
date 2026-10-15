@@ -76,9 +76,13 @@
     var b = e.target.closest('[data-plat]'); if (!b) return;
     ouvrirFiche(PLATS[b.getAttribute('data-plat')]);
   });
+  // « Comprise dans le maxi » : la 2e viande ne coute rien et devient obligatoire.
+  function inclus(g) { return !!(g.inclusSi && (enCours.choix[g.inclusSi.groupe] || [])[0] === g.inclusSi.option); }
+  function minDe(g) { return inclus(g) ? 1 : g.min; }
   function prixFiche() {
     var i = enCours.plat, p = i.p;
     (i.groupes || []).forEach(function (g) {
+      if (inclus(g)) return;
       (enCours.choix[g.id] || []).forEach(function (n) { var o = g.options.filter(function (x) { return x.n === n; })[0]; if (o) p += o.p; });
     });
     return p;
@@ -92,7 +96,8 @@
     feuille.innerHTML =
       '<div class="feuille-tete">' + (i.photo ? '<img src="../photos/' + i.photo + '.webp" alt="">' : '') +
       '<button type="button" class="feuille-fermer" data-fermer-fiche aria-label="Fermer">×</button></div>' +
-      '<div class="feuille-corps"><h3 id="feuille-titre">' + esc(i.n) + '</h3>' + (i.d ? '<p class="feuille-desc">' + esc(i.d) + '</p>' : '') +
+      '<div class="feuille-corps"><div class="feuille-titre-ligne"><h3 id="feuille-titre">' + esc(i.n) + '</h3>' +
+      (i.allergenes ? '<button type="button" class="allerg-btn" data-allergenes aria-haspopup="dialog">Allergènes</button>' : '') + '</div>' + (i.d ? '<p class="feuille-desc">' + esc(i.d) + '</p>' : '') +
       parties(i.groupes, function (g) {
         if (g.type === 'info') return '<p class="partie-info">' + esc(g.texte) + '</p>';
         if (g.type === 'retirer') {
@@ -142,6 +147,16 @@
     var pf = $('[data-prix-fiche]', feuille); if (pf) pf.textContent = euros(prixFiche() * enCours.qte);
     $('[data-q-n]', feuille).textContent = enCours.qte;
     enCours.plat.groupes.forEach(function (g) {
+      if (g.inclusSi) {
+        var fi = feuille.querySelector('[data-groupe="' + g.id + '"]'), inc = inclus(g);
+        fi.querySelector('legend small').textContent = inc ? 'Comprise dans le maxi · obligatoire' : 'Facultatif';
+        fi.querySelector('legend b').textContent = inc ? '2e viande' : g.titre;
+        fi.querySelectorAll('.option').forEach(function (l) {
+          var em = l.querySelector('em'); if (em) em.textContent = inc ? 'incluse' : '+2,50 €';
+          if (l.querySelector('input').value === 'Sans') l.hidden = inc;
+        });
+        var sans = fi.querySelector('input[value="Sans"]'); if (sans && !(enCours.choix[g.id] || []).length) sans.checked = !inc;
+      }
       if (g.type === 'sauces') {
         var ch = enCours.choix[g.id] || [], f = feuille.querySelector('[data-groupe="' + g.id + '"]');
         f.querySelector('[data-sauce-resume]').textContent = ch.length ? fmtSauces(ch) : 'Choisir · ' + g.aide;
@@ -174,6 +189,8 @@
   }
   feuille.addEventListener('click', function (e) {
     if (e.target.closest('[data-fermer-fiche]')) { cacher(feuille); return; }
+    if (e.target.closest('[data-allergenes]')) { allergenes(enCours.plat); return; }
+    if (e.target.closest('[data-allerg-fermer]') || e.target.classList.contains('allerg-pop')) { var ap = feuille.querySelector('.allerg-pop'); if (ap) ap.remove(); return; }
     var so = e.target.closest('[data-sauce-ouvrir]');
     if (so) { ouvrirSauces(so.closest('[data-sauces]'), so.getAttribute('aria-expanded') !== 'true'); return; }
     var sb = e.target.closest('[data-sauce]');
@@ -193,12 +210,20 @@
     var q = e.target.closest('[data-q]');
     if (q) { enCours.qte = Math.max(1, Math.min(20, enCours.qte + +q.getAttribute('data-q'))); majFiche(); return; }
     if (e.target.closest('[data-ajouter-fiche]')) {
-      var manque = enCours.plat.groupes.filter(function (g) { return (enCours.choix[g.id] || []).length < g.min; })[0];
-      if (manque) { toast('Choisis : ' + manque.titre.toLowerCase()); return; }
+      var manque = enCours.plat.groupes.filter(function (g) { return (enCours.choix[g.id] || []).length < minDe(g); })[0];
+      if (manque) { toast('Choisis : ' + manque.titre.replace(/\s*\?$/, '').toLowerCase()); return; }
       ajouter(enCours.plat, enCours.choix, enCours.qte, prixFiche()); cacher(feuille);
     }
   });
 
+  function allergenes(i) {
+    var a = i.allergenes, li = function (l) { return '<ul>' + l.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; };
+    var d = document.createElement('div'); d.className = 'allerg-pop';
+    d.innerHTML = '<div class="allerg-boite" role="dialog" aria-modal="true" aria-label="Allergènes"><button type="button" class="feuille-fermer" data-allerg-fermer aria-label="Fermer">×</button>' +
+      '<h4>Allergènes · ' + esc(i.n) + '</h4><b>Contient</b>' + li(a.contient) + '<b>Peut contenir</b>' + li(a.peut) +
+      '<p>Une allergie ? Appelle le restaurant avant de commander : <a href="tel:' + SNACK.tel.replace(/\s/g, '') + '">' + esc(SNACK.tel) + '</a>.</p></div>';
+    feuille.appendChild(d); d.querySelector('[data-allerg-fermer]').focus();
+  }
   function resume(i, choix) {
     var bouts = {}, ordre = [];
     (i.groupes || []).forEach(function (g) {
@@ -212,7 +237,7 @@
       if (g.type === 'retirer') return (choix[g.id] || []).map(function (n) { return 'sans ' + n.toLowerCase(); }).join(', ');
       if (g.type === 'sauces') return (choix[g.id] || []).length ? 'sauce ' + fmtSauces(choix[g.id]).toLowerCase() : '';
       if (g.prefixe) return (choix[g.id] || []).length ? g.prefixe + choix[g.id].join(', ').toLowerCase() : '';
-      var c = (choix[g.id] || []).filter(function (n) { return !/^Seul$|^Normal$/.test(n); });
+      var c = (choix[g.id] || []).filter(function (n) { return !/^Seul$|^Normal/.test(n); });
       return c.length ? c.join(', ') : '';
     }).filter(Boolean).join(' · ');
   }
@@ -277,7 +302,7 @@
       '<div class="segment" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode" value="emporter"' + (!liv ? ' checked' : '') + '><span>À emporter</span></label><label><input type="radio" name="mode" value="livraison"' + (liv ? ' checked' : '') + '><span>En livraison</span></label></div>' +
       (liv ? '<label class="champ champ-adresse"><span>Adresse de livraison</span><input name="adresse" autocomplete="off" placeholder="Numéro et rue, ville" value="' + esc(i.adresse) + '" data-adr-champ><ul class="suggestions" data-adr-sugg hidden></ul></label>' +
         '<label class="champ"><span>Étage, code, interphone <small>(facultatif)</small></span><input name="complement" value="' + esc(i.complement) + '"></label>' +
-        '<p class="info-zone" data-zone></p>' : '<p class="info-zone ok">À retirer chez Anas Grill ' + esc(SNACK.nom) + ', ' + esc(SNACK.adresse) + '.</p>') +
+        '<p class="info-zone" data-zone></p>' + (total() < (R.minimumLivraison || 0) ? '<p class="info-zone attention">Livraison à partir de ' + euros(R.minimumLivraison) + ' : il te manque ' + euros(R.minimumLivraison - total()) + '.</p>' : '') : '<p class="info-zone ok">À retirer chez Anas Grill ' + esc(SNACK.nom) + ', ' + esc(SNACK.adresse) + '.</p>') +
       '<label class="champ"><span>Prénom</span><input name="prenom" autocomplete="given-name" value="' + esc(i.prenom) + '" required></label>' +
       '<label class="champ"><span>Téléphone <small>' + (liv ? '(le livreur t’appelle à son arrivée)' : '(si la cuisine a besoin de te joindre)') + '</small></span><input name="tel" type="tel" inputmode="tel" autocomplete="tel" value="' + esc(i.tel) + '" required></label>' +
       '<label class="champ"><span>Un mot pour la cuisine <small>(facultatif)</small></span><input name="note" placeholder="Sans oignons, allergie…" value="' + esc(i.note) + '"></label>' +
@@ -330,6 +355,7 @@
     if (i.mode === 'livraison') {
       if (i.lat == null) err = 'Choisis ton adresse dans la liste proposée.';
       else if (distanceKm(i.lat, i.lng) > SNACK.rayonKm) err = 'Cette adresse est hors de la zone de livraison de ce restaurant.';
+      else if (total() < (R.minimumLivraison || 0)) err = 'La livraison, c’est à partir de ' + euros(R.minimumLivraison) + ' de commande : il te manque ' + euros(R.minimumLivraison - total()) + '. Ajoute un plat, ou passe à emporter.';
     }
     if (!err && (i.prenom || '').length < 2) err = 'Indique ton prénom.';
     if (!err && (i.tel || '').replace(/\D/g, '').length < 10) err = 'Indique un numéro de téléphone valide : on t’appelle si besoin.';

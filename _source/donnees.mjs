@@ -8,6 +8,9 @@
 // ===================================================================
 
 // rayonKm : rayon de livraison par defaut, a fixer avec le client.
+// Horaires : ceux releves au fetch du 14/10 (Google, Eat-List). Nicolas :
+// « met ce qu'on a trouve, si pas bon on changera ». Les autres : a venir.
+const HORAIRES = { 'vaulx-en-velin': '18 h – 4 h', 'lyon-8': '11 h – 2 h', 'bourgoin-jallieu': '11 h – 22 h', 'pont-de-cheruy': '12 h – 23 h' };
 export const SNACKS = [
   { id: 'lyon-8', nom: 'Lyon 8', ville: 'Lyon 8e', adresse: '95 rue Villon, 69008 Lyon', tel: '07 53 59 38 91', lat: 45.7372664, lng: 4.8625766, note: '4,5', avis: 306 },
   { id: 'charpennes', nom: 'Charpennes', ville: 'Villeurbanne', adresse: '3 rue d’Inkermann, 69100 Villeurbanne', tel: '07 54 87 93 04', lat: 45.7704796, lng: 4.8659924, note: '4,6', avis: 161 },
@@ -17,7 +20,7 @@ export const SNACKS = [
   { id: 'venissieux', nom: 'Vénissieux', ville: 'Vénissieux', adresse: '61 boulevard Laurent Gérin, 69200 Vénissieux', tel: '07 53 91 82 47', lat: 45.7010038, lng: 4.8838309, note: '4,7', avis: 34 },
   { id: 'pont-de-cheruy', nom: 'Pont-de-Chéruy', ville: 'Pont-de-Chéruy', adresse: '42 rue Grammont, 38230 Pont-de-Chéruy', tel: '04 87 83 02 90', lat: 45.750686, lng: 5.170642, note: null, avis: 0 },
   { id: 'bourgoin-jallieu', nom: 'Bourgoin-Jallieu', ville: 'Bourgoin-Jallieu', adresse: '49 avenue Gambetta, 38300 Bourgoin-Jallieu', tel: '07 75 43 84 16', lat: 45.5886073, lng: 5.2727873, note: '4,6', avis: 246 },
-].map((s) => ({ rayonKm: 5, ...s }));
+].map((s) => ({ rayonKm: 5, horaires: HORAIRES[s.id] || null, ...s }));
 
 /* ---------------- les groupes d'options, partages ---------------- */
 const VIANDES = ['Steak', 'Merguez', 'Escalope', 'Tandoori', 'Curry', 'Tenders', 'Cordon bleu', 'Kebab'];
@@ -42,7 +45,9 @@ const G = {
   menu: { id: 'menu', titre: 'En menu ?', min: 1, max: 1, options: o([['Seul', 0], ['En menu (frites + boisson)', 3], ['En menu, frites cheddar', 4]]) },
   // « Viande en plus » du panneau (+2,50 €), mais en disant laquelle (Nicolas, 2026-10-15). Prix a confirmer.
   viande2: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])) },
-  maxi: { id: 'taille', titre: 'Taille', min: 1, max: 1, options: o([['Normal', 0], ['Maxi tacos', 3]]) },
+  maxi: { id: 'taille', titre: 'Taille', min: 1, max: 1, options: o([['Normal (1 viande)', 0], ['Maxi (2 viandes)', 3]]) },
+  // Dans le maxi, la 2e viande est comprise : obligatoire et sans supplement.
+  viande2Tacos: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])), inclusSi: { groupe: 'taille', option: 'Maxi (2 viandes)' } },
 };
 
 /* ---------------- la carte ---------------- */
@@ -75,7 +80,7 @@ export const CARTE = [
     id: 'composer', nom: 'À composer', intro: 'Choisis ta viande, tes sauces et tes suppléments. En menu avec frites et boisson : 3 € de plus, et 1 € pour passer aux frites cheddar.',
     items: [
       { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Garni de la viande de ton choix, avec tes sauces préférées.', groupes: [G.viandeSandwich, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratinage, G.menu] },
-      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', groupes: [G.viande, G.viande2, G.maxi, G.sauces, G.supplements, G.menu] },
+      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', groupes: [G.viande, G.maxi, G.viande2Tacos, G.sauces, G.supplements, G.menu] },
       { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'La viande de ton choix et tes sauces, roulées dans une galette.', groupes: [G.viande, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.menu] },
     ],
   },
@@ -133,7 +138,7 @@ const SAUCES_G = (max) => ({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'T
 for (const c of CARTE) for (const i of c.items) {
   const autres = (i.groupes || []).filter((g) => g.type !== 'retirer' && g.id !== 'sauces');
   const saucesAvant = (i.groupes || []).find((g) => g.id === 'sauces');
-  const requis = autres.filter((g) => (g.min >= 1 || g.id === 'viande2') && g.id !== 'menu' && g.id !== 'taille');
+  const requis = autres.filter((g) => (g.min >= 1 || g.id === 'viande2') && g.id !== 'menu');
   const reste = autres.filter((g) => !requis.includes(g));
   i.groupes = [...requis, ...((PERSO[i.id] || []).length ? [sans(...PERSO[i.id])] : []), SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2), ...reste];
 }
@@ -169,4 +174,21 @@ for (const c of CARTE) for (const i of c.items) {
       ...(p.sauces === 0 ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
     ];
   });
+}
+
+/* ---------------- les allergenes (Nicolas, 2026-10-15) ----------------
+   Un bouton « Allergenes » sur chaque fiche. Deduits de la composition
+   connue (pain, fromages, poisson) ; les sauces apportent souvent oeufs et
+   moutarde. INDICATIF : le client verifie plat par plat (cahier). */
+const FROMAGES = /cheddar|gruy|kiri|raclette|chèvre|fromage|cheese|croc|mozza|emmental/i;
+const PAIN_BURGER = /burger|brioch|cheese|smash|house|anas grill|240/i;
+for (const c of CARTE) for (const i of c.items) {
+  const texte = [i.n, i.d || '', ...(i.groupes || []).flatMap((g) => (g.type === 'retirer' ? g.options.map((x) => x.n) : []))].join(' ');
+  const contient = ['Gluten (pain, galette, panure)'];
+  if (FROMAGES.test(texte) || c.id.startsWith('formules')) contient.push('Lait (fromages' + (c.id.startsWith('formules') ? ', frites cheddar gruyère' : '') + ')');
+  if (/fish|poisson/i.test(texte)) contient.push('Poisson');
+  const peut = ['Œufs et moutarde (selon la sauce choisie)'];
+  if (PAIN_BURGER.test(texte)) peut.push('Sésame (pain à burger)');
+  if (!FROMAGES.test(texte) && !c.id.startsWith('formules')) peut.push('Lait (si tu ajoutes du fromage ou une sauce gruyère)');
+  i.allergenes = { contient, peut };
 }

@@ -700,3 +700,18 @@ body::after { content: ''; position: fixed; inset: 0; z-index: -2; pointer-event
 @media (max-width: 760px) { body::after { background-image: url("../photos/fond-grill-mobile.webp"); background-position: center 60%; } }
 /* Un cran plus visible (Nicolas, 2026-10-15). */
 body::after { opacity: .22; }
+
+/* --- Reponses de Nicolas du 15/10 : horaires, allergenes, minimum livraison --- */
+.resto-horaires { font: 600 .8rem/1 var(--etroite); letter-spacing: .06em; text-transform: uppercase; color: var(--jaune); margin-top: 2px; }
+.info-zone.attention { color: var(--jaune); border-color: rgba(255, 190, 40, .35); }
+.feuille-titre-ligne { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.allerg-btn { flex: none; margin-top: 4px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--ligne-forte); background: transparent; color: var(--doux); font: 600 .78rem/1 var(--etroite); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.allerg-btn:hover, .allerg-btn:focus-visible { color: var(--jaune); border-color: var(--orange); }
+.allerg-pop { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(5, 5, 6, .72); animation: deplie .2s ease-out; }
+.allerg-boite { position: relative; width: min(100%, 380px); padding: 22px 20px 18px; border-radius: 18px; background: #18160f; border: 1px solid rgba(255, 160, 60, .3); box-shadow: 0 24px 60px rgba(0, 0, 0, .6); }
+.allerg-boite h4 { margin: 0 34px 12px 0; font: 400 1.3rem/1.1 var(--titre); text-transform: uppercase; color: var(--texte); }
+.allerg-boite b { display: block; margin-top: 10px; font: 700 .78rem/1 var(--etroite); letter-spacing: .12em; text-transform: uppercase; color: var(--orange); }
+.allerg-boite ul { margin: 6px 0 0; padding-left: 18px; color: var(--texte); font-size: .92rem; line-height: 1.5; }
+.allerg-boite p { margin: 14px 0 0; font-size: .84rem; color: var(--doux); }
+.allerg-boite p a { color: var(--jaune); font-weight: 600; }
+.allerg-boite .feuille-fermer { position: absolute; top: 10px; right: 10px; }

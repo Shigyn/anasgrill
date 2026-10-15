@@ -19,9 +19,9 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '28';
+const V = '29';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
-const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, paiement: PROD ? 'stripe' : 'simule' };
+const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, minimumLivraison: 20, paiement: PROD ? 'stripe' : 'simule' };
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const abs = (ch) => URL_SITE + ch;
@@ -182,6 +182,7 @@ PAGES.push(['', {
             <small>Anas Grill</small>
             <b>${esc(s.nom)}</b>
             <span class="resto-adresse">${esc(s.adresse)}</span>
+            ${s.horaires ? `<span class="resto-horaires">Ouvert ${esc(s.horaires)}</span>` : ''}
             <span class="resto-bas">${s.note ? `<span class="snack-note">${I.etoile}${s.note}<em>(${s.avis})</em></span>` : '<span class="snack-note snack-nouveau">Nouveau</span>'}<span class="snack-distance" data-distance></span><span class="resto-go">Commander ${I.fleche}</span></span>
           </span>
         </a>
