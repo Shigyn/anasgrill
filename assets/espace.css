@@ -100,3 +100,4 @@ body.cuisine::before, body.cuisine::after, body.gerant::before, body.gerant::aft
 .cu-aide-item p { margin: 0; padding: 0 16px 14px; color: var(--texte) !important; line-height: 1.5; }
 .cu-aide-item b { color: var(--jaune); }
 .cu-aide-pied { font-size: .9rem; }
+.cu-choix input[data-ip] { width: 190px; height: auto; padding: 10px 12px; border-radius: 10px; background: #0b0b0c; color: var(--texte); border: 1px solid var(--ligne-forte); font: 600 1rem/1 var(--texte-police); }

@@ -22,7 +22,9 @@
   var ecrire = function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
   var session = lire('ag-cuisine', null);         // {jeton, snack}
-  var reglage = lire('ag-cuisine-reglage', { impression: 'rawbt', son: true });
+  var APPLI = !!(window.LocWebImprimante && window.LocWebImprimante.version);
+  var reglage = lire('ag-cuisine-reglage', { impression: APPLI ? 'appli' : 'rawbt', son: true, ip: '', port: 9100 });
+  if (APPLI && reglage.impression === 'rawbt') reglage.impression = 'appli';
   var donnees = { commandes: [], snack: null, carte: [] };
   var imprimees = {};                               // deja envoyees cette session (evite les doublons)
   var canal = null, client = null, minuteur = null, horsLigne = false;
@@ -151,7 +153,7 @@
   }
   function imprimer(c) {
     imprimees[c.id] = true;
-    var ok = reglage.impression === 'rawbt' ? viaRawBT(c) : viaNavigateur(c);
+    var ok = reglage.impression === 'appli' ? viaAppli(c) : reglage.impression === 'rawbt' ? viaRawBT(c) : viaNavigateur(c);
     Promise.resolve(ok).then(function (fait) {
       if (fait === false) { imprimees[c.id] = false; majEtat(); return; }
       appel('imprimee', { id: c.id }).then(function () { c.imprimee_le = new Date().toISOString(); afficher(); }).catch(function () {});
@@ -175,6 +177,15 @@
     t += sans(c.prenom) + ' - ' + sans(c.telephone) + '\n' + 'PAYE EN LIGNE : ' + sans(euros(c.total_cents)) + '\n\n\n\n' + GS + 'V' + '\x42' + '\x00';
     return t;
   }
+  // L'appli Android LocWeb envoie les octets ESC/POS a l'imprimante, port 9100, sans fenetre.
+  function viaAppli(c) {
+    if (!APPLI) return false;
+    if (!reglage.ip) { majEtat(); alerteImpression('Indique l’adresse de l’imprimante dans Réglages.'); return false; }
+    var r = window.LocWebImprimante.imprimer(reglage.ip, +reglage.port || 9100, btoa(ticketTexte(c)));
+    if (r !== 'ok') { alerteImpression(r); return false; }
+    return true;
+  }
+  function alerteImpression(t) { var a = $('[data-alerte]'); if (a) { a.hidden = false; a.textContent = t; } }
   function viaRawBT(c) {
     // RawBT (Android) recoit le ticket par un lien « intent » et l'imprime sans fenetre.
     // A VERIFIER sur la tablette avec la POSwink avant achat de la licence.
@@ -258,8 +269,10 @@
 
   function panneauReglages() {
     panneau('<h2>Réglages de la tablette</h2><label class="cu-choix"><span>Impression</span><select data-imp>' +
-      [['rawbt', 'RawBT (tablette Android)'], ['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']].map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
-      '</select></label><label class="cu-choix"><span>Sonnerie</span><input type="checkbox" data-son' + (reglage.son ? ' checked' : '') + '></label>' +
+      (APPLI ? [['appli', 'Appli (imprimante réseau)']] : []).concat([['rawbt', 'RawBT (tablette Android)'], ['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']]).map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+      '</select></label>' +
+      (APPLI ? '<label class="cu-choix"><span>Adresse de l’imprimante</span><input data-ip inputmode="decimal" placeholder="192.168.1.87" value="' + esc(reglage.ip) + '"></label>' : '') +
+      '<label class="cu-choix"><span>Sonnerie</span><input type="checkbox" data-son' + (reglage.son ? ' checked' : '') + '></label>' +
       '<div class="cu-actions"><button type="button" class="cu-bouton" data-test-imp>Ticket de test</button><button type="button" class="cu-bouton" data-test-son>Tester le son</button></div>' +
       '<div class="cu-actions"><button type="button" class="cu-bouton cu-discret" data-deco>Se déconnecter</button><button type="button" class="cu-bouton" data-fermer>Fermer</button></div>');
   }
@@ -295,11 +308,13 @@
   document.addEventListener('change', function (e) {
     if (e.target.matches('[data-imp]')) { reglage.impression = e.target.value; ecrire('ag-cuisine-reglage', reglage); }
     if (e.target.matches('[data-son]')) { reglage.son = e.target.checked; ecrire('ag-cuisine-reglage', reglage); }
+    if (e.target.matches('[data-ip]')) { reglage.ip = e.target.value.trim(); ecrire('ag-cuisine-reglage', reglage); }
   });
   function imprimerTest() {
     var c = { id: 'test', numero: 0, heure_prevue: new Date(Date.now() + 900000).toISOString(), creneau: null, prenom: 'Test', telephone: '06 00 00 00 00', note: 'Ticket de test : si tu le lis, l’impression marche.', total_cents: 1000,
       lignes: [{ qte: 1, n: 'Le Classique', resume: 'Sandwich : Curry, sauce mayo ×2 · Burger : Steak, sans cornichon' }] };
-    reglage.impression === 'rawbt' ? viaRawBT(c) : viaNavigateur(c);
+    var r = reglage.impression === 'appli' ? viaAppli(c) : reglage.impression === 'rawbt' ? viaRawBT(c) : viaNavigateur(c);
+    if (r && reglage.impression === 'appli') alerteImpression('Ticket de test envoyé à ' + reglage.ip + '.');
   }
 
   if (session && session.jeton) demarrer(); else ecranCode();
