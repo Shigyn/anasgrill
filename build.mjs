@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '56';
+const V = '57';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -295,6 +295,8 @@ for (const [ch, o] of PAGES) {
 }
 // Les espaces Cuisine (tablette de chaque snack) et Gerant : pages a part,
 // sans bandeau cookies (outil de travail, aucune mesure), jamais indexees.
+// Les sauces de la carte : le gerant choisit celles de son offre du moment.
+const SAUCES_CARTE = [...new Set(CARTE.flatMap((c) => c.items).flatMap((i) => i.groupes || []).filter((g) => g.type === 'sauces').flatMap((g) => g.options.map((o) => o.n)))];
 const espace = (titre, js, avecTempsReel) => `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>${titre} — Anas Grill</title>
@@ -305,7 +307,7 @@ const espace = (titre, js, avecTempsReel) => `<!doctype html>
 </head><body>
 <template data-logo>${LOGO}</template>
 <div id="app"></div>
-<script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' }; window.AG_V = '${V}';</script>
+<script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' }; window.AG_V = '${V}'; window.AG_SAUCES = ${JSON.stringify(SAUCES_CARTE)};</script>
 ${avecTempsReel ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>' : ''}
 <script src="../assets/${js}?v=${V}" defer></script>
 </body></html>

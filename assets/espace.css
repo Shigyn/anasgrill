@@ -187,3 +187,29 @@ body.gerant .ge { max-width: 1180px; margin: 0; width: 100%; min-width: 0; gap: 
 body.gerant .ge-kpi { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); }
 .cu-bleu { background: rgba(90, 160, 255, .15); color: #a9ccff; }
 .ge-test { margin: 0; padding: 10px 14px; border-radius: 12px; background: rgba(90, 160, 255, .1); border: 1px solid rgba(90, 160, 255, .35); color: #cfe0ff; max-width: 70ch; }
+
+/* --- gerant : formulaire de l'offre du moment --- */
+.ge-offre-form { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+.ge-champs { display: grid; gap: 14px; }
+.ge-champ { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.ge-champ > span, .ge-champ legend { font: 700 .76rem/1 var(--etroite); letter-spacing: .1em; text-transform: uppercase; color: var(--doux); padding: 0; margin-bottom: 6px; }
+.ge-champ input, .ge-champ select, .ge-champ textarea, .ge-ligne input, .ge-ligne select { min-height: 44px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--ligne-forte); background: #141210; color: var(--texte); font: 500 1rem/1.3 var(--texte-police); color-scheme: dark; }
+.ge-champ textarea { resize: vertical; }
+.ge-photo input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.ge-photo b { display: inline-flex; align-items: center; justify-self: start; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px dashed var(--orange); color: var(--orange); cursor: pointer; }
+.ge-photo:focus-within b { outline: 2px solid var(--jaune); outline-offset: 2px; }
+.ge-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 8px; }
+.ge-ligne > span { color: var(--doux); }
+.ge-ligne input { flex: 1 1 200px; }
+.ge-puces { display: flex; flex-wrap: wrap; gap: 6px; }
+.ge-puce input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.ge-puce span { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ligne-forte); color: var(--doux); font-weight: 600; cursor: pointer; user-select: none; }
+.ge-puce input:checked + span { background: rgba(255, 122, 0, .16); border-color: var(--orange); color: var(--texte); }
+.ge-puce input:focus-visible + span { outline: 2px solid var(--jaune); outline-offset: 2px; }
+.ge-apercu { position: sticky; top: 16px; display: grid; gap: 8px; }
+.ge-apercu small { font: 700 .76rem/1 var(--etroite); letter-spacing: .1em; text-transform: uppercase; color: var(--doux); }
+.ge-apercu .plats { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; grid-template-columns: 1fr; }
+.ge-apercu-info { color: var(--doux); font-size: .85rem; }
+.ge-modale .ge-alerte-boite { border-color: rgba(255, 160, 60, .4); background: #171513; }
+.ge-modale .ge-alerte-boite h2 { color: var(--texte); }
+@media (max-width: 900px) { .ge-offre-form { grid-template-columns: 1fr; } .ge-apercu { position: static; } }

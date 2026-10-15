@@ -60,6 +60,89 @@
       '<span class="cu-carte-txt"><b>' + nom + '</b><small data-c-sous></small></span></button>';
   }
   function sousCarte(cle, t) { var c = $('[data-carte="' + cle + '"]'); if (c) c.querySelector('[data-c-sous]').textContent = t; return c; }
+  // --- L'offre du moment : formulaire, photo, apercu ---
+  var SANS_DE_BASE = ['Salade', 'Tomate', 'Oignon', 'Cornichons', 'Fromage'];
+  var photoOffre = '';
+  function puce(v, coche) { return '<label class="ge-puce"><input type="checkbox" value="' + esc(v) + '"' + (coche ? ' checked' : '') + '><span>' + esc(v) + '</span></label>'; }
+  function remplirOffre(o) {
+    o = o || {};
+    photoOffre = o.image || '';
+    $('[data-offre-titre]').value = o.titre || '';
+    $('[data-offre-texte]').value = o.texte || '';
+    $('[data-offre-prix]').value = o.prix ? String(o.prix.toFixed(2)).replace('.', ',') : '';
+    $('[data-offre-max]').value = o.sauces_max === 1 ? '1' : '2';
+    var sauces = o.titre ? (o.sauces || []) : (window.AG_SAUCES || []);
+    $('[data-offre-sauces]').innerHTML = (window.AG_SAUCES || []).map(function (n) { return puce(n, sauces.indexOf(n) >= 0); }).join('');
+    var sans = o.retirer || [];
+    $('[data-offre-sans]').innerHTML = SANS_DE_BASE.concat(sans.filter(function (n) { return SANS_DE_BASE.indexOf(n) < 0; })).map(function (n) { return puce(n, sans.indexOf(n) >= 0); }).join('');
+    $('[data-offre-photo-etat]').textContent = photoOffre ? 'Changer la photo' : 'Choisir une photo';
+    apercuOffre();
+  }
+  function cochees(sel) { return [].map.call(document.querySelectorAll(sel + ' input:checked'), function (x) { return x.value; }); }
+  function lireOffre() {
+    return { titre: $('[data-offre-titre]').value.trim(), texte: $('[data-offre-texte]').value.trim(), image: photoOffre,
+      prix: parseFloat(($('[data-offre-prix]').value || '').replace(',', '.')) || 0,
+      sauces: cochees('[data-offre-sauces]'), sauces_max: +$('[data-offre-max]').value, retirer: cochees('[data-offre-sans]') };
+  }
+  function apercuOffre() {
+    var o = lireOffre();
+    var details = [o.sauces.length ? (o.sauces_max === 1 ? '1 sauce au choix' : 'jusqu’à 2 sauces') : 'sans choix de sauce', o.retirer.length ? 'sans ' + o.retirer.join(', sans ').toLowerCase() + ' possible' : ''].filter(Boolean).join(' · ');
+    $('[data-offre-apercu]').innerHTML = '<li class="plat plat-offre"><div class="plat-bouton">' +
+      '<span class="plat-photo">' + (photoOffre ? '<img src="' + esc(photoOffre) + '" alt="">' : '') + '</span>' +
+      '<span class="plat-texte"><b>' + esc(o.titre || 'Titre de l’offre') + '</b>' + (o.texte ? '<small>' + esc(o.texte) + '</small>' : '') + '</span>' +
+      '<span class="plat-bas"><span class="prix">' + (o.prix ? euros(Math.round(o.prix * 100)) : '— €') + '</span><span class="plat-plus">+</span></span></div></li>' +
+      '<li class="ge-apercu-info">' + esc(details) + '</li>';
+  }
+  // La photo est reduite ici (1000 px, webp) avant l'envoi : rapide, meme en 4G.
+  function envoyerPhoto(f) {
+    var etatPh = $('[data-offre-photo-etat]'); etatPh.textContent = 'Envoi de la photo…';
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () {
+      var k = Math.min(1, 1000 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      appel('image', { donnees: c.toDataURL('image/webp', 0.82).split(',')[1] })
+        .then(function (j) { photoOffre = j.url; etatPh.textContent = 'Photo prête ✓ · changer'; apercuOffre(); })
+        .catch(function (e) { etatPh.textContent = 'Choisir une photo'; alert(e.message); });
+    };
+    img.onerror = function () { etatPh.textContent = 'Choisir une photo'; alert('Ce fichier n’est pas une photo.'); };
+    img.src = url;
+  }
+
+  // --- L'export Excel : on choisit les colonnes, puis on telecharge ---
+  var COLONNES = [
+    ['jour', 'Jour', function (c) { return c.jour; }],
+    ['heure', 'Heure', function (c) { return hm(c.payee_le || c.heure_prevue); }],
+    ['snack', 'Snack', function (c, nom) { return nom[c.etablissement_id]; }],
+    ['numero', 'N°', function (c) { return c.numero; }],
+    ['client', 'Client', function (c) { return c.prenom; }],
+    ['tel', 'Téléphone', function (c) { return c.telephone; }],
+    ['contenu', 'Contenu', function (c) { return c.lignes.map(function (x) { return x.qte + ' x ' + x.n + (x.resume ? ' (' + x.resume + ')' : ''); }).join(' | '); }],
+    ['total', 'Total TTC', function (c) { return (c.total_cents / 100).toFixed(2).replace('.', ','); }],
+    ['rembourse', 'Remboursé', function (c) { return (c.rembourse_cents / 100).toFixed(2).replace('.', ','); }],
+    ['net', 'Net', function (c) { return ((c.total_cents - c.rembourse_cents) / 100).toFixed(2).replace('.', ','); }],
+    ['etat', 'État', function (c) { return { recue: 'À préparer', prete: 'Prête', remise: 'Remise', annulee: 'Annulée' }[c.statut] || c.statut; }]
+  ];
+  function panneauExport() {
+    var gardees; try { gardees = JSON.parse(localStorage.getItem('ag-export-colonnes') || 'null'); } catch (x) {}
+    var fr = function (d) { return d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4); };
+    var d = document.createElement('div'); d.className = 'ge-alerte ge-modale';
+    d.innerHTML = '<div class="ge-alerte-boite" role="dialog" aria-modal="true" aria-label="Export Excel"><h2>Export Excel</h2>' +
+      '<p>Période : <b>' + (periode.du === periode.au ? 'le ' + fr(periode.du) : 'du ' + fr(periode.du) + ' au ' + fr(periode.au)) + '</b> (à changer en haut de la page).</p>' +
+      '<label class="ge-ligne"><span>Snack</span><select data-ex-snack><option value="tous">Les 8 snacks</option>' + donnees.snacks.map(function (s) { return '<option value="' + s.id + '"' + (filtre === s.id ? ' selected' : '') + '>' + esc(s.nom) + '</option>'; }).join('') + '</select></label>' +
+      '<p><b>Ce que tu veux dans le fichier</b></p><div class="ge-puces" data-ex-cols>' + COLONNES.map(function (k) { return puce(k[1], !gardees || gardees.indexOf(k[1]) >= 0); }).join('') + '</div>' +
+      '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-ex-go>Télécharger</button><button type="button" class="cu-bouton cu-discret" data-ex-annuler>Annuler</button></div></div>';
+    document.body.appendChild(d);
+    d.addEventListener('click', function (e) {
+      if (e.target === d || e.target.closest('[data-ex-annuler]')) { d.remove(); return; }
+      if (!e.target.closest('[data-ex-go]')) return;
+      var cols = [].map.call(d.querySelectorAll('[data-ex-cols] input:checked'), function (x) { return x.value; });
+      if (!cols.length) { alert('Coche au moins une colonne.'); return; }
+      try { localStorage.setItem('ag-export-colonnes', JSON.stringify(cols)); } catch (x) {}
+      exporter(cols, d.querySelector('[data-ex-snack]').value); d.remove();
+    });
+  }
+
   function montrer(v) {
     vue = v;
     document.querySelectorAll('[data-ecran]').forEach(function (e) { e.hidden = e.getAttribute('data-ecran') !== v; });
@@ -93,7 +176,20 @@
         '<section data-ecran="commandes" hidden><div class="ge-outils"><select data-filtre aria-label="Snack"></select></div><div class="ge-table-zone"><table class="ge-table" data-cmds></table></div></section>' +
         '<section data-ecran="snacks" hidden><p class="ge-aide">La tablette est « en ligne » quand elle a donné signe de vie il y a moins de 7 minutes. Le paiement doit être « activé » pour encaisser.</p><p class="ge-test" data-mode-test hidden><b>Mode test</b> : les paiements sont simulés, aucun argent réel n’est encaissé. Les vrais comptes des sociétés seront branchés à l’ouverture.</p><div class="ge-table-zone"><table class="ge-table" data-snacks></table></div></section>' +
         '<section data-ecran="rembourse" hidden><p class="ge-aide">Pour rembourser une commande : ouvre <b>Commandes</b> et touche <b>Rembourser</b> sur la ligne. Le client est remboursé sur sa carte sous 5 à 10 jours.</p><div class="ge-table-zone"><table class="ge-table" data-rembs></table></div></section>' +
-        '<section data-ecran="offre" hidden><p class="ge-aide">L’offre s’affiche en haut de la page du snack, sur le site.</p><form class="ge-offre" data-offre><select data-offre-snack aria-label="Snack"></select><input data-offre-titre maxlength="60" placeholder="Titre (ex. Formule du soir)"><input data-offre-texte maxlength="200" placeholder="Texte (facultatif)"><button class="cu-bouton cu-feu">Publier</button><button type="button" class="cu-bouton cu-discret" data-offre-retirer>Retirer</button></form><h3>En ligne en ce moment</h3><ul class="ge-ferm" data-offre-liste></ul></section>' +
+        '<section data-ecran="offre" hidden><p class="ge-aide">L’offre s’affiche <b>tout en haut de la carte</b>, comme un plat : le client la personnalise et la commande.</p>' +
+          '<form class="ge-offre-form" data-offre><div class="ge-champs">' +
+            '<label class="ge-champ"><span>Pour</span><select data-offre-snack></select></label>' +
+            '<label class="ge-champ ge-photo"><span>Photo</span><input type="file" accept="image/*" data-offre-photo><b data-offre-photo-etat>Choisir une photo</b></label>' +
+            '<label class="ge-champ"><span>Titre</span><input data-offre-titre maxlength="60" placeholder="ex. Formule du soir" required></label>' +
+            '<label class="ge-champ"><span>Description</span><textarea data-offre-texte maxlength="200" rows="3" placeholder="ex. Tacos 2 viandes, frites et boisson"></textarea></label>' +
+            '<label class="ge-champ"><span>Prix (€)</span><input data-offre-prix inputmode="decimal" placeholder="12,00" required></label>' +
+            '<fieldset class="ge-champ"><legend>Sauces au choix</legend><div class="ge-puces" data-offre-sauces></div>' +
+              '<label class="ge-ligne"><span>Le client peut en prendre</span><select data-offre-max><option value="2">jusqu’à 2</option><option value="1">une seule</option></select></label></fieldset>' +
+            '<fieldset class="ge-champ"><legend>Boutons « sans … »</legend><div class="ge-puces" data-offre-sans></div>' +
+              '<div class="ge-ligne"><input data-offre-ajout maxlength="30" placeholder="Autre ingrédient (ex. Poivrons)"><button type="button" class="cu-bouton" data-offre-ajouter>Ajouter</button></div></fieldset>' +
+            '<div class="cu-actions"><button class="cu-bouton cu-feu">Publier l’offre</button><button type="button" class="cu-bouton cu-discret" data-offre-retirer>Retirer l’offre</button></div>' +
+          '</div><div class="ge-apercu"><small>Aperçu sur le site</small><ul class="plats" data-offre-apercu></ul></div></form>' +
+          '<h3>En ligne en ce moment</h3><ul class="ge-ferm" data-offre-liste></ul></section>' +
         '<section data-ecran="fermetures" hidden><p class="ge-aide">Pendant une fermeture, le site n’accepte plus de commande pour ce snack.</p><form class="ge-offre" data-ferm><select data-ferm-snack aria-label="Snack"></select><input type="datetime-local" data-ferm-du aria-label="Du"><input type="datetime-local" data-ferm-au aria-label="Au"><input data-ferm-motif maxlength="80" placeholder="Motif (ex. Congés)"><button class="cu-bouton cu-feu">Ajouter</button></form><h3>Prévues</h3><ul class="ge-ferm" data-ferm-liste></ul></section>' +
       '</main>';
     montrer(vue);
@@ -156,7 +252,8 @@
         return '<tr><td>' + c.jour.slice(8, 10) + '/' + c.jour.slice(5, 7) + '</td><td>' + esc(nom[c.etablissement_id]) + '</td><td>' + c.numero + '</td><td>' + esc(c.prenom) + '</td><td>' + euros(c.total_cents) + '</td><td><b>' + euros(c.rembourse_cents) + '</b></td></tr>';
       }).join('') || '<tr><td colspan="6">Aucun remboursement sur cette période.</td></tr>') + '</tbody>';
     var ol = snacks.filter(function (s) { return s.offre_du_moment && s.offre_du_moment.titre; });
-    $('[data-offre-liste]').innerHTML = ol.map(function (s) { return '<li><b>' + esc(s.nom) + '</b> · ' + esc(s.offre_du_moment.titre) + (s.offre_du_moment.texte ? ' — ' + esc(s.offre_du_moment.texte) : '') + '</li>'; }).join('') || '<li>Aucune offre en ligne.</li>';
+    $('[data-offre-liste]').innerHTML = ol.map(function (s) { var o = s.offre_du_moment; return '<li><b>' + esc(s.nom) + '</b> · ' + esc(o.titre) + (o.prix ? ' · ' + euros(Math.round(o.prix * 100)) : '') + ' <button type="button" class="cu-bouton cu-discret" data-offre-modifier="' + s.id + '">Modifier</button></li>'; }).join('') || '<li>Aucune offre en ligne.</li>';
+    if (!$('[data-offre-sauces]').innerHTML) remplirOffre(null);
     var fl = []; snacks.forEach(function (s) { (s.fermetures || []).forEach(function (f, i) { fl.push('<li><b>' + esc(s.nom) + '</b> du ' + new Date(f.du).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + ' au ' + new Date(f.au).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + (f.motif ? ' · ' + esc(f.motif) : '') + ' <button type="button" class="cu-bouton cu-discret" data-ferm-suppr="' + s.id + '|' + i + '">Supprimer</button></li>'); }); });
     $('[data-ferm-liste]').innerHTML = fl.join('') || '<li>Aucune.</li>';
 
@@ -205,22 +302,27 @@
     d.querySelector('[data-alerte-ok]').addEventListener('click', function () { d.remove(); });
   }
 
-  function exporter() {
+  function exporter(cols, snack) {
     var nom = {}; donnees.snacks.forEach(function (s) { nom[s.id] = s.nom; });
-    var l = donnees.commandes.filter(function (c) { return filtre === 'tous' || c.etablissement_id === filtre; });
-    var lignes = [['Jour', 'Heure', 'Snack', 'N°', 'Client', 'Téléphone', 'Contenu', 'Total TTC', 'Remboursé', 'Net', 'Frais de paiement en ligne', 'État']].concat(l.map(function (c) {
-      return [c.jour, hm(c.payee_le || c.heure_prevue), nom[c.etablissement_id], c.numero, c.prenom, c.telephone, c.lignes.map(function (x) { return x.qte + ' x ' + x.n + (x.resume ? ' (' + x.resume + ')' : ''); }).join(' | '),
-        (c.total_cents / 100).toFixed(2).replace('.', ','), (c.rembourse_cents / 100).toFixed(2).replace('.', ','), ((c.total_cents - c.rembourse_cents) / 100).toFixed(2).replace('.', ','), (c.commission_cents / 100).toFixed(2).replace('.', ','), c.statut];
-    }));
-    var csv = '﻿' + lignes.map(function (r) { return r.map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(';'); }).join('\r\n');
+    var l = donnees.commandes.filter(function (c) { return snack === 'tous' || c.etablissement_id === snack; });
+    var choisies = COLONNES.filter(function (k) { return cols.indexOf(k[1]) >= 0; });
+    var lignes = [choisies.map(function (k) { return k[1]; })].concat(l.map(function (c) { return choisies.map(function (k) { return k[2](c, nom); }); }));
+    var csv = String.fromCharCode(0xFEFF) + lignes.map(function (r) { return r.map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(';'); }).join(String.fromCharCode(13, 10));
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = 'anas-grill-' + (filtre === 'tous' ? 'tous' : filtre) + '-' + periode.du + '_' + periode.au + '.csv'; a.click();
+    a.download = 'anas-grill-' + snack + '-' + periode.du + '_' + periode.au + '.csv'; a.click();
   }
 
   document.addEventListener('click', function (e) {
     var t = e.target, per = t.closest('[data-per]');
     if (per) { choisirPeriode(per.getAttribute('data-per')); return; }
-    if (t.closest('[data-export]')) { exporter(); return; }
+    if (t.closest('[data-export]')) { if (donnees) panneauExport(); return; }
+    if (t.closest('[data-offre-ajouter]')) {
+      var aj = $('[data-offre-ajout]'), v0 = aj.value.trim();
+      if (v0) { $('[data-offre-sans]').insertAdjacentHTML('beforeend', puce(v0.charAt(0).toUpperCase() + v0.slice(1), true)); aj.value = ''; apercuOffre(); }
+      return;
+    }
+    var mo = t.closest('[data-offre-modifier]');
+    if (mo) { var so = donnees.snacks.filter(function (x) { return x.id === mo.getAttribute('data-offre-modifier'); })[0]; $('[data-offre-snack]').value = so.id; remplirOffre(so.offre_du_moment); window.scrollTo(0, 0); return; }
     var vv = t.closest('[data-vue]'); if (vv) { montrer(vv.getAttribute('data-vue')); return; }
     if (t.closest('[data-sortir]')) {
       if (!confirm('Se déconnecter de l’espace gérant sur cet appareil ?')) return;
@@ -247,14 +349,19 @@
       appel('fermetures', { snack: sn.id, fermetures: l }).then(charger);
     }
   });
+  document.addEventListener('input', function (e) { if (e.target.closest('[data-offre]')) apercuOffre(); });
   document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-offre-photo]') && e.target.files[0]) { envoyerPhoto(e.target.files[0]); e.target.value = ''; return; }
+    if (e.target.closest('[data-offre]')) apercuOffre();
     if (e.target.matches('[data-filtre]')) { filtre = e.target.value; afficher(); }
     if (e.target.matches('[data-du], [data-au]')) { periode = { du: $('[data-du]').value, au: $('[data-au]').value }; document.querySelectorAll('[data-per]').forEach(function (b) { b.classList.remove('cu-actif'); }); charger(); }
   });
   document.addEventListener('submit', function (e) {
     if (e.target.matches('[data-offre]')) {
       e.preventDefault();
-      appel('offre', { snack: $('[data-offre-snack]').value, titre: $('[data-offre-titre]').value.trim(), texte: $('[data-offre-texte]').value.trim() }).then(function () { alert('Offre publiée sur le site.'); charger(); });
+      var o = lireOffre();
+      if (!(o.prix >= 0.5)) { alert('Indique le prix de l’offre.'); return; }
+      appel('offre', Object.assign({ snack: $('[data-offre-snack]').value }, o)).then(function () { alert('Offre publiée en haut de la carte.'); charger(); }).catch(function (x) { alert(x.message); });
     }
     if (e.target.matches('[data-ferm]')) {
       e.preventDefault();

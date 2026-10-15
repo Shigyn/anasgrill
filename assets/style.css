@@ -775,3 +775,6 @@ body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
 .retour { z-index: 95; }
 .retour-titre { margin: 0; font: 800 clamp(2.6rem, 1.6rem + 5vw, 4.4rem)/.95 var(--etroite); letter-spacing: .02em; text-transform: uppercase; background: var(--feu); -webkit-background-clip: text; background-clip: text; color: transparent; padding-top: .12em; }
 .retour .conf-recap span small { display: block; font-size: .85rem; opacity: .75; }
+
+/* L'offre du moment, tout en haut de la carte */
+.plat-offre .plat-bouton { border-color: rgba(255, 122, 0, .7); box-shadow: 0 0 0 1px rgba(255, 122, 0, .35), 0 10px 30px -12px rgba(255, 122, 0, .45); }

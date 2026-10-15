@@ -49,7 +49,42 @@
   var PLATS = {};
   D.carte.forEach(function (c) { c.items.forEach(function (i) { PLATS[i.id] = i; }); });
 
+  // L'offre du moment (creee par le gerant) : un plat comme les autres, tout en
+  // haut de la carte. Meme construction que platOffre() cote serveur (ag-regles.ts).
+  function platOffre(o) {
+    if (!o || !o.titre || !(o.prix > 0)) return null;
+    var groupes = [];
+    if (o.retirer && o.retirer.length) groupes.push({ id: 'retirer', type: 'retirer', titre: 'Ingrédients', aide: 'touche pour retirer', min: 0, max: o.retirer.length, options: o.retirer.map(function (n) { return { n: n, p: 0 }; }) });
+    var max = o.sauces_max === 1 ? 1 : 2;
+    if (o.sauces && o.sauces.length) groupes.push({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte' : 'jusqu’à 2, offertes', min: 0, max: max, options: o.sauces.map(function (n) { return { n: n, p: 0, photo: PHOTO_SAUCE[n] }; }) });
+    return { id: 'offre', n: o.titre, d: o.texte || '', p: o.prix, image: o.image || '', groupes: groupes };
+  }
+  function montrerOffre() {
+    var plat = platOffre(ETAT.offre), vieille = $('#offre'), onglet = $('[data-onglets] a[href="#offre"]');
+    if (vieille) vieille.remove(); if (onglet) onglet.remove();
+    if (!plat) {
+      delete PLATS.offre;
+      // Offre retiree : elle sort du panier.
+      var avant = etat.lignes.length; etat.lignes = etat.lignes.filter(function (l) { return l.id !== 'offre'; });
+      if (etat.lignes.length !== avant) { garder(); majBarre(); }
+      return;
+    }
+    PLATS.offre = plat;
+    var plus = $('.plat-plus') ? $('.plat-plus').innerHTML : '+';
+    var sec = document.createElement('section');
+    sec.className = 'categorie categorie-offre'; sec.id = 'offre';
+    sec.innerHTML = '<h2>Offre du moment</h2><ul class="plats"><li class="plat plat-offre">' +
+      '<button type="button" class="plat-bouton" data-plat="offre" aria-label="' + esc(plat.n) + ', personnaliser et ajouter">' +
+      '<span class="plat-photo">' + (plat.image ? '<img src="' + esc(plat.image) + '" alt="' + esc(plat.n) + '" loading="lazy">' : '') + '</span>' +
+      '<span class="plat-texte"><b>' + esc(plat.n) + '</b>' + (plat.d ? '<small>' + esc(plat.d) + '</small>' : '') + '</span>' +
+      '<span class="plat-bas"><span class="prix">' + euros(plat.p) + '</span><span class="plat-plus">' + plus + '</span></span></button></li></ul>';
+    var carte = $('#carte'); if (carte) carte.insertBefore(sec, carte.firstChild);
+    var ong = $('[data-onglets] .onglets-in');
+    if (ong) { var a = document.createElement('a'); a.href = '#offre'; a.textContent = 'Offre'; ong.insertBefore(a, ong.firstChild); }
+  }
+
   function appliquerEtat() {
+    montrerOffre();
     document.querySelectorAll('[data-plat]').forEach(function (b) {
       var ep = ETAT.epuises.indexOf(b.getAttribute('data-plat')) >= 0;
       b.closest('.plat').classList.toggle('plat-epuise', ep);
@@ -59,8 +94,8 @@
     var msg = ETAT.ferme ? 'Fermé en ce moment (' + esc(ETAT.ferme) + ').'
       : ETAT.pause ? 'Anas Grill ' + esc(SNACK.nom) + ' ne prend plus de commandes en ligne pour le moment. Réessaie un peu plus tard.' : '';
     bandeau.innerHTML = (msg ? '<p class="etat-alerte">' + msg + '</p>' : '') +
-      (ETAT.offre ? '<p class="etat-offre"><b>' + esc(ETAT.offre.titre) + '</b>' + (ETAT.offre.texte ? ' ' + esc(ETAT.offre.texte) : '') + '</p>' : '');
-    bandeau.hidden = !msg && !ETAT.offre;
+      (ETAT.offre && !PLATS.offre ? '<p class="etat-offre"><b>' + esc(ETAT.offre.titre) + '</b>' + (ETAT.offre.texte ? ' ' + esc(ETAT.offre.texte) : '') + '</p>' : '');
+    bandeau.hidden = !msg && !(ETAT.offre && !PLATS.offre);
   }
   if (FN.indexOf('http') === 0) appel('ag-commande', { action: 'etat', snack: SNACK.id }).then(function (j) { ETAT = j; appliquerEtat(); }).catch(function () {});
 
@@ -127,7 +162,7 @@
     // Un choix unique facultatif (le gratine) : « Sans » coche par defaut, pour pouvoir revenir en arriere.
     var optionsDe = function (g) { return g.max === 1 && g.min === 0 ? [{ n: 'Sans', p: 0 }].concat(g.options) : g.options; };
     feuille.innerHTML =
-      '<div class="feuille-tete">' + (i.photo ? '<img src="../photos/' + i.photo + '.webp" alt="">' : '') +
+      '<div class="feuille-tete">' + (i.image ? '<img src="' + esc(i.image) + '" alt="">' : i.photo ? '<img src="../photos/' + i.photo + '.webp" alt="">' : '') +
       '<button type="button" class="feuille-fermer" data-fermer-fiche aria-label="Fermer">×</button></div>' +
       '<div class="feuille-corps"><div class="feuille-titre-ligne"><h3 id="feuille-titre">' + esc(i.n) + '</h3>' +
       (i.allergenes ? '<button type="button" class="allerg-btn" data-allergenes aria-haspopup="dialog">Allergènes</button>' : '') + '</div>' + (i.d ? '<p class="feuille-desc">' + esc(i.d) + '</p>' : '') +
@@ -284,7 +319,7 @@
   function ajouter(i, choix, qte, prixU) {
     var cle = i.id + '|' + JSON.stringify(choix);
     var l = etat.lignes.filter(function (x) { return x.k === cle; })[0];
-    if (l) l.qte += qte; else etat.lignes.push({ k: cle, id: i.id, choix: choix, qte: qte, prix: prixU == null ? i.p : prixU, resume: resume(i, choix) });
+    if (l) l.qte += qte; else etat.lignes.push({ k: cle, id: i.id, n: i.n, choix: choix, qte: qte, prix: prixU == null ? i.p : prixU, resume: resume(i, choix) });
     garder(); majBarre(true); toast(i.n + ' ajouté');
   }
 
@@ -312,7 +347,7 @@
       return;
     }
     corps.innerHTML = '<ul class="lignes">' + etat.lignes.map(function (l, n) {
-      var p = PLATS[l.id];
+      var p = PLATS[l.id] || l;
       return '<li class="ligne"><div class="ligne-texte"><b>' + esc(p.n) + '</b>' + (l.resume ? '<small>' + esc(l.resume) + '</small>' : '') + '</div>' +
         '<div class="qte qte-petite"><button type="button" data-moins="' + n + '" aria-label="Retirer">−</button><span>' + l.qte + '</span><button type="button" data-plus="' + n + '" aria-label="Ajouter">+</button></div>' +
         '<span class="prix">' + euros(l.prix * l.qte) + '</span></li>';
@@ -481,7 +516,7 @@
     var i = etat.infos, e = estimation(), liv = i.mode === 'livraison';
     corps.innerHTML =
       '<div class="recap"><small>' + (liv ? 'Livraison' : 'À emporter') + '</small><b>' + (liv ? 'Chez toi vers ' : 'Prêt à ') + hm(e.heure) + '</b><span>' + esc(liv ? i.adresse + (i.complement ? ' · ' + i.complement : '') : 'Anas Grill ' + SNACK.nom + ', ' + SNACK.adresse) + '</span></div>' +
-      '<div class="recap"><small>' + nb() + ' article' + (nb() > 1 ? 's' : '') + '</small>' + etat.lignes.map(function (l) { return '<div class="recap-ligne"><span>' + l.qte + ' × ' + esc(PLATS[l.id].n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '</div>' +
+      '<div class="recap"><small>' + nb() + ' article' + (nb() > 1 ? 's' : '') + '</small>' + etat.lignes.map(function (l) { return '<div class="recap-ligne"><span>' + l.qte + ' × ' + esc((PLATS[l.id] || l).n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '</div>' +
       (STRIPE
         ? '<div class="carte-paiement"><div class="cp-tete"><b>Paiement sécurisé</b><span class="cp-logos">Carte · Apple Pay · Google Pay</span></div><div class="paiement-stripe" data-ps><p class="ps-attente">Préparation du paiement sécurisé…</p></div></div><p class="alerte" data-alerte-paiement hidden></p>'
         : '<div class="carte-paiement"><div class="cp-tete"><b>Carte bancaire</b><span class="cp-logos">CB · Visa · Mastercard · Apple Pay</span></div>' +
@@ -599,7 +634,7 @@
         : '<h2>Rendez-vous à <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">' + (e.programme ? 'commande programmée' : 'prête dans ' + e.minutes + ' minutes environ') + '</p>' +
           '<p class="conf-lieu">Anas Grill ' + esc(SNACK.nom) + '<br>' + esc(SNACK.adresse) + '</p>' +
           '<div class="conf-consigne"><b>Donne ton numéro ' + num + ' au comptoir.</b> <a href="https://www.google.com/maps/dir/?api=1&destination=' + SNACK.lat + ',' + SNACK.lng + '" target="_blank" rel="noopener">Itinéraire</a></div>') +
-      '<div class="conf-recap">' + lignes.map(function (l) { return '<div><span>' + l.qte + ' × ' + esc(PLATS[l.id].n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '<div class="conf-total"><span>Payé</span><span>' + euros(paye) + '</span></div></div>' +
+      '<div class="conf-recap">' + lignes.map(function (l) { return '<div><span>' + l.qte + ' × ' + esc((PLATS[l.id] || l).n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '<div class="conf-total"><span>Payé</span><span>' + euros(paye) + '</span></div></div>' +
       (srv ? '' : '<p class="conf-demo">Aperçu : paiement simulé, aucune commande n’a été envoyée.</p>') +
       '<a class="bouton bouton-ligne" href="./">Nouvelle commande</a></div>';
     etat.lignes = []; garder(); majBarre();
