@@ -541,9 +541,15 @@
     return stripeJs;
   }
   function alertePaiement(t) { var a = $('[data-alerte-paiement]'); if (a) { a.hidden = !t; a.textContent = t || ''; } }
+  // Un identifiant au hasard pour cet appareil : la limite anti-spam du serveur.
+  function appareil() {
+    var a; try { a = localStorage.getItem('anas-appareil'); } catch (x) {}
+    if (!a) { a = 'a' + Math.random().toString(36).slice(2) + Date.now().toString(36); try { localStorage.setItem('anas-appareil', a); } catch (x) {} }
+    return a;
+  }
   function preparerPaiement() {
     var i = etat.infos;
-    var demande = { action: 'payer', snack: SNACK.id, prenom: i.prenom, telephone: i.tel, note: i.note || '',
+    var demande = { action: 'payer', snack: SNACK.id, appareil: appareil(), prenom: i.prenom, telephone: i.tel, note: i.note || '',
       creneau: i.quand === 'plus-tard' ? i.creneau : null,
       lignes: etat.lignes.map(function (l) { return { id: l.id, choix: l.choix, qte: l.qte }; }) };
     var cle = JSON.stringify(demande);
