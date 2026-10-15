@@ -46,6 +46,8 @@
   var etat = { lignes: [], infos: { mode: 'emporter' } };
   try { var lu = JSON.parse(localStorage.getItem(CLE) || 'null'); if (lu && lu.lignes) etat = lu; } catch (e) {}
   etat.infos = etat.infos || { mode: 'emporter' };
+  // Pas de livraison pour l'instant (Hakim, 15/10) : tout est a emporter. R.livraison la rallume.
+  if (!R.livraison) etat.infos.mode = 'emporter';
   try { var a = JSON.parse(localStorage.getItem('anas-adresse') || 'null'); if (a && !etat.infos.adresse) { etat.infos.adresse = a.label; etat.infos.lat = a.lat; etat.infos.lng = a.lng; } } catch (e) {}
   var garder = function () { try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (e) {} };
   var total = function () { return etat.lignes.reduce(function (t, l) { return t + l.prix * l.qte; }, 0); };
@@ -306,7 +308,7 @@
   function rendreInfos() {
     var i = etat.infos, liv = i.mode === 'livraison';
     corps.innerHTML = '<form class="form" data-form novalidate>' +
-      '<div class="segment" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode" value="emporter"' + (!liv ? ' checked' : '') + '><span>À emporter</span></label><label><input type="radio" name="mode" value="livraison"' + (liv ? ' checked' : '') + '><span>En livraison</span></label></div>' +
+      (!R.livraison ? '' : '<div class="segment" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode" value="emporter"' + (!liv ? ' checked' : '') + '><span>À emporter</span></label><label><input type="radio" name="mode" value="livraison"' + (liv ? ' checked' : '') + '><span>En livraison</span></label></div>') +
       (liv ? '<label class="champ champ-adresse"><span>Adresse de livraison</span><input name="adresse" autocomplete="off" placeholder="Numéro et rue, ville" value="' + esc(i.adresse) + '" data-adr-champ><ul class="suggestions" data-adr-sugg hidden></ul></label>' +
         '<label class="champ"><span>Étage, code, interphone <small>(facultatif)</small></span><input name="complement" value="' + esc(i.complement) + '"></label>' +
         '<p class="info-zone" data-zone></p>' + (total() < (R.minimumLivraison || 0) ? '<p class="info-zone attention">Livraison à partir de ' + euros(R.minimumLivraison) + ' : il te manque ' + euros(R.minimumLivraison - total()) + '.</p>' : '') : '<p class="info-zone ok">À retirer chez Anas Grill ' + esc(SNACK.nom) + ', ' + esc(SNACK.adresse) + '.</p>') +

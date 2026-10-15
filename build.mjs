@@ -19,9 +19,9 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '34';
+const V = '35';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
-const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 2, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: PROD ? 'stripe' : 'simule' };
+const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, livraison: false, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 2, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: PROD ? 'stripe' : 'simule' };
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const abs = (ch) => URL_SITE + ch;
@@ -154,7 +154,7 @@ PAGES.push(['', {
     <div class="arrivee-texte">
       <a class="marque marque-grande" href="./">${LOGO}</a>
       <h1>Choisis <span>ton restaurant</span></h1>
-      <p>Livraison ou à emporter, payé en ligne, prêt à l’heure.</p>
+      <p>À emporter, payé en ligne, prêt à l’heure.</p>
       <div class="choix-actions">
         <button class="bouton bouton-feu" type="button" data-localiser>${I.cible} Le plus proche de moi</button>
         <form class="adresse-form" data-adresse-form autocomplete="off">
@@ -214,7 +214,7 @@ const ligne = (i) => `
 for (const s of SNACKS) {
   PAGES.push([s.id + '/', {
     titre: `Anas Grill ${s.nom} — Commande en ligne, formules à 10 €`,
-    description: `Commandez chez Anas Grill ${s.nom} (${s.adresse}) : formules à 10 €, sandwichs, tacos, burgers. Livraison ou à emporter, paiement en ligne.`,
+    description: `Commandez chez Anas Grill ${s.nom} (${s.adresse}) : formules à 10 €, sandwichs, tacos, burgers. À emporter, paiement en ligne, prêt à l’heure.`,
     classe: 'page-snack',
     schemas: [restaurantSchema(s)],
     scripts: ['commande.js'],
@@ -264,13 +264,13 @@ PAGES.push(['confidentialite/', { titre: 'Confidentialité et cookies — Anas G
 <main id="contenu" class="cadre etroit texte"><h1>Confidentialité et cookies</h1>
 <p>Le restaurant Anas Grill qui prépare ta commande est responsable de tes données. [Raison sociale, SIRET et adresse de chaque société à compléter avec les KBIS.]</p>
 <h2>Ce qu’on te demande, et pourquoi</h2>
-<p>Pour préparer et te remettre ta commande : ton <b>prénom</b>, ton <b>téléphone</b> (la cuisine ou le livreur t’appelle si besoin), et en livraison ton <b>adresse</b>. Le paiement est traité par <b>Stripe</b> : ta carte bancaire n’est jamais vue ni gardée par le restaurant.</p>
+<p>Pour préparer et te remettre ta commande : ton <b>prénom</b>, et ton <b>téléphone</b> (la cuisine t’appelle si besoin). Le paiement est traité par <b>Stripe</b> : ta carte bancaire n’est jamais vue ni gardée par le restaurant.</p>
 <h2>Qui les voit</h2>
-<p>Le restaurant que tu as choisi et son livreur, Stripe pour le paiement, et LocWeb, qui fait fonctionner le site pour le restaurant. Rien n’est vendu ni donné à d’autres.</p>
+<p>Le restaurant que tu as choisi, Stripe pour le paiement, et LocWeb, qui fait fonctionner le site pour le restaurant. Rien n’est vendu ni donné à d’autres.</p>
 <h2>Combien de temps</h2>
 <p>Le temps de la commande, puis 3 ans au plus. Les pièces comptables (montant, date) sont gardées 10 ans, comme la loi l’impose.</p>
 <h2>L’adresse que tu tapes</h2>
-<p>Pour te proposer ton adresse pendant que tu l’écris, le site interroge la Base Adresse Nationale (service public, api-adresse.data.gouv.fr). La carte du site est une image fixe : elle ne charge rien.</p>
+<p>Pour trouver le restaurant le plus proche, quand tu tapes ton adresse, le site interroge la Base Adresse Nationale (service public, api-adresse.data.gouv.fr). La carte du site est une image fixe : elle ne charge rien.</p>
 <h2>Cookies</h2>
 <p><b>Mesure d’audience</b> (Google Analytics) : seulement si tu as cliqué « Accepter », pour savoir combien de personnes viennent et ce qui sert. Rien de publicitaire. Tu peux changer d’avis à tout moment avec le lien <a href="#" data-cookies>Cookies</a> en bas de page.</p>
 <p><b>Ton panier et ton adresse</b> sont gardés dans ton navigateur pour que tu ne les perdes pas en changeant de page. Ce n’est pas de la mesure : ça ne demande pas ton accord, et ça ne quitte pas ton téléphone.</p>
@@ -282,7 +282,7 @@ PAGES.push(['mentions-legales/', { titre: 'Mentions légales — Anas Grill', de
 PAGES.push(['cgv/', { titre: 'Conditions générales de vente — Anas Grill', description: 'Conditions de vente des commandes en ligne Anas Grill.', classe: 'page-texte', corps: () => `
 <main id="contenu" class="cadre etroit texte"><h1>Conditions générales de vente</h1><p>Projet à valider avec le client avant la mise en ligne.</p>
 <h2>Paiement</h2><p>Le paiement s’effectue en ligne par carte bancaire au moment de la commande, sur une page sécurisée opérée par Stripe. La commande n’est transmise à la cuisine qu’une fois le paiement accepté.</p>
-<h2>Livraison et retrait</h2><p>La livraison est assurée dans le rayon de chaque restaurant. L’heure annoncée est une estimation ; le livreur appelle le client à son arrivée.</p>
+<h2>Retrait</h2><p>Les commandes sont à retirer au restaurant choisi, à l’heure annoncée sur l’écran de confirmation.</p>
 <h2>Rétractation</h2><p>Conformément à l’article L221-28 du Code de la consommation, le droit de rétractation ne s’applique pas aux denrées alimentaires susceptibles de se détériorer rapidement.</p>
 <h2>Allergènes</h2><p>La liste des allergènes est disponible dans chaque restaurant et par téléphone.</p></main>` }]);
 
