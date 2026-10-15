@@ -82,7 +82,6 @@
     rafraichir();
     clearInterval(minuteur); minuteur = setInterval(rafraichir, 60000); // signe de vie + filet de securite
     if (APPLI && window.LocWebImprimante.chercher && !reglage.ip) setTimeout(function () { panneauRecherche(); }, 800);
-    if (MAJ) { verifierMaj(); setInterval(verifierMaj, 6 * 3600000); }
     ecouter();
     garderEcranAllume();
   }
@@ -102,7 +101,7 @@
       var avant = {}; donnees.commandes.forEach(function (c) { avant[c.id] = 1; });
       var premiere = !donnees.snack;
       donnees = j; horsLigne = false;
-      if (premiere) ecouter();
+      if (premiere) { ecouter(); setTimeout(majAuLancement, 3000); }
       var nouvelles = j.commandes.filter(function (c) { return !avant[c.id] && c.statut === 'recue'; });
       if (nouvelles.length && !premiere) sonner();
       afficher();
@@ -233,14 +232,28 @@
   function verifierMaj(manuel) {
     window.__agMaj = function (r) {
       DERNIERE = r;
-      if (r.disponible) proposerMaj();
+      if (r.disponible) proposerMaj(manuel);
       else if (manuel) alert(r.erreur ? 'Vérification impossible : ' + r.erreur : 'L’appli est à jour (version ' + r.actuelle + ').');
     };
     window.LocWebImprimante.verifierMiseAJour('__agMaj');
   }
+  // Une seule verification par 24 h, au lancement de l'appli, et JAMAIS pendant le
+  // service : relancee en plein rush (apres une coupure), la tablette ne propose rien.
+  function enService() {
+    var s0 = donnees.snack || {}, o = s0.ouverture == null ? 11 : s0.ouverture, f = s0.fermeture == null ? 1 : s0.fermeture;
+    var h = new Date().getHours();
+    return f <= o ? (h >= o || h < f) : (h >= o && h < f);
+  }
+  function majAuLancement() {
+    if (!MAJ || enService()) return;
+    if (Date.now() - lire('ag-maj-derniere', 0) < 24 * 3600000) return;
+    ecrire('ag-maj-derniere', Date.now());
+    verifierMaj();
+  }
   // La fenetre « Nouvelle version » ; si une autre fenetre est ouverte, elle attend son tour.
-  function proposerMaj() {
-    if (!$('[data-panneau]').hidden) { setTimeout(proposerMaj, 30000); return; }
+  function proposerMaj(manuel) {
+    if (!manuel && enService()) return;   // le service a commence entre-temps : demain
+    if (!$('[data-panneau]').hidden) { setTimeout(function () { proposerMaj(manuel); }, 30000); return; }
     panneau('<h2>Nouvelle version de l’appli</h2><p>Une mise à jour de l’appli de la cuisine est disponible. Elle s’installe en quelques secondes ; Android te demandera juste de confirmer.</p>' +
       '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-maj-go>Mettre à jour</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
   }
