@@ -88,3 +88,15 @@ body.cuisine::before, body.cuisine::after, body.gerant::before, body.gerant::aft
 .ge-ferm { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; color: var(--doux); }
 
 @media (max-width: 900px) { .cu-colonnes { grid-template-columns: 1fr; } }
+
+/* --- Que faire si... (aide de la tablette) --- */
+.cu-aide { border-color: rgba(255, 190, 40, .5); color: var(--jaune); }
+.cu-aide-liste { display: grid; gap: 8px; }
+.cu-aide-item { border-radius: 12px; border: 1px solid var(--ligne); background: #120f0d; }
+.cu-aide-item summary { cursor: pointer; padding: 14px 16px; font: 700 1.05rem/1.2 var(--texte-police); list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.cu-aide-item summary::-webkit-details-marker { display: none; }
+.cu-aide-item summary::after { content: '+'; color: var(--orange); font-size: 1.3rem; line-height: 1; }
+.cu-aide-item[open] summary::after { content: '–'; }
+.cu-aide-item p { margin: 0; padding: 0 16px 14px; color: var(--texte) !important; line-height: 1.5; }
+.cu-aide-item b { color: var(--jaune); }
+.cu-aide-pied { font-size: .9rem; }

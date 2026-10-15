@@ -69,6 +69,7 @@
       '<span class="cu-etat" data-etat>Connexion…</span>' +
       '<button type="button" class="cu-bouton" data-pause>Pause</button>' +
       '<button type="button" class="cu-bouton" data-epuises>Plats épuisés</button>' +
+      '<button type="button" class="cu-bouton cu-aide" data-aide>Aide</button>' +
       '<button type="button" class="cu-bouton cu-discret" data-reglages aria-label="Réglages">Réglages</button></header>' +
       '<p class="cu-alerte" data-alerte hidden></p>' +
       '<main class="cu-colonnes"><section><h2>À préparer <span data-n-recue></span></h2><div data-col="recue"></div></section>' +
@@ -225,6 +226,36 @@
       donnees.carte.map(function (p) { return '<button type="button" class="cu-plat' + (ep.indexOf(p.id) >= 0 ? ' cu-ep' : '') + '" data-plat="' + p.id + '">' + esc(p.n) + '</button>'; }).join('') +
       '</div><button type="button" class="cu-bouton" data-fermer>Fermer</button>');
   }
+  /* La fiche « Que faire si… » : les situations du service, dans les mots
+     de la cuisine. Elle s'imprime aussi, pour l'afficher au mur. */
+  var AIDE = [
+    ['Une commande arrive', 'Ça sonne et le ticket sort tout seul. Prépare-la pour l’heure écrite en gros (« À remettre à … »). Quand elle est prête, touche <b>Prête</b>. Quand le client la récupère, vérifie son <b>numéro</b>, puis touche <b>Remise au client</b>.'],
+    ['Le ticket ne sort pas', 'La commande devient rouge et un bandeau te prévient. Vérifie le <b>papier</b>, que l’imprimante est <b>allumée</b> et que son <b>câble réseau</b> est branché. Puis touche <b>Réimprimer</b> sur la commande. Pour tester : <b>Réglages → Ticket de test</b>. En attendant, prépare la commande en lisant l’écran : tout y est.'],
+    ['Trop de monde, on ne suit plus', 'Touche <b>Pause</b> en haut. Le site n’accepte plus de nouvelles commandes ; celles déjà payées restent à préparer. Quand ça se calme, touche <b>Reprendre les commandes</b>.'],
+    ['Il n’y a plus d’un produit', 'Touche <b>Plats épuisés</b>, puis le plat : il disparaît du site tout de suite. <b>Pense à le remettre</b> quand il revient (même bouton), sinon il reste caché.'],
+    ['Un plat déjà payé manque', 'Appelle le client (son numéro est sur la commande) et propose-lui autre chose. S’il préfère être remboursé, préviens le <b>gérant</b> : il rembourse le plat depuis sa page, le client est recrédité sur sa carte.'],
+    ['Le client ne vient pas', 'La commande est déjà payée. Garde-la et appelle le client. Ne la marque <b>Remise</b> que quand il l’a vraiment récupérée.'],
+    ['« Hors ligne » en rouge', 'Internet est coupé ou faible. <b>Aucune commande n’est perdue</b> : elles s’afficheront et s’imprimeront au retour du réseau. Vérifie le Wi-Fi de la tablette. Si ça dure, préviens le gérant.'],
+    ['La tablette s’est éteinte', 'Rebranche-la sur son chargeur, rallume-la et ouvre la page <b>Cuisine</b> (l’icône Anas Grill sur l’écran d’accueil). Pas besoin de retaper le code. Les commandes arrivées entre-temps s’impriment toutes seules.'],
+    ['Le code est demandé', 'C’est le code à 8 chiffres <b>de ton snack</b>, donné par le gérant. Il ne se tape qu’une fois sur cette tablette.'],
+    ['Fermeture du soir', 'Rien à faire : le site arrête de prendre des commandes 15 minutes avant la fermeture et reprend à 8 h. Pour une fermeture exceptionnelle (congés, travaux), c’est le gérant qui la règle.'],
+  ];
+  function panneauAide() {
+    panneau('<h2>Que faire si…</h2><div class="cu-aide-liste">' +
+      AIDE.map(function (a) { return '<details class="cu-aide-item"><summary>' + a[0] + '</summary><p>' + a[1] + '</p></details>'; }).join('') +
+      '</div><p class="cu-aide-pied">Un problème que la fiche ne règle pas : appelle le gérant.</p>' +
+      '<div class="cu-actions"><button type="button" class="cu-bouton" data-aide-imprimer>Imprimer la fiche</button><button type="button" class="cu-bouton cu-feu" data-fermer>Fermer</button></div>');
+  }
+  function imprimerAide() {
+    var f = document.createElement('iframe'); f.className = 'cu-iframe'; document.body.appendChild(f);
+    var d = f.contentDocument;
+    d.open(); d.write('<!doctype html><meta charset="utf-8"><title>Anas Grill — Que faire si…</title><style>@page{size:A4;margin:14mm}body{font:12.5pt/1.45 Arial,sans-serif;color:#000}h1{font-size:22pt;margin:0 0 4pt}p.s{margin:0 0 12pt;color:#444}h2{font-size:13.5pt;margin:12pt 0 2pt}p{margin:0}</style>' +
+      '<h1>Anas Grill — Que faire si…</h1><p class="s">Fiche de la tablette Cuisine' + (session && session.snack ? ' · ' + esc(session.snack.nom) : '') + '</p>' +
+      AIDE.map(function (a) { return '<h2>' + a[0] + '</h2><p>' + a[1] + '</p>'; }).join('') + '<h2>Autre problème</h2><p>Appelle le gérant.</p>');
+    d.close();
+    setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} setTimeout(function () { f.remove(); }, 5000); }, 250);
+  }
+
   function panneauReglages() {
     panneau('<h2>Réglages de la tablette</h2><label class="cu-choix"><span>Impression</span><select data-imp>' +
       [['rawbt', 'RawBT (tablette Android)'], ['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']].map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
@@ -238,6 +269,8 @@
     if (t.closest('[data-voile]') || t.closest('[data-fermer]')) { fermerPanneau(); return; }
     if (t.closest('[data-epuises]')) { panneauEpuises(); return; }
     if (t.closest('[data-reglages]')) { panneauReglages(); return; }
+    if (t.closest('[data-aide]')) { panneauAide(); return; }
+    if (t.closest('[data-aide-imprimer]')) { imprimerAide(); return; }
     if (t.closest('[data-deco]')) { if (confirm('Se déconnecter de cette tablette ? Il faudra retaper le code.')) deconnecter(); return; }
     if (t.closest('[data-test-son]')) { var s0 = reglage.son; reglage.son = true; sonner(); reglage.son = s0; return; }
     if (t.closest('[data-test-imp]')) { imprimerTest(); return; }
