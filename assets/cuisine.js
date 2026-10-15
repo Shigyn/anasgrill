@@ -71,6 +71,7 @@
       '<span class="cu-etat" data-etat>Connexion…</span>' +
       '<button type="button" class="cu-bouton" data-pause>Pause</button>' +
       '<button type="button" class="cu-bouton" data-epuises>Plats épuisés</button>' +
+      (APPLI ? '' : '<button type="button" class="cu-bouton cu-feu" data-installer>Installer l’appli</button>') +
       '<button type="button" class="cu-bouton cu-aide" data-aide>Aide</button>' +
       '<button type="button" class="cu-bouton cu-discret" data-reglages aria-label="Réglages">Réglages</button></header>' +
       '<p class="cu-alerte" data-alerte hidden></p>' +
@@ -306,6 +307,29 @@
     setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} setTimeout(function () { f.remove(); }, 5000); }, 250);
   }
 
+  // L'appli de la tablette : toujours la derniere version publiee (GitHub, depot anasgrillprint).
+  var APK = 'https://github.com/Shigyn/anasgrillprint/releases/latest/download/anasgrill-cuisine.apk';
+  function panneauInstaller() {
+    var android = /android/i.test(navigator.userAgent);
+    panneau('<h2>Installer l’appli de la cuisine</h2>' +
+      '<p>Avec l’appli, les tickets sortent <b>tout seuls</b> sur l’imprimante de la cuisine. À faire une seule fois, sur la <b>tablette Android</b> de la cuisine.</p>' +
+      (android ? '' : '<p class="cu-note">Tu n’es pas sur une tablette Android : ouvre cette page sur la tablette de la cuisine pour installer l’appli. (iPhone et iPad ne sont pas compatibles.)</p>') +
+      '<h3 class="cu-h3">Avant de commencer</h3><ul class="cu-tuto">' +
+        '<li>L’imprimante à tickets est <b>allumée</b> et branchée à la <b>box internet</b> par un câble réseau.</li>' +
+        '<li>La tablette est connectée au <b>Wi-Fi du snack</b> (pas le Wi-Fi « invités »).</li></ul>' +
+      '<h3 class="cu-h3">Installation (2 minutes)</h3><ol class="cu-tuto">' +
+        '<li>Touche <b>Télécharger l’appli</b> ci-dessous.</li>' +
+        '<li>Ouvre le fichier téléchargé (<b>anasgrill-cuisine.apk</b>), depuis la notification ou le dossier Téléchargements.</li>' +
+        '<li>Android demande d’<b>autoriser l’installation</b> depuis le navigateur : touche <b>Paramètres</b>, active l’autorisation, puis reviens et touche <b>Installer</b>. C’est normal pour une appli qui ne vient pas du Play Store.</li>' +
+        '<li>Ouvre l’appli <b>Anas Grill</b> et tape le <b>code à 8 chiffres</b> du snack.</li>' +
+        '<li>L’appli <b>cherche l’imprimante toute seule</b> et imprime un ticket numéroté : touche le numéro du ticket sorti <b>en cuisine</b>. C’est réglé.</li></ol>' +
+      '<h3 class="cu-h3">Pour que ça tienne toute la journée</h3><ul class="cu-tuto">' +
+        '<li>Laisse la tablette <b>branchée sur son chargeur</b>.</li>' +
+        '<li>Paramètres Android → Applis → Anas Grill → Batterie : choisis <b>Sans restriction</b>.</li></ul>' +
+      '<div class="cu-actions">' + (android ? '<a class="cu-bouton cu-feu cu-lien" href="' + APK + '">Télécharger l’appli</a>' : '<button type="button" class="cu-bouton" data-copier-lien>Copier le lien de l’appli</button>') +
+      '<button type="button" class="cu-bouton cu-discret" data-fermer>Fermer</button></div>');
+  }
+
   function panneauReglages() {
     panneau('<h2>Réglages de la tablette</h2><label class="cu-choix"><span>Impression</span><select data-imp>' +
       (APPLI ? [['appli', 'Appli (imprimante réseau)']] : []).concat([['rawbt', 'RawBT (tablette Android)'], ['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune']]).map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
@@ -323,6 +347,9 @@
     if (t.closest('[data-epuises]')) { panneauEpuises(); return; }
     if (t.closest('[data-reglages]')) { panneauReglages(); return; }
     if (t.closest('[data-aide]')) { panneauAide(); return; }
+    if (t.closest('[data-installer]')) { panneauInstaller(); return; }
+    var cp = t.closest('[data-copier-lien]');
+    if (cp) { try { navigator.clipboard.writeText(APK); cp.textContent = 'Lien copié ✓'; } catch (x) { prompt('Lien de l’appli :', APK); } return; }
     if (t.closest('[data-chercher]')) { panneauRecherche(); return; }
     var ch = t.closest('[data-choisir-ip]');
     if (ch) {

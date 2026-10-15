@@ -107,3 +107,9 @@ body.cuisine::before, body.cuisine::after, body.gerant::before, body.gerant::aft
 .cu-numero { display: grid; justify-items: center; gap: 4px; padding: 14px 8px; }
 .cu-numero b { font: 400 2.6rem/1 var(--titre); color: var(--jaune); }
 .cu-numero small { color: var(--doux); font-size: .78rem; }
+/* --- Installer l'appli (mini-tuto) --- */
+.cu-h3 { margin: 4px 0 0; font: 700 .82rem/1 var(--etroite); letter-spacing: .12em; text-transform: uppercase; color: var(--orange); }
+.cu-tuto { margin: 0; padding-left: 22px; display: grid; gap: 8px; color: var(--texte); line-height: 1.45; }
+.cu-tuto b { color: var(--jaune); }
+.cu-note { padding: 10px 12px; border-radius: 12px; background: rgba(255, 190, 40, .1); color: #ffe2a0 !important; }
+.cu-lien { display: inline-flex; align-items: center; text-decoration: none; }
