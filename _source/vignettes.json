@@ -18,8 +18,10 @@
 "min": true
 },
 "s-dz": {
-"l": 860,
-"h": 190
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "s-tajs": {
 "l": 910,
