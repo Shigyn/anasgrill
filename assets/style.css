@@ -715,3 +715,22 @@ body::after { opacity: .22; }
 .allerg-boite p { margin: 14px 0 0; font-size: .84rem; color: var(--doux); }
 .allerg-boite p a { color: var(--jaune); font-weight: 600; }
 .allerg-boite .feuille-fermer { position: absolute; top: 10px; right: 10px; }
+
+/* --- Options en tuiles photo, comme sur le panneau de la boutique (2026-10-15) ---
+   Meme format pour toutes : photo ronde 46 px, nom, prix. Viandes, supplements,
+   gratine ; les sauces gardent leur carte qui se deplie. */
+.options.tuiles { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+.option.tuile { position: relative; flex-direction: column; justify-content: flex-start; gap: 6px; padding: 12px 4px 10px; text-align: center; border-radius: 14px; }
+.option.tuile input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: pointer; }
+.tuile-photo, .tuile-sans { display: block; width: 46px; height: 46px; border-radius: 50%; object-fit: cover; flex: none; border: 2px solid rgba(255, 255, 255, .1); }
+.tuile-sans { background: radial-gradient(circle, transparent 54%, rgba(255, 255, 255, .25) 56% 60%, transparent 62%), linear-gradient(45deg, transparent 47%, rgba(255, 255, 255, .25) 48% 52%, transparent 53%); }
+.option.tuile span { flex: none; font: 600 .76rem/1.15 var(--etroite); letter-spacing: .03em; text-transform: uppercase; }
+.option.tuile em { font-size: .82rem; }
+.option.tuile:has(input:checked) .tuile-photo { border-color: var(--orange); }
+.option.tuile:has(input:checked)::after { content: ''; position: absolute; top: 6px; right: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--feu) center / 10px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2 4 7.6 8.5 2.6' fill='none' stroke='%231b0d00' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.option.tuile:has(input:focus-visible) { outline: 2px solid var(--jaune); outline-offset: 2px; }
+/* Le pot de sauce en photo (le bol du panneau). */
+.sauce-pot-photo { overflow: hidden; background: #fff; border-color: #2b2724; }
+.sauce-pot-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.12); }
+.sauce .sauce-pot-photo { width: 44px; height: 44px; }
+.prix small { font: 600 .72rem/1 var(--texte-police); color: var(--doux); text-transform: none; letter-spacing: 0; }

@@ -32,7 +32,12 @@
     ch.forEach(function (x) { if (!n[x]) { n[x] = 0; ordre.push(x); } n[x]++; });
     return ordre.map(function (x) { return x + (n[x] > 1 ? ' ×' + n[x] : ''); }).join(' + ');
   };
-  var pot = function (n) { return '<i class="sauce-pot" style="--c:' + (TEINTES[n] || '#e2ae1c') + '"></i>'; };
+  var PHOTO_SAUCE = {};
+  D.carte.forEach(function (c) { c.items.forEach(function (i) { (i.groupes || []).forEach(function (g) { if (g.type === 'sauces') g.options.forEach(function (o) { if (o.photo) PHOTO_SAUCE[o.n] = o.photo; }); }); }); });
+  var pot = function (n) {
+    return PHOTO_SAUCE[n] ? '<i class="sauce-pot sauce-pot-photo"><img src="../photos/' + PHOTO_SAUCE[n] + '.webp" alt="" width="160" height="160"></i>'
+      : '<i class="sauce-pot" style="--c:' + (TEINTES[n] || '#e2ae1c') + '"></i>';
+  };
   var PLATS = {};
   D.carte.forEach(function (c) { c.items.forEach(function (i) { PLATS[i.id] = i; }); });
 
@@ -115,12 +120,13 @@
               return '<button type="button" class="sauce" data-sauce="' + esc(o.n) + '" aria-pressed="false">' + pot(o.n) + '<span>' + esc(o.n) + '</span><em data-sauce-n></em></button>';
             }).join('') + '</div></div></fieldset>';
         }
-        var type = g.max === 1 ? 'radio' : 'checkbox';
+        var type = g.max === 1 ? 'radio' : 'checkbox', tuiles = g.options.some(function (o) { return o.photo; });
         return '<fieldset class="groupe" data-groupe="' + g.id + '"><legend><b>' + esc(g.titre) + '</b><small>' +
-          (g.min ? 'Obligatoire' : 'Facultatif') + (g.max > 1 && g.aide ? ' · ' + esc(g.aide) : '') + '</small></legend><div class="options">' +
+          (g.min ? 'Obligatoire' : 'Facultatif') + (g.max > 1 && g.aide ? ' · ' + esc(g.aide) : '') + '</small></legend><div class="options' + (tuiles ? ' tuiles' : '') + '">' +
           optionsDe(g).map(function (o) {
             var coche = (enCours.choix[g.id] || []).indexOf(o.n) >= 0 || (o.n === 'Sans' && !(enCours.choix[g.id] || []).length);
-            return '<label class="option"><input type="' + type + '" name="g-' + g.id + '" value="' + esc(o.n) + '"' + (coche ? ' checked' : '') + '><span>' + esc(o.n) + '</span>' + (o.p ? '<em>+' + (Number.isInteger(o.p) ? o.p + ' €' : euros(o.p)) + '</em>' : '') + '</label>';
+            var visuel = !tuiles ? '' : o.photo ? '<img class="tuile-photo" src="../photos/' + o.photo + '.webp" alt="" width="160" height="160">' : '<i class="tuile-sans" aria-hidden="true"></i>';
+            return '<label class="option' + (tuiles ? ' tuile' : '') + '"><input type="' + type + '" name="g-' + g.id + '" value="' + esc(o.n) + '"' + (coche ? ' checked' : '') + '>' + visuel + '<span>' + esc(o.n) + '</span>' + (o.p ? '<em>+' + (Number.isInteger(o.p) ? o.p + ' €' : euros(o.p)) + '</em>' : '') + '</label>';
           }).join('') + '</div></fieldset>';
       }) + '</div>' +
       '<div class="feuille-pied"><div class="qte"><button type="button" data-q="-1" aria-label="Moins">−</button><span data-q-n>1</span><button type="button" data-q="1" aria-label="Plus">+</button></div>' +

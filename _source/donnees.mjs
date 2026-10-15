@@ -8,9 +8,9 @@
 // ===================================================================
 
 // rayonKm : rayon de livraison par defaut, a fixer avec le client.
-// Horaires : ceux releves au fetch du 14/10 (Google, Eat-List). Nicolas :
-// « met ce qu'on a trouve, si pas bon on changera ». Les autres : a venir.
-const HORAIRES = { 'vaulx-en-velin': '18 h – 4 h', 'lyon-8': '11 h – 2 h', 'bourgoin-jallieu': '11 h – 22 h', 'pont-de-cheruy': '12 h – 23 h' };
+// Horaires : donnes par Hakim le 15/10 (tous 11 h - 1 h, Vaulx jusqu'a 4 h).
+const HORAIRES = Object.fromEntries(['lyon-8', 'charpennes', 'la-duchere', 'rillieux-la-pape', 'vaulx-en-velin', 'venissieux', 'pont-de-cheruy', 'bourgoin-jallieu']
+  .map((id) => [id, id === 'vaulx-en-velin' ? '11 h – 4 h' : '11 h – 1 h']));
 export const SNACKS = [
   { id: 'lyon-8', nom: 'Lyon 8', ville: 'Lyon 8e', adresse: '95 rue Villon, 69008 Lyon', tel: '07 53 59 38 91', lat: 45.7372664, lng: 4.8625766, note: '4,5', avis: 306 },
   { id: 'charpennes', nom: 'Charpennes', ville: 'Villeurbanne', adresse: '3 rue d’Inkermann, 69100 Villeurbanne', tel: '07 54 87 93 04', lat: 45.7704796, lng: 4.8659924, note: '4,6', avis: 161 },
@@ -50,6 +50,10 @@ const G = {
   viande2Tacos: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])), inclusSi: { groupe: 'taille', option: 'Maxi (2 viandes)' } },
 };
 
+// Chaque signature existe en 4 formats (panneau « Les signatures ») :
+// burger 7 EUR, sandwich 7,50 EUR, roule 8,50 EUR, tacos 8,50 EUR (Hakim, 15/10).
+const FORMAT_SIG = { id: 'format', titre: 'Ton format', min: 1, max: 1, options: o([['Burger', 0], ['Sandwich', 0.5], ['Roulé', 1.5], ['Tacos', 1.5]]) };
+
 /* ---------------- la carte ---------------- */
 // photo : vignette decoupee dans les panneaux de la boutique (_source/vignettes.py).
 export const CARTE = [
@@ -85,14 +89,14 @@ export const CARTE = [
     ],
   },
   {
-    id: 'signatures', nom: 'Les signatures', intro: 'Nos recettes maison. Les prix arrivent bientôt.',
+    id: 'signatures', nom: 'Les signatures', intro: 'Nos recettes maison, en burger, sandwich, roulé ou tacos.',
     items: [
-      { id: 'sig-dz', n: 'Les DZ', p: null, photo: 's-dz', d: 'Steak, escalope, chakchouka et cheddar, relevés d’une sauce algérienne et d’une sauce gruyère, avec des frites.' },
-      { id: 'sig-tajs', n: 'Les Tajs', p: null, photo: 's-tajs', d: 'Poulet tikka, Kiri, salade, tomate et cheddar, avec des frites, du piment pili-pili et une sauce gruyère.' },
-      { id: 'sig-bollys', n: 'Les Bollys', p: null, photo: 's-bollys', d: 'Poulet au curry, Kiri et cheddar, avec des frites, une sauce curry et une sauce gruyère.' },
-      { id: 'sig-forestiers', n: 'Les Forestiers', p: null, photo: 's-forestiers', d: 'Escalope à la sauce forestière et cheddar, nappés de sauce gruyère.' },
-      { id: 'sig-savoyards', n: 'Les Savoyards', p: null, photo: 's-savoyards', d: 'Poulet, bacon et raclette, nappés de sauce gruyère.' },
-      { id: 'sig-anas-food', n: 'Les Anas Food', p: null, photo: 's-anas-food', d: 'Steak, chakchouka et cheddar, avec la sauce de ton choix et une sauce gruyère.' },
+      { id: 'sig-dz', n: 'Les DZ', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-dz', d: 'Steak, escalope, chakchouka et cheddar, relevés d’une sauce algérienne et d’une sauce gruyère, avec des frites.' },
+      { id: 'sig-tajs', n: 'Les Tajs', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-tajs', d: 'Poulet tikka, Kiri, salade, tomate et cheddar, avec des frites, du piment pili-pili et une sauce gruyère.' },
+      { id: 'sig-bollys', n: 'Les Bollys', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-bollys', d: 'Poulet au curry, Kiri et cheddar, avec des frites, une sauce curry et une sauce gruyère.' },
+      { id: 'sig-forestiers', n: 'Les Forestiers', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-forestiers', d: 'Escalope à la sauce forestière et cheddar, nappés de sauce gruyère.' },
+      { id: 'sig-savoyards', n: 'Les Savoyards', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-savoyards', d: 'Poulet, bacon et raclette, nappés de sauce gruyère.' },
+      { id: 'sig-anas-food', n: 'Les Anas Food', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-anas-food', d: 'Steak, chakchouka et cheddar, avec la sauce de ton choix et une sauce gruyère.' },
     ],
   },
   {
@@ -191,4 +195,23 @@ for (const c of CARTE) for (const i of c.items) {
   if (PAIN_BURGER.test(texte)) peut.push('Sésame (pain à burger)');
   if (!FROMAGES.test(texte) && !c.id.startsWith('formules')) peut.push('Lait (si tu ajoutes du fromage ou une sauce gruyère)');
   i.allergenes = { contient, peut };
+}
+
+/* ---------------- les photos des options (Nicolas, 2026-10-15) ----------------
+   « Regarde les design sur menu » : viandes, sauces, supplements et gratine
+   en petites tuiles photo, comme sur le panneau. Photos : _source/options_panneau.py. */
+const slug = (n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const PHOTO_OPT = {
+  viande: (n) => 'opt/' + slug(n),
+  viande2: (n) => 'opt/' + slug(n),
+  sauces: (n) => 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
+  supplements: (n) => 'opt/u-' + slug(n.replace(' fumé', '')),
+  gratinage: (n) => 'opt/u-' + slug(n),
+};
+const vus = new Set();
+for (const c of CARTE) for (const i of c.items) for (const g of i.groupes || []) {
+  const f = PHOTO_OPT[g.type === 'sauces' ? 'sauces' : g.id];
+  if (!f || vus.has(g.options)) continue;
+  vus.add(g.options);
+  g.options = g.options.map((x) => ({ ...x, photo: f(x.n) }));
 }
