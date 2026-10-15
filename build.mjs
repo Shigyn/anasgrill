@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '35';
+const V = '36';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, livraison: false, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 2, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: PROD ? 'stripe' : 'simule' };
 
