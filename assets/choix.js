@@ -1,6 +1,6 @@
 /* ===================================================================
    Anas Grill — l'arrivee « Choisis ton restaurant » (LocWeb, 2026-10-14)
-   Les 8 restaurants en cartes, classees par distance : par la position
+   Les restaurants en cartes, classees par distance : par la position
    du telephone (avec permission) ou l'adresse tapee (Base Adresse
    Nationale, gratuite). Leger : pas de carte interactive, des images
    statiques et quelques classes CSS. Sans JavaScript, tout reste cliquable.

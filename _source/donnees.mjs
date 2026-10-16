@@ -9,7 +9,7 @@
 
 // rayonKm : rayon de livraison par defaut, a fixer avec le client.
 // Horaires : donnes par Hakim le 15/10 (tous 11 h - 1 h, Vaulx jusqu'a 4 h).
-const HORAIRES = Object.fromEntries(['lyon-8', 'charpennes', 'la-duchere', 'rillieux-la-pape', 'vaulx-en-velin', 'venissieux', 'pont-de-cheruy', 'bourgoin-jallieu']
+const HORAIRES = Object.fromEntries(['lyon-8', 'charpennes', 'la-duchere', 'rillieux-la-pape', 'vaulx-en-velin', 'venissieux', 'bourgoin-jallieu']
   .map((id) => [id, id === 'vaulx-en-velin' ? '11 h – 4 h' : '11 h – 1 h']));
 export const SNACKS = [
   { id: 'lyon-8', nom: 'Lyon 8', ville: 'Lyon 8e', adresse: '95 rue Villon, 69008 Lyon', tel: '07 53 59 38 91', lat: 45.7372664, lng: 4.8625766, note: '4,5', avis: 306 },
@@ -18,7 +18,7 @@ export const SNACKS = [
   { id: 'rillieux-la-pape', nom: 'Rillieux-la-Pape', ville: 'Rillieux-la-Pape', adresse: '3070 route de Strasbourg, 69140 Rillieux-la-Pape', tel: '06 59 26 08 96', lat: 45.8209225, lng: 4.8982348, note: '4,7', avis: 101 },
   { id: 'vaulx-en-velin', nom: 'Vaulx-en-Velin', ville: 'Vaulx-en-Velin', adresse: '18 avenue Eugène Hénaff, 69120 Vaulx-en-Velin', tel: '06 05 71 17 65', lat: 45.7742965, lng: 4.9277551, note: '4,4', avis: 24 },
   { id: 'venissieux', nom: 'Vénissieux', ville: 'Vénissieux', adresse: '61 boulevard Laurent Gérin, 69200 Vénissieux', tel: '07 53 91 82 47', lat: 45.7010038, lng: 4.8838309, note: '4,7', avis: 34 },
-  { id: 'pont-de-cheruy', nom: 'Pont-de-Chéruy', ville: 'Pont-de-Chéruy', adresse: '42 rue Grammont, 38230 Pont-de-Chéruy', tel: '04 87 83 02 90', lat: 45.750686, lng: 5.170642, note: null, avis: 0 },
+  // Pont-de-Cheruy retire le 16/10 : ce snack n'existe pas (Hakim).
   { id: 'bourgoin-jallieu', nom: 'Bourgoin-Jallieu', ville: 'Bourgoin-Jallieu', adresse: '49 avenue Gambetta, 38300 Bourgoin-Jallieu', tel: '07 75 43 84 16', lat: 45.5886073, lng: 5.2727873, note: '4,6', avis: 246 },
 ].map((s) => ({ rayonKm: 5, horaires: HORAIRES[s.id] || null, ouverture: 11, fermeture: s.id === 'vaulx-en-velin' ? 4 : 1, ...s }));
 
@@ -57,27 +57,37 @@ const FORMAT_SIG = { id: 'format', titre: 'Ton format', min: 1, max: 1, options:
 /* ---------------- la carte ---------------- */
 // photo : vignette decoupee dans les panneaux de la boutique (_source/vignettes.py).
 export const CARTE = [
+  // Les formules du panneau envoye par Hakim le 16/10 (10, 11, 12 et 15 EUR).
+  // Chaque formule : 2 plats (ou plus), frites OU potatoes cheddar gruyere, 1 boisson.
   {
-    id: 'formules', nom: 'Formules à 10 €', intro: 'Frites cheddar gruyère et boisson comprises.',
+    id: 'formules', nom: 'Formules à 10 €', intro: 'Frites ou potatoes cheddar gruyère et boisson comprises.',
     items: [
-      { id: 'formule-classique', n: 'Le Classique', p: 10, photo: 'f-classique', d: 'Un sandwich à l’escalope (curry, tandoori ou paprika) et un burger brioché au steak ou au poisson, avec des frites cheddar gruyère et une boisson.', groupes: [
-        { id: 'sandwich', titre: 'Le sandwich escalope', min: 1, max: 1, options: o(['Curry', 'Tandoori', 'Paprika']) },
-        { id: 'burger', titre: 'Le burger brioché', min: 1, max: 1, options: o(['Steak', 'Fish']) }] },
-      { id: 'formule-grill-wrap', n: 'Le Grill and Wrap', p: 10, photo: 'f-grill-wrap', d: 'Notre burger l’Anas Grill et un wrap au poulet, avec des frites cheddar gruyère et une boisson.' },
+      { id: 'formule-classique', n: 'Le Classique', p: 10, photo: 'f-classique', d: 'Un sandwich à l’escalope (curry, tandoori ou paprika) et un burger brioché au steak ou au poisson, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-giant', n: 'Giant and Big', p: 10, photo: 'f-giant', d: 'Un Big Max et un Giant, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-rolls-burger', n: 'Rolls and Burger', p: 10, photo: 'f-rolls-burger', d: 'Une galette au steak ou à l’escalope et un burger au steak ou au chicken, avec des frites ou potatoes cheddar gruyère et une boisson.' },
     ],
   },
   {
-    id: 'formules-11', nom: 'Formules à 11 €', intro: 'Nos formules les plus gourmandes. Frites cheddar gruyère et boisson comprises.',
+    id: 'formules-11', nom: 'Formule à 11 €', intro: 'Frites ou potatoes cheddar gruyère et boisson comprises.',
     items: [
-      { id: 'formule-turkish', n: 'Le Turkish', p: 11, photo: 'f-turkish', d: 'Une galette kebab avec la sauce de ton choix et un cheese, avec des frites cheddar gruyère et une boisson.', groupes: [{ ...G.sauces, titre: 'Sauce de la galette', max: 1, aide: '' }] },
-      { id: 'formule-mielleux', n: 'Le Mielleux', p: 11, photo: 'f-mielleux', d: 'Un burger chèvre-miel aux noix de pécan et un wrap poulet-chèvre, avec des frites cheddar gruyère et une boisson.' },
-      { id: 'formule-crocs', n: 'Formule Crocs', p: 11, photo: 'f-crocs', d: 'Deux croc’s au bacon et deux cheeseburgers, avec des frites cheddar gruyère et une boisson.' },
-      { id: 'formule-smash', n: 'Le Smash Grill', p: 11, photo: 'f-smash', d: 'Un smash burger double steak et un smash aux tenders, avec des frites cheddar gruyère et une boisson.' },
-      { id: 'formule-algerien', n: 'L’Algérien', p: 11, photo: 'f-algerien', d: 'Deux burgers au pain matlouh, l’un au steak, l’autre à l’escalope, tous deux à la chakchouka. Avec des frites cheddar gruyère et une boisson.' },
-      { id: 'formule-rolls', n: 'Rolls and Croc’s', p: 11, photo: 'f-rolls', d: 'Un roulé (steak, curry, tandoori ou paprika) et un croc’s, avec des frites cheddar gruyère et une boisson.', groupes: [
-        { id: 'roule', titre: 'Le roulé', min: 1, max: 1, options: o(['Steak', 'Curry', 'Tandoori', 'Paprika']) }] },
-      { id: 'formule-forestier', n: 'Le Forestier', p: 11, photo: 'f-forestier', d: 'Un sandwich forestier, un maxi brioché et un croc’s, avec des frites cheddar gruyère et une boisson.' },
-      { id: 'formule-mexicain', n: 'Le Mexicain', p: 11, photo: 'f-mexicain', d: 'Deux fajitas bien relevées aux jalapeños, avec des frites cheddar gruyère et une boisson.' },
+      { id: 'formule-smash', n: 'Smash Grill', p: 11, photo: 'f-smash', d: 'Un smash burger double steak et un smash aux tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+    ],
+  },
+  {
+    id: 'formules-12', nom: 'Formules à 12 €', intro: 'Frites ou potatoes cheddar gruyère et boisson comprises.',
+    items: [
+      { id: 'formule-crousty', n: 'Crousty', p: 12, photo: 'f-crousty', d: 'Deux burgers crousty ou un tacos crousty, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-double-rolls', n: 'Double Rolls', p: 12, photo: 'f-double-rolls', d: 'Un rolls au steak et un rolls à l’escalope, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-rolls-dwich', n: 'Rolls and Dwich', p: 12, photo: 'f-rolls-dwich', d: 'Un rolls (escalope, curry, tandoori ou steak) et un sandwich, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-algerien', n: 'L’Algérien', p: 12, photo: 'f-algerien', d: 'Deux burgers au pain matlouh à la chakchouka, l’un au steak, l’autre à l’escalope, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+    ],
+  },
+  {
+    id: 'formules-15', nom: 'Formules à 15 €', intro: 'Les maxi. Frites ou potatoes cheddar gruyère et boisson comprises.',
+    items: [
+      { id: 'formule-maxi-tacos', n: 'Maxi Tacos', p: 15, photo: 'f-maxi-tacos', d: 'Un maxi tacos (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-maxi-sandwich', n: 'Maxi Sandwich', p: 15, photo: 'f-maxi-sandwich', d: 'Un maxi sandwich (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-street', n: 'Street', p: 15, photo: 'f-street', d: 'Deux wraps chicken, 5 wings et 3 tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
     ],
   },
   {
@@ -179,19 +189,27 @@ for (const c of CARTE) for (const i of c.items) {
    ingredients, ses sauces) et le panier dit « Sandwich : sans oignon ». */
 const P = (court, titre, ing, opts = {}) => ({ court, titre, ing, ...opts });
 const choixDe = (titre, liste) => ({ titre, min: 1, max: 1, options: o(liste) });
+const VIANDES_MAXI = ['Escalope', 'Escalope curry', 'Escalope tandoori', 'Steak'];
 const FORMULES = {
   'formule-classique': [P('Sandwich', 'Le sandwich escalope', [...LEG], { choix: choixDe('Assaisonnement', ['Curry', 'Tandoori', 'Paprika']) }),
     P('Burger', 'Le burger brioché', [...LEG, 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Fish']) })],
-  'formule-grill-wrap': [P('Anas Grill', 'L’Anas Grill', [...LEG, 'Cheddar', 'Bacon']), P('Wrap', 'Le wrap poulet', [...LEG, 'Cheddar'])],
-  'formule-turkish': [P('Galette', 'La galette kebab', [...LEG], { sauces: 1 }), P('Cheese', 'Le cheese', ['Salade', 'Tomate', 'Cornichon', 'Cheddar'])],
-  'formule-mielleux': [P('Burger', 'Le burger chèvre-miel', [...LEG]), P('Wrap', 'Le wrap poulet-chèvre', ['Salade', 'Oignon'])],
-  'formule-crocs': [P('Croc’s', 'Les deux croc’s bacon', ['Bacon'], { sauces: 0 }), P('Cheeseburgers', 'Les deux cheeseburgers', ['Salade', 'Tomate', 'Cheddar'])],
+  'formule-giant': [P('Big Max', 'Le Big Max', [...LEG, 'Cornichon', 'Cheddar']), P('Giant', 'Le Giant', [...LEG, 'Cheddar'])],
+  'formule-rolls-burger': [P('Galette', 'La galette', [...LEG], { choix: choixDe('Viande', ['Steak', 'Escalope']) }),
+    P('Burger', 'Le burger', [...LEG, 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Chicken']) })],
   'formule-smash': [P('Smash steak', 'Le smash double steak', [...LEG, 'Cornichon', 'Oignons crispy', 'Cheddar']), P('Smash tenders', 'Le smash tenders', [...LEG, 'Cheddar'])],
+  'formule-crousty': [P('Crousty', 'Le crousty', ['Salade', 'Cheddar'], { choix: choixDe('Au choix', ['2 burgers crousty', '1 tacos crousty']) })],
+  'formule-double-rolls': [P('Rolls steak', 'Le rolls steak', [...LEG]), P('Rolls escalope', 'Le rolls escalope', [...LEG])],
+  'formule-rolls-dwich': [P('Rolls', 'Le rolls', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) }),
+    P('Sandwich', 'Le sandwich', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) })],
   'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', [...LEG]), P('Burger escalope', 'Le burger matlouh escalope', [...LEG])],
-  'formule-rolls': [P('Roulé', 'Le roulé', [...LEG], { choix: choixDe('Viande', ['Steak', 'Curry', 'Tandoori', 'Paprika']) }), P('Croc’s', 'Le croc’s', [], { sauces: 0, info: 'Jambon et fromage fondu, servi tel quel.' })],
-  'formule-forestier': [P('Forestier', 'Le sandwich forestier', ['Salade']), P('Maxi', 'Le maxi brioché', [...LEG, 'Cheddar']), P('Croc’s', 'Le croc’s', [], { sauces: 0, info: 'Jambon et fromage fondu, servi tel quel.' })],
-  'formule-mexicain': [P('Fajitas', 'Les deux fajitas', [...LEG, 'Jalapeños', 'Cheddar'])],
+  'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI) }),
+    P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
+  'formule-maxi-sandwich': [P('Maxi sandwich', 'Le maxi sandwich', [...LEG], { choix: choixDe('Viande', VIANDES_MAXI) }),
+    P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
+  'formule-street': [P('Wraps', 'Les deux wraps chicken', [...LEG, 'Cheddar']), P('Wings et tenders', 'Les 5 wings et 3 tenders', [])],
 };
+// « 1 frite ou potatoes cheddar gruyere » dans chaque formule (panneau du 16/10).
+const G_ACCOMP = { id: 'accompagnement', titre: 'Ton accompagnement', min: 1, max: 1, options: o(['Frites cheddar gruyère', 'Potatoes cheddar gruyère']) };
 for (const c of CARTE) for (const i of c.items) {
   const parts = FORMULES[i.id]; if (!parts) continue;
   i.groupes = parts.flatMap((p, n) => {
@@ -215,7 +233,7 @@ const CANETTES = ['Dada Cola', 'Dada Cherry', 'Dada Zéro', 'Oasis Tropical', 'O
   'Schweppes Agrumes', 'Schweppes Pomme', 'Schweppes Lemon', 'Orangina'];
 const G_BOISSON = { id: 'boisson', titre: 'Ta boisson', min: 1, max: 1, options: o([...CANETTES, 'Eau 50 cl']) };
 for (const c of CARTE) for (const i of c.items) {
-  if (FORMULES[i.id]) i.groupes.push({ ...G_BOISSON });
+  if (FORMULES[i.id]) i.groupes.push({ ...G_ACCOMP }, { ...G_BOISSON });
   const m = (i.groupes || []).findIndex((g) => g.id === 'menu');
   if (m >= 0) i.groupes.splice(m + 1, 0, { ...G_BOISSON, titre: 'Ta boisson (menu)', siChoix: { groupe: 'menu', sauf: 'Seul' } });
 }

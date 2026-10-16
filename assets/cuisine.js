@@ -219,7 +219,7 @@
     majEtat();
   }
   function carte(c) {
-    var rb = c.paiement === 'remboursee' ? '<span class="cu-badge cu-rouge">Remboursée</span>' : c.paiement === 'remboursee_partiel' ? '<span class="cu-badge cu-jaune">Remb. ' + euros(c.rembourse_cents) + '</span>' : '<span class="cu-badge cu-vert">Payée</span>';
+    var rb = c.paiement === 'sur_place' ? '<span class="cu-badge cu-a-payer">À payer · ' + euros(c.total_cents) + '</span>' : c.paiement === 'remboursee' ? '<span class="cu-badge cu-rouge">Remboursée</span>' : c.paiement === 'remboursee_partiel' ? '<span class="cu-badge cu-jaune">Remb. ' + euros(c.rembourse_cents) + '</span>' : '<span class="cu-badge cu-vert">Payée</span>';
     return '<article class="cu-cmd' + (c.imprimee_le ? '' : ' cu-non-imp') + '" data-id="' + c.id + '">' +
       '<div class="cu-cmd-tete"><b class="cu-num">N° ' + c.numero + '</b><span class="cu-heure">' + (c.creneau ? 'Programmée · ' : '') + 'À remettre à <b>' + hm(c.heure_prevue) + '</b></span>' + rb + '</div>' +
       '<p class="cu-client">' + esc(c.prenom) + ' · <a href="tel:' + esc(c.telephone) + '">' + esc(c.telephone) + '</a></p>' +
@@ -229,6 +229,7 @@
         (c.statut === 'recue' ? '<button type="button" class="cu-bouton cu-feu" data-statut="prete">Prête</button>' : '') +
         (c.statut === 'prete' ? '<button type="button" class="cu-bouton cu-feu" data-statut="remise">Remise au client</button><button type="button" class="cu-bouton cu-discret" data-statut="recue">Pas prête</button>' : '') +
         (c.statut === 'remise' ? '<button type="button" class="cu-bouton cu-discret" data-statut="prete">Pas encore remise</button>' : '') +
+        (c.paiement === 'sur_place' && c.statut !== 'remise' ? '<button type="button" class="cu-bouton cu-discret" data-statut="annulee">Pas venu</button>' : '') +
         '<button type="button" class="cu-bouton cu-discret" data-reimprimer>' + (c.imprimee_le ? 'Réimprimer' : 'Imprimer') + '</button>' +
         '<span class="cu-total">' + euros(c.total_cents) + '</span></div></article>';
   }
@@ -274,7 +275,7 @@
     });
     t += '-'.repeat(L) + '\n';
     if (c.note) t += ESC + 'E1' + 'NOTE : ' + ESC + 'E0' + couper(c.note, L - 7).join('\n') + '\n';
-    t += sans(c.prenom) + ' - ' + sans(c.telephone) + '\n' + 'PAYE EN LIGNE : ' + sans(euros(c.total_cents)) + '\n\n\n\n' + GS + 'V' + '\x42' + '\x00';
+    t += sans(c.prenom) + ' - ' + sans(c.telephone) + '\n' + (c.paiement === 'sur_place' ? ESC + 'a1' + GS + '!' + '\x11' + 'A PAYER : ' + sans(euros(c.total_cents)) + '\n' + GS + '!' + '\x00' + ESC + 'a0' : 'PAYE EN LIGNE : ' + sans(euros(c.total_cents))) + '\n\n\n\n' + GS + 'V' + '\x42' + '\x00';
     return t;
   }
   // L'appli Android LocWeb envoie les octets ESC/POS a l'imprimante, port 9100, sans fenetre.
@@ -390,7 +391,7 @@
     d.open(); d.write('<!doctype html><meta charset="utf-8"><style>@page{size:80mm auto;margin:0}body{width:72mm;margin:0 4mm;font:13px/1.35 monospace;color:#000}h1{font-size:30px;margin:6px 0;text-align:center}h2{font-size:17px;margin:0 0 6px;text-align:center}hr{border:0;border-top:1px dashed #000}b{font-size:14px}.r{padding-left:10px}</style>' +
       '<h1>N° ' + c.numero + '</h1><h2>À REMETTRE À ' + hm(c.heure_prevue) + '</h2><div style="text-align:center">' + (c.creneau ? 'Commande programmée<br>' : '') + 'Anas Grill ' + esc(session.snack.nom) + ' · à emporter</div><hr>' +
       c.lignes.map(function (l) { return '<div><b>' + l.qte + ' × ' + esc(l.n) + '</b>' + (l.resume ? '<div class="r">' + esc(l.resume) + '</div>' : '') + '</div>'; }).join('') + '<hr>' +
-      (c.note ? '<div><b>NOTE :</b> ' + esc(c.note) + '</div>' : '') + '<div>' + esc(c.prenom) + ' · ' + esc(c.telephone) + '</div><div>PAYÉ EN LIGNE : ' + euros(c.total_cents) + '</div>');
+      (c.note ? '<div><b>NOTE :</b> ' + esc(c.note) + '</div>' : '') + '<div>' + esc(c.prenom) + ' · ' + esc(c.telephone) + '</div>' + (c.paiement === 'sur_place' ? '<h2>À PAYER : ' + euros(c.total_cents) + '</h2>' : '<div>PAYÉ EN LIGNE : ' + euros(c.total_cents) + '</div>'));
     d.close();
     setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} setTimeout(function () { f.remove(); }, 5000); }, 250);
     return true;
@@ -551,6 +552,7 @@
     var art = t.closest('[data-id]'); if (!art) return;
     var c = donnees.commandes.filter(function (x) { return x.id === art.getAttribute('data-id'); })[0];
     var st = t.closest('[data-statut]');
+    if (st && st.getAttribute('data-statut') === 'annulee' && !confirm('Le client n’est pas venu chercher la commande N° ' + c.numero + ' ? Elle sera annulée.')) return;
     if (st) { var nv = st.getAttribute('data-statut'); appel('statut', { id: c.id, statut: nv }).then(function () { c.statut = nv; afficher(); }); return; }
     if (t.closest('[data-reimprimer]')) { imprimees[c.id] = false; imprimer(c, true); }
   });

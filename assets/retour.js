@@ -20,7 +20,7 @@
     .then(function (c) {
       if (!c) return; // serveur injoignable : on reessaiera a la prochaine visite
       if (c.perdue || c.statut === 'remise' || c.statut === 'annulee' || c.paiement === 'echouee' || c.paiement === 'remboursee') { oublier(); return; }
-      if (c.paiement !== 'payee' && c.paiement !== 'remboursee_partiel') return; // paiement pas encore confirme
+      if (c.paiement !== 'payee' && c.paiement !== 'remboursee_partiel' && c.paiement !== 'sur_place') return; // paiement pas encore confirme
       if (Date.now() > new Date(c.heure_prevue).getTime() + 2 * 3600000) { oublier(); return; }
       afficher(c);
     }).catch(function () {});
@@ -44,7 +44,7 @@
         (s.lat != null ? ' <a href="https://www.google.com/maps/dir/?api=1&destination=' + s.lat + ',' + s.lng + '" target="_blank" rel="noopener">Itinéraire</a>' : '') + '</div>' +
       '<div class="conf-recap">' + (c.lignes || []).map(function (l) {
         return '<div><span>' + l.qte + ' × ' + esc(l.n) + (l.resume ? '<small>' + esc(l.resume) + '</small>' : '') + '</span></div>';
-      }).join('') + '<div class="conf-total"><span>Payé</span><span>' + euros(c.total_cents / 100) + '</span></div></div>' +
+      }).join('') + '<div class="conf-total"><span>' + (c.paiement === 'sur_place' ? 'À payer au comptoir' : 'Payé') + '</span><span>' + euros(c.total_cents / 100) + '</span></div></div>' +
       '<button type="button" class="bouton bouton-ligne" data-retour-fermer>Fermer</button></div>';
     document.body.appendChild(d);
     document.documentElement.style.overflow = 'hidden';

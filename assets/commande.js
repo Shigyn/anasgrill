@@ -514,16 +514,24 @@
   /* --- Le paiement (simule dans l'apercu) --- */
   function rendrePaiement() {
     var i = etat.infos, e = estimation(), liv = i.mode === 'livraison';
-    corps.innerHTML =
+    var surPlace = R.payerSurPlace && i.reglement === 'sur_place';
+    var choix = R.payerSurPlace ? '<div class="reglements" role="radiogroup" aria-label="Paiement">' +
+      '<button type="button" class="reglement' + (surPlace ? '' : ' actif') + '" data-reglement="ligne" role="radio" aria-checked="' + !surPlace + '"><b>Payer en ligne</b><small>Carte, Apple Pay, Google Pay</small></button>' +
+      '<button type="button" class="reglement' + (surPlace ? ' actif' : '') + '" data-reglement="sur_place" role="radio" aria-checked="' + surPlace + '"><b>Payer sur place</b><small>Au comptoir, en récupérant ta commande</small></button></div>' : '';
+    corps.innerHTML = choix +
       '<div class="recap"><small>' + (liv ? 'Livraison' : 'À emporter') + '</small><b>' + (liv ? 'Chez toi vers ' : 'Prêt à ') + hm(e.heure) + '</b><span>' + esc(liv ? i.adresse + (i.complement ? ' · ' + i.complement : '') : 'Anas Grill ' + SNACK.nom + ', ' + SNACK.adresse) + '</span></div>' +
       '<div class="recap"><small>' + nb() + ' article' + (nb() > 1 ? 's' : '') + '</small>' + etat.lignes.map(function (l) { return '<div class="recap-ligne"><span>' + l.qte + ' × ' + esc((PLATS[l.id] || l).n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '</div>' +
-      (STRIPE
+      (surPlace
+        ? '<div class="carte-paiement sur-place"><b>Tu paies au comptoir</b><p>En espèces ou par carte, quand tu récupères ta commande. Elle part en cuisine dès que tu valides.</p></div><p class="alerte" data-alerte-paiement hidden></p>'
+        : STRIPE
         ? '<div class="carte-paiement"><div class="cp-tete"><b>Paiement sécurisé</b><span class="cp-logos">Carte · Apple Pay · Google Pay</span></div><div class="paiement-stripe" data-ps><p class="ps-attente">Préparation du paiement sécurisé…</p></div></div><p class="alerte" data-alerte-paiement hidden></p>'
         : '<div class="carte-paiement"><div class="cp-tete"><b>Carte bancaire</b><span class="cp-logos">CB · Visa · Mastercard · Apple Pay</span></div>' +
           '<div class="cp-champ">•••• •••• •••• 4242</div><div class="cp-deux"><div class="cp-champ">12 / 28</div><div class="cp-champ">•••</div></div>' +
           '<p class="cp-demo">Aperçu : paiement simulé, rien n’est débité. Une fois en ligne, ce cadre est le paiement sécurisé Stripe.</p></div>');
-    pied.innerHTML = '<div class="total"><span>À payer</span><b data-a-payer>' + euros(total()) + '</b></div><button type="button" class="bouton bouton-feu" data-payer' + (STRIPE ? ' disabled' : '') + '>Payer ' + euros(total()) + '</button>';
-    if (STRIPE) preparerPaiement();
+    pied.innerHTML = '<div class="total"><span>' + (surPlace ? 'À payer au comptoir' : 'À payer') + '</span><b data-a-payer>' + euros(total()) + '</b></div>' +
+      (surPlace ? '<button type="button" class="bouton bouton-feu" data-sur-place>Valider ma commande</button>'
+        : '<button type="button" class="bouton bouton-feu" data-payer' + (STRIPE ? ' disabled' : '') + '>Payer ' + euros(total()) + '</button>');
+    if (STRIPE && !surPlace) preparerPaiement();
   }
 
   /* Le paiement : le serveur verifie tout et recalcule le prix (ag-commande),
@@ -546,6 +554,19 @@
     var a; try { a = localStorage.getItem('anas-appareil'); } catch (x) {}
     if (!a) { a = 'a' + Math.random().toString(36).slice(2) + Date.now().toString(36); try { localStorage.setItem('anas-appareil', a); } catch (x) {} }
     return a;
+  }
+  function validerSurPlace(b) {
+    var i = etat.infos;
+    b.disabled = true; b.textContent = 'Envoi au restaurant…'; alertePaiement('');
+    if (!STRIPE) { setTimeout(function () { confirmer(null, true); }, 900); return; } // apercu
+    appel('ag-commande', { action: 'payer', mode_paiement: 'sur_place', snack: SNACK.id, appareil: appareil(), prenom: i.prenom, telephone: i.tel, note: i.note || '',
+      creneau: i.quand === 'plus-tard' ? i.creneau : null,
+      lignes: etat.lignes.map(function (l) { return { id: l.id, choix: l.choix, qte: l.qte }; }) })
+      .then(function (rep) {
+        try { localStorage.setItem('anas-commande', JSON.stringify({ id: rep.commande.id, heure: rep.commande.heure_prevue })); } catch (x) {}
+        PAIEMENT = null; confirmer(rep.commande, true);
+      })
+      .catch(function (e) { b.disabled = false; b.textContent = 'Valider ma commande'; alertePaiement(e.message); });
   }
   function preparerPaiement() {
     var i = etat.infos;
@@ -612,6 +633,8 @@
       if (etape === 'infos' && verifier()) { etape = 'paiement'; rendre(); }
       return;
     }
+    var sp = e.target.closest('[data-sur-place]');
+    if (sp && !sp.disabled) { validerSurPlace(sp); return; }
     var b = e.target.closest('[data-payer]');
     if (b && !b.disabled) {
       if (STRIPE) { payerStripe(b); return; }
@@ -619,10 +642,14 @@
       setTimeout(confirmer, 1300);
     }
   });
+  corps.addEventListener('click', function (e) {
+    var r = e.target.closest('[data-reglement]'); if (!r) return;
+    etat.infos.reglement = r.getAttribute('data-reglement'); garder(); rendre();
+  });
   corps.addEventListener('input', function (e) { if (e.target.closest('[data-form]') && e.target.name !== 'adresse') lire(); });
 
   /* ===================== 3. Commande payee ===================== */
-  function confirmer(srv) {
+  function confirmer(srv, surPlace) {
     // Le client vient de la voir en grand : pas de fenetre « VOTRE COMMANDE » s'il recharge tout de suite.
     try { if (srv && srv.id) sessionStorage.setItem('anas-commande-vue', srv.id); } catch (x) {}
     var i = etat.infos, liv = i.mode === 'livraison';
@@ -632,7 +659,7 @@
     var c = $('[data-confirmation]');
     c.innerHTML = '<div class="conf-in">' +
       '<div class="conf-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></div>' +
-      '<p class="conf-eti">Commande payée · n° ' + num + '</p>' +
+      '<p class="conf-eti">' + (surPlace ? 'Commande envoyée' : 'Commande payée') + ' · n° ' + num + '</p>' +
       (liv
         ? '<h2>Livrée vers <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">' + (e.programme ? 'commande programmée' : 'dans ' + e.minutes + ' minutes environ') + '</p>' +
           '<p class="conf-lieu">' + esc(i.adresse) + (i.complement ? '<br>' + esc(i.complement) : '') + '</p>' +
@@ -640,8 +667,8 @@
         : '<h2>Rendez-vous à <span>' + hm(e.heure) + '</span></h2><p class="conf-dans">' + (e.programme ? 'commande programmée' : 'prête dans ' + e.minutes + ' minutes environ') + '</p>' +
           '<p class="conf-lieu">Anas Grill ' + esc(SNACK.nom) + '<br>' + esc(SNACK.adresse) + '</p>' +
           '<div class="conf-consigne"><b>Donne ton numéro ' + num + ' au comptoir.</b> <a href="https://www.google.com/maps/dir/?api=1&destination=' + SNACK.lat + ',' + SNACK.lng + '" target="_blank" rel="noopener">Itinéraire</a></div>') +
-      '<div class="conf-recap">' + lignes.map(function (l) { return '<div><span>' + l.qte + ' × ' + esc((PLATS[l.id] || l).n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '<div class="conf-total"><span>Payé</span><span>' + euros(paye) + '</span></div></div>' +
-      (srv ? '' : '<p class="conf-demo">Aperçu : paiement simulé, aucune commande n’a été envoyée.</p>') +
+      '<div class="conf-recap">' + lignes.map(function (l) { return '<div><span>' + l.qte + ' × ' + esc((PLATS[l.id] || l).n) + '</span><span>' + euros(l.prix * l.qte) + '</span></div>'; }).join('') + '<div class="conf-total"><span>' + (surPlace ? 'À payer au comptoir' : 'Payé') + '</span><span>' + euros(paye) + '</span></div></div>' +
+      (srv ? '' : '<p class="conf-demo">Aperçu : ' + (surPlace ? 'commande simulée' : 'paiement simulé') + ', aucune commande n’a été envoyée.</p>') +
       '<a class="bouton bouton-ligne" href="./">Nouvelle commande</a></div>';
     etat.lignes = []; garder(); majBarre();
     cacher(tiroir); c.hidden = false; requestAnimationFrame(function () { c.classList.add('visible'); });

@@ -1,6 +1,6 @@
 /* ===================================================================
    Anas Grill — la page Gerant (LocWeb, 2026-10-15)
-   Un seul code, les 8 snacks : chiffre d'affaires et commandes (total et
+   Un seul code, tous les snacks : chiffre d'affaires et commandes (total et
    par snack, sur la periode choisie), remboursements, pause, offre du
    moment, fermetures exceptionnelles, etat des tablettes, export Excel.
    =================================================================== */
@@ -110,6 +110,7 @@
   }
 
   // --- L'export Excel : on choisit les colonnes, puis on telecharge ---
+  function etatDe(c) { return c.paiement === 'sur_place' && c.statut === 'annulee' ? 'Pas venu' : { recue: 'À préparer', prete: 'Prête', remise: 'Remise', annulee: 'Annulée' }[c.statut] || c.statut; }
   var COLONNES = [
     ['jour', 'Jour', function (c) { return c.jour; }],
     ['heure', 'Heure', function (c) { return hm(c.payee_le || c.heure_prevue); }],
@@ -121,7 +122,8 @@
     ['total', 'Total TTC', function (c) { return (c.total_cents / 100).toFixed(2).replace('.', ','); }],
     ['rembourse', 'Remboursé', function (c) { return (c.rembourse_cents / 100).toFixed(2).replace('.', ','); }],
     ['net', 'Net', function (c) { return ((c.total_cents - c.rembourse_cents) / 100).toFixed(2).replace('.', ','); }],
-    ['etat', 'État', function (c) { return { recue: 'À préparer', prete: 'Prête', remise: 'Remise', annulee: 'Annulée' }[c.statut] || c.statut; }]
+    ['paiement', 'Paiement', function (c) { return c.paiement === 'sur_place' ? 'Sur place' : 'En ligne'; }],
+    ['etat', 'État', etatDe]
   ];
   function panneauExport() {
     var gardees; try { gardees = JSON.parse(localStorage.getItem('ag-export-colonnes') || 'null'); } catch (x) {}
@@ -129,7 +131,7 @@
     var d = document.createElement('div'); d.className = 'ge-alerte ge-modale';
     d.innerHTML = '<div class="ge-alerte-boite" role="dialog" aria-modal="true" aria-label="Export Excel"><h2>Export Excel</h2>' +
       '<p>Période : <b>' + (periode.du === periode.au ? 'le ' + fr(periode.du) : 'du ' + fr(periode.du) + ' au ' + fr(periode.au)) + '</b> (à changer en haut de la page).</p>' +
-      '<label class="ge-ligne"><span>Snack</span><select data-ex-snack><option value="tous">Les 8 snacks</option>' + donnees.snacks.map(function (s) { return '<option value="' + s.id + '"' + (filtre === s.id ? ' selected' : '') + '>' + esc(s.nom) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="ge-ligne"><span>Snack</span><select data-ex-snack><option value="tous">Tous les snacks</option>' + donnees.snacks.map(function (s) { return '<option value="' + s.id + '"' + (filtre === s.id ? ' selected' : '') + '>' + esc(s.nom) + '</option>'; }).join('') + '</select></label>' +
       '<p><b>Ce que tu veux dans le fichier</b></p><div class="ge-puces" data-ex-cols>' + COLONNES.map(function (k) { return puce(k[1], !gardees || gardees.indexOf(k[1]) >= 0); }).join('') + '</div>' +
       '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-ex-go>Télécharger</button><button type="button" class="cu-bouton cu-discret" data-ex-annuler>Annuler</button></div></div>';
     document.body.appendChild(d);
@@ -157,7 +159,7 @@
     $('#app').innerHTML =
       '<aside class="cu-menu">' +
         '<div class="cu-marque"><div class="cu-logo">' + $('[data-logo]').innerHTML + '</div>' +
-          '<div><small>Espace gérant</small><h1>Les 8 snacks</h1></div></div>' +
+          '<div><small>Espace gérant</small><h1>Tous les snacks</h1></div></div>' +
         '<nav class="cu-cartes" aria-label="Menu du gérant">' +
           carteMenu('data-vue="resume"', 'resume', 'Vue d’ensemble') +
           carteMenu('data-vue="commandes"', 'commandes', 'Commandes') +
@@ -211,10 +213,11 @@
   }
 
   function afficher() {
-    var snacks = donnees.snacks, cmds = donnees.commandes;
+    // « Pas venu » (sur place, annulee) : visible dans Commandes, hors des chiffres.
+    var snacks = donnees.snacks, tout = donnees.commandes, cmds = tout.filter(function (c) { return !(c.paiement === 'sur_place' && c.statut === 'annulee'); });
     var net = function (c) { return c.total_cents - c.rembourse_cents; };
     var ca = cmds.reduce(function (t, c) { return t + net(c); }, 0);
-    $('[data-kpi]').innerHTML = [['Chiffre d’affaires', euros(ca)], ['Commandes', cmds.length], ['Panier moyen', cmds.length ? euros(Math.round(ca / cmds.length)) : '—'], ['Remboursé', euros(cmds.reduce(function (t, c) { return t + c.rembourse_cents; }, 0))]]
+    $('[data-kpi]').innerHTML = [['Chiffre d’affaires', euros(ca)], ['Commandes', cmds.length], ['Panier moyen', cmds.length ? euros(Math.round(ca / cmds.length)) : '—'], ['Payé sur place', euros(cmds.filter(function (c) { return c.paiement === 'sur_place'; }).reduce(function (t, c) { return t + c.total_cents; }, 0))], ['Remboursé', euros(cmds.reduce(function (t, c) { return t + c.rembourse_cents; }, 0))]]
       .map(function (k) { return '<div><small>' + k[0] + '</small><b>' + k[1] + '</b></div>'; }).join('');
     var vu = function (s) {
       if (!s.cuisine_vue_le) return '<span class="cu-badge cu-rouge">jamais connectée</span>';
@@ -235,16 +238,16 @@
       }).join('') + '</tbody>';
     var opts = '<option value="tous">Tous les snacks</option>' + snacks.map(function (s) { return '<option value="' + s.id + '"' + (filtre === s.id ? ' selected' : '') + '>' + esc(s.nom) + '</option>'; }).join('');
     $('[data-filtre]').innerHTML = opts;
-    ['[data-offre-snack]', '[data-ferm-snack]'].forEach(function (sel, n) { var v = $(sel).value; $(sel).innerHTML = (n === 0 ? '<option value="tous">Les 8 snacks</option>' : '') + snacks.map(function (s) { return '<option value="' + s.id + '">' + esc(s.nom) + '</option>'; }).join(''); if (v) $(sel).value = v; });
+    ['[data-offre-snack]', '[data-ferm-snack]'].forEach(function (sel, n) { var v = $(sel).value; $(sel).innerHTML = (n === 0 ? '<option value="tous">Tous les snacks</option>' : '') + snacks.map(function (s) { return '<option value="' + s.id + '">' + esc(s.nom) + '</option>'; }).join(''); if (v) $(sel).value = v; });
     var nom = {}; snacks.forEach(function (s) { nom[s.id] = s.nom; });
-    var l = cmds.filter(function (c) { return filtre === 'tous' || c.etablissement_id === filtre; });
+    var l = tout.filter(function (c) { return filtre === 'tous' || c.etablissement_id === filtre; });
     $('[data-cmds]').innerHTML = '<thead><tr><th>Jour</th><th>Snack</th><th>N°</th><th>Client</th><th>Contenu</th><th>Payé</th><th>État</th><th></th></tr></thead><tbody>' +
       (l.map(function (c) {
         var reste = c.total_cents - c.rembourse_cents;
         return '<tr><td>' + c.jour.slice(8, 10) + '/' + c.jour.slice(5, 7) + ' ' + hm(c.payee_le || c.heure_prevue) + '</td><td>' + esc(nom[c.etablissement_id]) + '</td><td>' + c.numero + '</td><td>' + esc(c.prenom) + '<br><small>' + esc(c.telephone) + '</small></td>' +
-          '<td><small>' + c.lignes.map(function (x) { return x.qte + ' × ' + esc(x.n); }).join(', ') + '</small></td><td>' + euros(c.total_cents) + (c.rembourse_cents ? '<br><small>remb. ' + euros(c.rembourse_cents) + '</small>' : '') + '</td>' +
-          '<td>' + esc({ recue: 'À préparer', prete: 'Prête', remise: 'Remise', annulee: 'Annulée' }[c.statut] || c.statut) + '</td>' +
-          '<td>' + (reste > 0 ? '<button type="button" class="cu-bouton cu-discret" data-rembourser="' + c.id + '" data-reste="' + reste + '">Rembourser</button>' : '') + '</td></tr>';
+          '<td><small>' + c.lignes.map(function (x) { return x.qte + ' × ' + esc(x.n); }).join(', ') + '</small></td><td>' + euros(c.total_cents) + (c.paiement === 'sur_place' ? '<br><small>sur place</small>' : '') + (c.rembourse_cents ? '<br><small>remb. ' + euros(c.rembourse_cents) + '</small>' : '') + '</td>' +
+          '<td>' + esc(etatDe(c)) + '</td>' +
+          '<td>' + (reste > 0 && c.paiement !== 'sur_place' ? '<button type="button" class="cu-bouton cu-discret" data-rembourser="' + c.id + '" data-reste="' + reste + '">Rembourser</button>' : '') + '</td></tr>';
       }).join('') || '<tr><td colspan="8">Aucune commande sur cette période.</td></tr>') + '</tbody>';
     var rb = cmds.filter(function (c) { return c.rembourse_cents > 0; });
     $('[data-rembs]').innerHTML = '<thead><tr><th>Jour</th><th>Snack</th><th>N°</th><th>Client</th><th>Payé</th><th>Remboursé</th></tr></thead><tbody>' +

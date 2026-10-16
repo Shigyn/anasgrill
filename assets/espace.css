@@ -213,3 +213,4 @@ body.gerant .ge-kpi { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)
 .ge-modale .ge-alerte-boite { border-color: rgba(255, 160, 60, .4); background: #171513; }
 .ge-modale .ge-alerte-boite h2 { color: var(--texte); }
 @media (max-width: 900px) { .ge-offre-form { grid-template-columns: 1fr; } .ge-apercu { position: static; } }
+.cu-a-payer { background: #ffbe28; color: #1b0d00; font-size: .85rem; }

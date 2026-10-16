@@ -778,3 +778,13 @@ body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
 
 /* L'offre du moment, tout en haut de la carte */
 .plat-offre .plat-bouton { border-color: rgba(255, 122, 0, .7); box-shadow: 0 0 0 1px rgba(255, 122, 0, .35), 0 10px 30px -12px rgba(255, 122, 0, .45); }
+
+/* Payer en ligne ou sur place (Hakim, 16/10) */
+.reglements { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.reglement { display: grid; gap: 3px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--ligne); background: var(--charbon); color: var(--texte); text-align: left; font: inherit; cursor: pointer; }
+.reglement b { font-weight: 700; }
+.reglement small { color: var(--doux); font-size: .82rem; line-height: 1.25; }
+.reglement.actif { border-color: var(--orange); background: rgba(255, 122, 0, .12); box-shadow: 0 0 0 1px rgba(255, 122, 0, .4); }
+.reglement:focus-visible { outline: 2px solid var(--jaune); outline-offset: 2px; }
+.carte-paiement.sur-place { display: grid; gap: 6px; }
+.carte-paiement.sur-place p { margin: 0; color: var(--doux); }

@@ -30,6 +30,11 @@ DECOUPES = {
         'g-camembert': (55, 705, 150, 110), 'g-tenders': (200, 700, 150, 115), 'g-nuggets': (340, 695, 160, 120),
         'e-cheese': (515, 704, 255, 76), 'e-nuggets': (515, 822, 255, 86),
     },
+    'menu-formules-2.jpg': {  # nouvelles formules 10/11/12/15 EUR (Hakim, 16/10) ; provisoires en attendant les photos du graphiste
+        'f-giant': (455, 92, 300, 200), 'f-rolls-burger': (768, 92, 300, 200),
+        'f-crousty': (190, 385, 280, 168), 'f-double-rolls': (468, 396, 290, 150), 'f-rolls-dwich': (800, 380, 300, 166),
+        'f-maxi-tacos': (240, 628, 320, 170), 'f-maxi-sandwich': (600, 650, 330, 148), 'f-street': (960, 628, 350, 168),
+    },
     'menu-c19.jpg': {  # burgers
         'b-cheese': (160, 150, 115, 70), 'b-double-cheese': (305, 150, 120, 70), 'b-triple-cheese': (455, 140, 110, 80),
         'b-240': (590, 140, 125, 55), 'b-fish': (740, 125, 125, 75),

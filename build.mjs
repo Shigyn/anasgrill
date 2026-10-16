@@ -19,12 +19,12 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '59';
+const V = '60';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
 const STRIPE_PK = process.env.STRIPE_PK || '';
-const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, livraison: false, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 3, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: STRIPE_PK ? 'stripe' : 'simule', stripePk: STRIPE_PK };
+const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, payerSurPlace: true, livraison: false, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 3, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: STRIPE_PK ? 'stripe' : 'simule', stripePk: STRIPE_PK };
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const abs = (ch) => URL_SITE + ch;
@@ -32,7 +32,8 @@ const prix = (p) => (p == null ? 'Prix à confirmer' : (Number.isInteger(p) ? `$
 
 /* Le logo, redessine en SVG d'apres leur logo (rond noir, flamme, ANAS
    blanc, GRILL orange) : leur fichier HD remplacera ce dessin. */
-const LOGO = `<svg class="logo" viewBox="0 0 120 120" role="img" aria-label="Anas Grill"><defs><linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a00"/><stop offset="1" stop-color="#ffb800"/></linearGradient></defs><circle cx="60" cy="60" r="58" fill="#0b0b0c"/><circle cx="60" cy="60" r="49" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M60 14c3 9 13 13 11 25-1 5-4 8-4 8 1-6-2-10-5-12 1 6-3 10-6 13-3-4-7-7-6-13-4 4-6 9-4 14-5-3-8-9-6-16 3-9 15-11 20-19z" fill="url(#fl)"/><text x="60" y="73" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="27" fill="#fff" letter-spacing="1">ANAS</text><text x="60" y="94" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="15" fill="#ff8a00" letter-spacing="4">GRILL</text></svg>`;
+// Le logo officiel (envoye par Hakim le 16/10), detoure en rond : assets/logo.webp.
+const LOGO_R = (r) => `<img class="logo" src="${r}assets/logo.webp?v=${V}" alt="Anas Grill" width="512" height="512">`;
 
 const I = {
   pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>',
@@ -63,7 +64,7 @@ ${PROD ? '' : '<meta name="robots" content="noindex,nofollow">\n'}<link rel="can
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:image" content="${URL_SITE}photos/f-classique.webp">
 <meta name="theme-color" content="#0b0b0c">
-<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(LOGO.replace('class="logo" ', ''))}">
+<link rel="icon" type="image/png" href="${r}assets/logo-192.png"><link rel="apple-touch-icon" href="${r}assets/logo-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -75,7 +76,7 @@ ${tetes}<link rel="stylesheet" href="${r}assets/style.css?v=${V}">
 ${corps(r)}
 <footer class="pied">
   <div class="cadre pied-in">
-    <a class="pied-logo" href="${r || './'}">${LOGO}</a>
+    <a class="pied-logo" href="${r || './'}">${LOGO_R(r)}</a>
     <p>Les formules à 10 € toute l’année, dans nos ${SNACKS.length} restaurants de Lyon et d’Isère.</p>
     <nav class="pied-snacks" aria-label="Nos restaurants">${SNACKS.map((s) => `<a href="${r}${s.id}/">${esc(s.nom)}</a>`).join('')}</nav>
     <p class="pied-bas">© ${new Date().getFullYear()} Anas Grill · <a href="${r}mentions-legales/">Mentions légales</a> · <a href="${r}cgv/">Conditions de vente</a> · <a href="${r}confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a>${PROD ? ' · Site réalisé par <a href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a>' : ''}</p>
@@ -118,7 +119,7 @@ const proj = (lat, lng) => [Math.round((lng - CA.O) / (CA.E - CA.O) * CA.W * 10)
 // Communes sans snack, en repere discret (les snacks portent deja leur nom).
 const REPERES = [['Lyon', 45.7605, 4.832, 'grande'], ['Caluire', 45.797, 4.846], ['Bron', 45.735, 4.914], ['Décines', 45.766, 4.96], ['Meyzieu', 45.768, 5.004], ['Saint-Priest', 45.692, 4.944], ['L’Isle-d’Abeau', 45.621, 5.226], ['Saint-Fons', 45.703, 4.852]];
 // Ou poser le nom de chaque snack pour qu'ils ne se chevauchent pas.
-const ETIQUETTE = { 'lyon-8': 'droite', charpennes: 'haut', 'la-duchere': 'haut', 'rillieux-la-pape': 'haut', 'vaulx-en-velin': 'droite', venissieux: 'bas', 'pont-de-cheruy': 'haut', 'bourgoin-jallieu': 'haut' };
+const ETIQUETTE = { 'lyon-8': 'droite', charpennes: 'haut', 'la-duchere': 'haut', 'rillieux-la-pape': 'haut', 'vaulx-en-velin': 'droite', venissieux: 'bas', 'bourgoin-jallieu': 'haut' };
 function carteSvg(r) {
   const km = CA.W / ((CA.E - CA.O) * Math.cos(((CA.S + CA.N) / 2) * Math.PI / 180) * 111.32);
   const reperes = REPERES.map(([n, la, ln, cls]) => { const [x, y] = proj(la, ln); return `<text x="${x}" y="${y}" class="ville${cls ? ' ville-' + cls : ''}" text-anchor="middle">${esc(n)}</text>`; }).join('');
@@ -143,7 +144,7 @@ function carteSvg(r) {
 const PAGES = [];
 PAGES.push(['', {
   titre: 'Anas Grill — Commande en ligne · Lyon et Isère',
-  description: `Commandez chez Anas Grill en ligne : sandwichs, tacos, burgers, formules à 10 €. ${SNACKS.length} restaurants à Lyon, Villeurbanne, Vénissieux, Vaulx-en-Velin, Rillieux, Bourgoin-Jallieu et Pont-de-Chéruy.`,
+  description: `Commandez chez Anas Grill en ligne : sandwichs, tacos, burgers, formules à 10 €. ${SNACKS.length} restaurants à Lyon, Villeurbanne, Vénissieux, Vaulx-en-Velin, Rillieux et Bourgoin-Jallieu.`,
   classe: 'page-choix',
   scripts: ['choix.js', 'retour.js'],
   // Arrivee (retour de Nicolas, 2026-10-14) : la carte reduite au minimum,
@@ -155,7 +156,7 @@ PAGES.push(['', {
 <main id="contenu" class="arrivee">
   <section class="cadre arrivee-tete">
     <div class="arrivee-texte">
-      <a class="marque marque-grande" href="./">${LOGO}</a>
+      <a class="marque marque-grande" href="./">${LOGO_R(r)}</a>
       <h1>Choisis <span>ton restaurant</span></h1>
       <p>À emporter, payé en ligne, prêt à l’heure.</p>
       <div class="choix-actions">
@@ -224,7 +225,7 @@ for (const s of SNACKS) {
     corps: (r) => `
 <header class="entete entete-snack-page" data-entete>
   <div class="cadre entete-in">
-    <a class="marque marque-petite" href="${r}" aria-label="Retour au choix du restaurant">${LOGO}</a>
+    <a class="marque marque-petite" href="${r}" aria-label="Retour au choix du restaurant">${LOGO_R(r)}</a>
     <div class="entete-snack">
       <h1 class="entete-nom"><span class="entete-marque">Anas Grill</span> ${esc(s.nom)}</h1>
       <p class="entete-adresse">${esc(s.adresse)}</p>
@@ -300,12 +301,12 @@ const SAUCES_CARTE = [...new Set(CARTE.flatMap((c) => c.items).flatMap((i) => i.
 const espace = (titre, js, avecTempsReel) => `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>${titre} — Anas Grill</title>
-<meta name="theme-color" content="#0b0b0c"><link rel="icon" href="data:image/svg+xml,${encodeURIComponent(LOGO.replace('class="logo" ', ''))}">
+<meta name="theme-color" content="#0b0b0c"><link rel="icon" type="image/png" href="../assets/logo-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css?v=${V}"><link rel="stylesheet" href="../assets/espace.css?v=${V}">
 </head><body>
-<template data-logo>${LOGO}</template>
+<template data-logo>${LOGO_R('../')}</template>
 <div id="app"></div>
 <script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' }; window.AG_V = '${V}'; window.AG_SAUCES = ${JSON.stringify(SAUCES_CARTE)};</script>
 ${avecTempsReel ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>' : ''}
