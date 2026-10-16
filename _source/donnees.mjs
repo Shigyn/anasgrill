@@ -65,12 +65,20 @@ export const CARTE = [
       { id: 'formule-classique', n: 'Le Classique', p: 10, photo: 'f-classique', d: 'Un sandwich à l’escalope (curry, tandoori ou paprika) et un burger brioché au steak ou au poisson, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-giant', n: 'Giant and Big', p: 10, photo: 'f-giant', d: 'Un Big Max et un Giant, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-rolls-burger', n: 'Rolls and Burger', p: 10, photo: 'f-rolls-burger', d: 'Une galette au steak ou à l’escalope et un burger au steak ou au chicken, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-grill-wrap', n: 'Le Grill and Wrap', p: 10, photo: 'f-grill-wrap', d: 'Notre burger l’Anas Grill et un wrap au poulet, avec des frites ou potatoes cheddar gruyère et une boisson.' },
     ],
   },
   {
-    id: 'formules-11', nom: 'Formule à 11 €', intro: 'Frites ou potatoes cheddar gruyère et boisson comprises.',
+    id: 'formules-11', nom: 'Formules à 11 €', intro: 'Frites ou potatoes cheddar gruyère et boisson comprises.',
     items: [
       { id: 'formule-smash', n: 'Smash Grill', p: 11, photo: 'f-smash', d: 'Un smash burger double steak et un smash aux tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-turkish', n: 'Le Turkish', p: 11, photo: 'f-turkish', d: 'Une galette kebab avec la sauce de ton choix et un cheese, avec des frites ou potatoes cheddar gruyère et une boisson.', groupes: [{ ...G.sauces, titre: 'Sauce de la galette', max: 1, aide: '' }] },
+      { id: 'formule-mielleux', n: 'Le Mielleux', p: 11, photo: 'f-mielleux', d: 'Un burger chèvre-miel aux noix de pécan et un wrap poulet-chèvre, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-crocs', n: 'Formule Crocs', p: 11, photo: 'f-crocs', d: 'Deux croc’s au bacon et deux cheeseburgers, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-rolls', n: 'Rolls and Croc’s', p: 11, photo: 'f-rolls', d: 'Un roulé (steak, curry, tandoori ou paprika) et un croc’s, avec des frites ou potatoes cheddar gruyère et une boisson.', groupes: [
+        { id: 'roule', titre: 'Le roulé', min: 1, max: 1, options: o(['Steak', 'Curry', 'Tandoori', 'Paprika']) }] },
+      { id: 'formule-forestier', n: 'Le Forestier', p: 11, photo: 'f-forestier', d: 'Un sandwich forestier, un maxi brioché et un croc’s, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-mexicain', n: 'Le Mexicain', p: 11, photo: 'f-mexicain', d: 'Deux fajitas bien relevées aux jalapeños, avec des frites ou potatoes cheddar gruyère et une boisson.' },
     ],
   },
   {
@@ -207,6 +215,14 @@ const FORMULES = {
   'formule-maxi-sandwich': [P('Maxi sandwich', 'Le maxi sandwich', [...LEG], { choix: choixDe('Viande', VIANDES_MAXI) }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
   'formule-street': [P('Wraps', 'Les deux wraps chicken', [...LEG, 'Cheddar']), P('Wings et tenders', 'Les 5 wings et 3 tenders', [])],
+  // Les formules d'avant, gardees a cote des nouvelles (Nicolas, 17/10).
+  'formule-grill-wrap': [P('Anas Grill', 'L’Anas Grill', [...LEG, 'Cheddar', 'Bacon']), P('Wrap', 'Le wrap poulet', [...LEG, 'Cheddar'])],
+  'formule-turkish': [P('Galette', 'La galette kebab', [...LEG], { sauces: 1 }), P('Cheese', 'Le cheese', ['Salade', 'Tomate', 'Cornichon', 'Cheddar'])],
+  'formule-mielleux': [P('Burger', 'Le burger chèvre-miel', [...LEG]), P('Wrap', 'Le wrap poulet-chèvre', ['Salade', 'Oignon'])],
+  'formule-crocs': [P('Croc’s', 'Les deux croc’s bacon', ['Bacon'], { sauces: 0 }), P('Cheeseburgers', 'Les deux cheeseburgers', ['Salade', 'Tomate', 'Cheddar'])],
+  'formule-rolls': [P('Roulé', 'Le roulé', [...LEG], { choix: choixDe('Viande', ['Steak', 'Curry', 'Tandoori', 'Paprika']) }), P('Croc’s', 'Le croc’s', [], { sauces: 0, info: 'Jambon et fromage fondu, servi tel quel.' })],
+  'formule-forestier': [P('Forestier', 'Le sandwich forestier', ['Salade']), P('Maxi', 'Le maxi brioché', [...LEG, 'Cheddar']), P('Croc’s', 'Le croc’s', [], { sauces: 0, info: 'Jambon et fromage fondu, servi tel quel.' })],
+  'formule-mexicain': [P('Fajitas', 'Les deux fajitas', [...LEG, 'Jalapeños', 'Cheddar'])],
 };
 // « 1 frite ou potatoes cheddar gruyere » dans chaque formule (panneau du 16/10).
 const G_ACCOMP = { id: 'accompagnement', titre: 'Ton accompagnement', min: 1, max: 1, options: o(['Frites cheddar gruyère', 'Potatoes cheddar gruyère']) };
