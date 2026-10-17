@@ -36,8 +36,10 @@
 "min": true
 },
 "s-forestiers": {
-"l": 910,
-"h": 190
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "s-savoyards": {
 "l": 1200,
@@ -46,8 +48,10 @@
 "min": true
 },
 "s-anas-food": {
-"l": 840,
-"h": 190
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-classique": {
 "l": 1200,
@@ -122,12 +126,16 @@
 "min": true
 },
 "s-bresiliens": {
-"l": 1440,
-"h": 220
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "s-normands": {
-"l": 1500,
-"h": 212
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "g-camembert": {
 "l": 300,
@@ -150,24 +158,34 @@
 "h": 172
 },
 "f-giant": {
-"l": 600,
-"h": 400
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-rolls-burger": {
-"l": 600,
-"h": 400
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-crousty": {
-"l": 560,
-"h": 336
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-double-rolls": {
-"l": 580,
-"h": 300
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-rolls-dwich": {
-"l": 600,
-"h": 332
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-maxi-tacos": {
 "l": 1200,
@@ -182,8 +200,10 @@
 "min": true
 },
 "f-street": {
-"l": 700,
-"h": 336
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-cheese": {
 "l": 1200,
