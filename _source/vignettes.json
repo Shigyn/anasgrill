@@ -61,7 +61,7 @@
 },
 "f-grill-wrap": {
 "l": 1200,
-"h": 720,
+"h": 800,
 "client": true,
 "min": true
 },
@@ -266,20 +266,28 @@
 "min": true
 },
 "b-naan-beef": {
-"l": 240,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-naan-chicken": {
-"l": 240,
-"h": 150
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-naan-curry": {
-"l": 250,
-"h": 150
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-naan-tandoori": {
-"l": 250,
-"h": 150
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "bo-canette": {
 "l": 1200,

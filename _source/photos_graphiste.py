@@ -41,6 +41,15 @@ DUOS = {
     'f-double-rolls': ('roulés/seul/roulé dz.png', 'roulés/seul/roulé suisse.png'),
     'f-rolls-dwich': ('roulés/seul/roulé jala.png', 'sandwichs/seul/sandwich à composer.jpg'),
     'f-street': ('roulés/seul/roulé rio.png', 'roulés/seul/roulé buffalo.png'),
+    # 18/10 : les visuels de formules d'Hakim (titre imprime dessus) passent aussi
+    # aux photos du graphiste. Restent les siens : Crocs et Rolls and Croc's (le
+    # graphiste n'a pas de croc's) et L'Algerien (pas de pain matlouh).
+    'f-smash': ('burgers/seul/double Cheese.jpg', 'burgers/seul/Chicken brioché.jpg'),
+    'f-turkish': ('roulés/seul/roulé buffalo.png', 'burgers/seul/Cheese.jpg'),
+    'f-mielleux': ('burgers/seul/Boursin.jpg', 'roulés/seul/roulé suisse.png'),
+    'f-forestier': ('sandwichs/seul/veaudais.png', 'burgers/seul/maxi brioché.jpg'),
+    'f-mexicain': ('roulés/seul/roulé jala.png', 'roulés/seul/roulé dz.png'),
+    'f-grill-wrap': ('burgers/seul/Anas grill.jpg', 'roulés/seul/roulé rio.png'),
 }
 
 SAUCES = {
