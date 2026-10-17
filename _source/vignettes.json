@@ -24,20 +24,26 @@
 "min": true
 },
 "s-tajs": {
-"l": 910,
-"h": 190
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "s-bollys": {
-"l": 880,
-"h": 190
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "s-forestiers": {
 "l": 910,
 "h": 190
 },
 "s-savoyards": {
-"l": 880,
-"h": 190
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "s-anas-food": {
 "l": 840,
@@ -104,12 +110,16 @@
 "min": true
 },
 "s-effiloches": {
-"l": 1400,
-"h": 260
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "s-keftas": {
-"l": 1400,
-"h": 290
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "s-bresiliens": {
 "l": 1440,
@@ -160,56 +170,80 @@
 "h": 332
 },
 "f-maxi-tacos": {
-"l": 640,
-"h": 340
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-maxi-sandwich": {
-"l": 660,
-"h": 296
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-street": {
 "l": 700,
 "h": 336
 },
 "b-cheese": {
-"l": 230,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-double-cheese": {
-"l": 240,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-triple-cheese": {
-"l": 220,
-"h": 160
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-240": {
-"l": 250,
-"h": 110
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-fish": {
-"l": 250,
-"h": 150
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-maxi": {
-"l": 220,
-"h": 150
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-chicken": {
-"l": 220,
-"h": 150
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-steak-house": {
-"l": 230,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-chicken-house": {
-"l": 230,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-anas-grill": {
-"l": 220,
-"h": 140
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "b-naan-beef": {
 "l": 240,

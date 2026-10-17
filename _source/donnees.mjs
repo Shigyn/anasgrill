@@ -286,17 +286,26 @@ for (const c of CARTE) for (const i of c.items) {
    « Regarde les design sur menu » : viandes, sauces, supplements et gratine
    en petites tuiles photo, comme sur le panneau. Photos : _source/options_panneau.py. */
 const slug = (n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+// Photos du graphiste (17/10) : les pots de sauce et les canettes, en tuiles.
+// La Fish n'a pas de photo du graphiste : elle garde son illustration.
+const SAUCES_GRAPHISTE = new Set(['mayo', 'ketchup', 'burger', 'blanche', 'barbecue', 'algerienne', 'curry', 'samourai', 'harissa', 'gruyere', 'brazil', 'tartare', 'andalouse']);
+const BOISSONS_GRAPHISTE = new Set(['dada-cola', 'dada-cherry', 'oasis-tropical', 'oasis-pomme-cassis-framboise', 'schweppes-agrumes', 'schweppes-pomme', 'orangina', 'eau-50-cl']);
+const photoBoisson = (n) => BOISSONS_GRAPHISTE.has(slug(n)) ? 'boisson-' + slug(n) : 'boisson-autre';
 const PHOTO_OPT = {
   viande: (n) => 'opt/' + slug(n),
   viande2: (n) => 'opt/' + slug(n),
-  sauces: (n) => 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
+  sauces: (n) => SAUCES_GRAPHISTE.has(slug(n)) ? 'sauce-' + slug(n) : 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
+  boisson: photoBoisson,
+  parfum: photoBoisson,
   supplements: (n) => 'opt/u-' + slug(n.replace(' fumé', '')),
   gratinage: (n) => 'opt/u-' + slug(n),
 };
-const vus = new Set();
+// Une liste partagee (la boisson des formules) n'est convertie qu'une fois,
+// et TOUS les groupes qui la partagent recoivent la version avec photos.
+const faites = new Map();
 for (const c of CARTE) for (const i of c.items) for (const g of i.groupes || []) {
   const f = PHOTO_OPT[g.type === 'sauces' ? 'sauces' : g.id];
-  if (!f || vus.has(g.options)) continue;
-  vus.add(g.options);
-  g.options = g.options.map((x) => ({ ...x, photo: f(x.n) }));
+  if (!f) continue;
+  if (!faites.has(g.options)) faites.set(g.options, g.options.map((x) => { const ph = f(x.n); return ph ? { ...x, photo: ph } : { ...x }; }));
+  g.options = faites.get(g.options);
 }
