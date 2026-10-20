@@ -24,7 +24,7 @@ export const SNACKS = [
 
 /* ---------------- les groupes d'options, partages ---------------- */
 const VIANDES = ['Steak', 'Merguez', 'Escalope', 'Tandoori', 'Curry', 'Tenders', 'Cordon bleu', 'Kebab'];
-const SAUCES = ['Mayo', 'Ketchup', 'Burger', 'Blanche', 'Barbecue', 'Fish', 'Algérienne', 'Curry', 'Samouraï', 'Harissa', 'Gruyère', 'Brazil', 'Tartare', 'Andalouse'];
+const SAUCES = ['Mayo', 'Ketchup', 'Burger', 'Blanche', 'Barbecue', 'Fish', 'Algérienne', 'Curry', 'Samouraï', 'Harissa', 'Gruyère', 'Brazil', 'Tartare', 'Andalouse', 'Moutarde'];
 const SUPPLEMENTS = [['Emmental', 1], ['Kiri', 1], ['Cheddar', 1], ['Boursin', 1], ['Chakchouka', 1], ['Oignons crispy', 1], ['Bacon fumé', 1]];
 const GRATINAGE = [['Emmental', 2], ['Raclette', 2], ['Cheddar', 2], ['Chèvre', 2], ['Mozza', 2]];
 const o = (liste) => liste.map((x) => (Array.isArray(x) ? { n: x[0], p: x[1] } : { n: x, p: 0 }));
@@ -122,6 +122,24 @@ export const CARTE = [
       { id: 'sig-normands', n: 'Les Normands', p: 7, des: true, groupes: [FORMAT_SIG], photo: 's-normands', d: 'Poulet, tranche de jambon de dinde, salade, oignons crispy et frites, avec une sauce Boursin et une sauce fromagère maison.' },
     ],
   },
+  // 20/10 : sandwichs et roules des photos du graphiste. PRIX A CONFIRMER par Hakim.
+  {
+    id: 'sandwichs', nom: 'Les sandwichs', intro: 'Garnis et prêts à partir. En menu avec frites et boisson : 3 € de plus.',
+    items: [
+      { id: 'suedois', n: 'Le Suédois', p: 7, photo: 'sw-suedois', d: 'Une viande grillée, du cheddar, de la salade, de la tomate et une sauce blanche.', groupes: [G.menu] },
+      { id: 'veaudais', n: 'Le Veaudais', p: 7, photo: 'sw-veaudais', d: 'Deux steaks, du cheddar, une sauce fromagère, de la salade, de la tomate et de l’oignon.', groupes: [G.menu] },
+      { id: 'bavette', n: 'La Bavette', p: 8, photo: 'sw-bavette', d: 'Des tranches de bavette, du cheddar, une sauce fromagère, de la salade et de la tomate.', groupes: [G.menu] },
+    ],
+  },
+  {
+    id: 'roules', nom: 'Les roulés', intro: 'Dans une grande galette. En menu avec frites et boisson : 3 € de plus.',
+    items: [
+      { id: 'roule-jala', n: 'Le Jala', p: 8, photo: 'r-jala', d: 'Du bœuf grillé, des jalapeños, du cheddar et une sauce barbecue.', groupes: [G.menu] },
+      { id: 'roule-buffalo', n: 'Le Buffalo', p: 8, photo: 'r-buffalo', d: 'Du bœuf grillé, des bouchées de fromage panées, du cheddar et une sauce crémeuse.', groupes: [G.menu] },
+      { id: 'roule-rio', n: 'Le Rio', p: 8, photo: 'r-rio', d: 'Du poulet pané, du jambon de dinde, du fromage fondu et une sauce blanche aux herbes.', groupes: [G.menu] },
+      { id: 'roule-suisse', n: 'Le Suisse', p: 8, photo: 'r-suisse', d: 'Du poulet grillé, du jambon de dinde et de la raclette fondue.', groupes: [G.menu] },
+    ],
+  },
   {
     id: 'a-grignoter', nom: 'À grignoter', intro: 'Pour accompagner, ou pour les petites faims.',
     items: [
@@ -143,6 +161,12 @@ export const CARTE = [
       { id: 'cheese', n: 'Cheese', p: 2.5, photo: 'b-cheese', groupes: [sans('Oignon', 'Cornichon', 'Cheddar')] },
       { id: 'double-cheese', n: 'Double cheese', p: 4, photo: 'b-double-cheese', groupes: [sans('Oignon', 'Cornichon', 'Cheddar')] },
       { id: 'triple-cheese-bacon', n: 'Triple cheese bacon', p: 6, photo: 'b-triple-cheese', groupes: [sans('Oignon', 'Cornichon', 'Cheddar', 'Bacon')] },
+      // 20/10 : produits des photos du graphiste (sa carte Uber Eats). PRIX A CONFIRMER par Hakim.
+      { id: 'triple-cheese', n: 'Triple cheese', p: 5, photo: 'b-triple-cheese-nature', d: 'Trois steaks, trois tranches de cheddar, des cornichons et des oignons.' },
+      { id: 'quadruple-cheese', n: 'Quadruple cheese', p: 7, photo: 'b-quadruple-cheese', d: 'Quatre steaks, quatre tranches de cheddar, des cornichons et des oignons.' },
+      { id: 'big-grill', n: 'Le Big Grill', p: 6, photo: 'b-big-grill', d: 'Deux steaks, deux tranches de cheddar et des oignons dans un pain brioché, avec la sauce de ton choix.' },
+      { id: 'boursin', n: 'Le Boursin', p: 5.5, photo: 'b-boursin', d: 'Un steak, du cheddar, des cornichons et une sauce au Boursin, dans un pain brioché.' },
+      { id: 'fish', n: 'Le Fish', p: 3.5, photo: 'b-fish-classique', d: 'Un filet de poisson pané, du cheddar et une sauce tartare.' },
       { id: 'le-240', n: 'Le 240 brioché', p: 7.5, photo: 'b-240', d: 'Deux steaks et deux tranches de cheddar, avec la sauce et les légumes de ton choix.', groupes: [sans('Salade', 'Tomate', 'Oignon', 'Cornichon', 'Cheddar'), G.sauces] },
       { id: 'fish-brioche', n: 'Le Fish brioché', p: 5, photo: 'b-fish', d: 'Un filet de poisson pané, du cheddar, de la salade et une sauce au poisson, dans un pain brioché.', groupes: [sans('Salade', 'Cheddar', 'Sauce')] },
       { id: 'maxi-brioche', n: 'Le Maxi brioché', p: 5, photo: 'b-maxi', d: 'Steaks et cheddar dans un pain brioché, avec la sauce et les légumes de ton choix.', groupes: [sans('Salade', 'Tomate', 'Oignon', 'Cornichon', 'Cheddar'), G.sauces] },
@@ -176,6 +200,10 @@ const PERSO = {
   cheese: ['Oignon', 'Cornichon', 'Cheddar'], 'double-cheese': ['Oignon', 'Cornichon', 'Cheddar'], 'triple-cheese-bacon': ['Oignon', 'Cornichon', 'Cheddar', 'Bacon'],
   'le-240': [...LEG, 'Cornichon', 'Cheddar'], 'fish-brioche': ['Salade', 'Cheddar'], 'maxi-brioche': [...LEG, 'Cornichon', 'Cheddar'], 'chicken-brioche': [...LEG, 'Cornichon', 'Cheddar'],
   'steak-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'chicken-house': ['Oignons crispy', 'Cheddar', 'Bacon'], 'anas-grill': [...LEG, 'Cheddar', 'Bacon'],
+  'triple-cheese': ['Oignon', 'Cornichon', 'Cheddar'], 'quadruple-cheese': ['Oignon', 'Cornichon', 'Cheddar'], 'big-grill': ['Oignon', 'Cheddar'],
+  boursin: ['Cornichon', 'Cheddar'], fish: ['Cheddar'],
+  suedois: ['Salade', 'Tomate', 'Cheddar'], veaudais: [...LEG, 'Cheddar'], bavette: ['Salade', 'Tomate', 'Cheddar'],
+  'roule-jala': ['Jalapeños', 'Cheddar'], 'roule-buffalo': ['Cheddar'], 'roule-rio': ['Fromage'], 'roule-suisse': ['Raclette'],
   'naan-beef': ['Salade', 'Cheddar', 'Gruyère'], 'naan-chicken': ['Salade', 'Cheddar', 'Gruyère'], 'naan-curry': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'], 'naan-tandoori': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'],
 };
 // A grignoter et menus enfant : une sauce offerte, 1 EUR la sauce en plus.
@@ -246,7 +274,7 @@ for (const c of CARTE) for (const i of c.items) {
    on ne la demande que si le client prend « en menu ». Oasis « FF » = Fraise Framboise (existe) ;
    « PP » = Pomme Poire, deduit de la gamme Oasis : A CONFIRMER avec Hakim. */
 const CANETTES = ['Dada Cola', 'Dada Cherry', 'Dada Zéro', 'Oasis Tropical', 'Oasis Pomme Cassis Framboise', 'Oasis Fraise Framboise', 'Oasis Pomme Poire',
-  'Schweppes Agrumes', 'Schweppes Pomme', 'Schweppes Lemon', 'Orangina'];
+  'Schweppes Agrumes', 'Schweppes Pomme', 'Schweppes Lemon', 'Orangina', 'Perrier', 'Ice Tea'];
 const G_BOISSON = { id: 'boisson', titre: 'Ta boisson', min: 1, max: 1, options: o([...CANETTES, 'Eau 50 cl']) };
 for (const c of CARTE) for (const i of c.items) {
   if (FORMULES[i.id]) i.groupes.push({ ...G_ACCOMP }, { ...G_BOISSON });
@@ -258,7 +286,7 @@ CARTE.push(
     { id: 'tiramisu', n: 'Tiramisu', p: 4, photo: 'd-tiramisu', d: 'Le tiramisu maison, au café et au mascarpone.', groupes: [] },
   ] },
   { id: 'boissons', nom: 'Boissons', intro: 'Canettes 33 cl bien fraîches.', items: [
-    { id: 'canette', n: 'Canette', p: 2, photo: 'bo-canette', d: 'Dada, Oasis, Schweppes ou Orangina.', groupes: [{ id: 'parfum', titre: 'Ta canette', min: 1, max: 1, options: o(CANETTES) }] },
+    { id: 'canette', n: 'Canette', p: 2, photo: 'bo-canette', d: 'Dada, Oasis, Schweppes, Orangina, Perrier ou Ice Tea.', groupes: [{ id: 'parfum', titre: 'Ta canette', min: 1, max: 1, options: o(CANETTES) }] },
     { id: 'eau', n: 'Eau 50 cl', p: 1, photo: 'bo-eau', d: 'Une petite bouteille d’eau.', groupes: [] },
   ] },
 );
@@ -288,8 +316,10 @@ for (const c of CARTE) for (const i of c.items) {
 const slug = (n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 // Photos du graphiste (17/10) : les pots de sauce et les canettes, en tuiles.
 // La Fish n'a pas de photo du graphiste : elle garde son illustration.
-const SAUCES_GRAPHISTE = new Set(['mayo', 'ketchup', 'burger', 'blanche', 'barbecue', 'algerienne', 'curry', 'samourai', 'harissa', 'gruyere', 'brazil', 'tartare', 'andalouse']);
-const BOISSONS_GRAPHISTE = new Set(['dada-cola', 'dada-cherry', 'oasis-tropical', 'oasis-pomme-cassis-framboise', 'schweppes-agrumes', 'schweppes-pomme', 'orangina', 'eau-50-cl']);
+const SAUCES_GRAPHISTE = new Set(['mayo', 'ketchup', 'burger', 'blanche', 'barbecue', 'algerienne', 'curry', 'samourai', 'harissa', 'gruyere', 'brazil', 'tartare', 'andalouse', 'moutarde']);
+const BOISSONS_GRAPHISTE = new Set(['dada-cola', 'dada-cherry', 'oasis-tropical', 'oasis-pomme-cassis-framboise', 'schweppes-agrumes', 'schweppes-pomme', 'orangina', 'eau-50-cl',
+  // + 20/10 : Perrier et Ice Tea (graphiste), et 4 canettes en photo d'internet en attendant les siennes.
+  'perrier', 'ice-tea', 'dada-zero', 'oasis-fraise-framboise', 'oasis-pomme-poire', 'schweppes-lemon']);
 const photoBoisson = (n) => BOISSONS_GRAPHISTE.has(slug(n)) ? 'boisson-' + slug(n) : 'boisson-autre';
 const PHOTO_OPT = {
   viande: (n) => 'opt/' + slug(n),

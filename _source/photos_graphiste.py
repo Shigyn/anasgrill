@@ -32,6 +32,12 @@ PLATS = {
     'g-camembert': 'tex mex/bouchées de camembert.png', 'g-tenders': 'tex mex/tenders.png', 'g-nuggets': 'tex mex/nuggets.png',
     'e-cheese': 'menus enfant/menu cheese.png', 'e-nuggets': 'menus enfant/menu nuggets.png',
     'f-algerien': "burgers/menu/l'algérien.png",
+    # Produits du graphiste ajoutes a la carte le 20/10 (prix a confirmer par Hakim).
+    'b-triple-cheese-nature': 'burgers/seul/Triple Cheese.jpg', 'b-quadruple-cheese': 'burgers/seul/Quadruple Cheese.jpg',
+    'b-fish-classique': 'burgers/seul/Fish.jpg', 'b-big-grill': 'burgers/seul/big grill.jpg', 'b-boursin': 'burgers/seul/Boursin.jpg',
+    'sw-suedois': 'sandwichs/seul/Suédois seul.jpg', 'sw-veaudais': 'sandwichs/seul/veaudais.png', 'sw-bavette': 'sandwichs/signatures/seul/Bavette.jpg',
+    'r-jala': 'roulés/seul/roulé jala.png', 'r-buffalo': 'roulés/seul/roulé buffalo.png',
+    'r-rio': 'roulés/seul/roulé rio.png', 'r-suisse': 'roulés/seul/roulé suisse.png',
 }
 # Signatures sans photo exacte du graphiste : la plus proche (17/10, a remplacer
 # si le graphiste envoie la vraie).
@@ -63,13 +69,18 @@ DUOS = {
 SAUCES = {
     'Mayo': 'Mayonnaise', 'Ketchup': 'Ketchup', 'Burger': 'Burger', 'Blanche': 'Blanche', 'Barbecue': 'Bbq',
     'Algérienne': 'Algérienne', 'Curry': 'Curry', 'Samouraï': 'Samouraï', 'Harissa': 'harissa',
-    'Gruyère': 'Gruyère', 'Brazil': 'Brazil', 'Tartare': 'Tartare', 'Andalouse': 'Andalouse',
+    'Gruyère': 'Gruyère', 'Brazil': 'Brazil', 'Tartare': 'Tartare', 'Andalouse': 'Andalouse', 'Moutarde': 'Moutarde',
 }
 BOISSONS = {
     'Dada Cola': 'dada cola', 'Dada Cherry': 'dada cherry', 'Oasis Tropical': 'oasis tropical',
     'Oasis Pomme Cassis Framboise': 'oasis framboise', 'Schweppes Agrumes': 'schweppes agrumes',
     'Schweppes Pomme': 'schweppes pomme', 'Orangina': 'Orangina', 'Eau 50 cl': 'Eau',
+    'Perrier': 'Perrier', 'Ice Tea': 'ice tea',
 }
+# Canettes que le graphiste n'a pas : photos trouvees sur internet (Open Food
+# Facts, _source/photos-internet/), mises TELLES QUELLES (Nicolas, 20/10 : pas
+# de detourage, Hakim fournira les bonnes) : la photo entiere sur fond sombre.
+INTERNET = ['dada-zero', 'oasis-fraise-framboise', 'oasis-pomme-poire', 'schweppes-lemon']
 
 def slug(t):
     import unicodedata
@@ -124,4 +135,8 @@ for n, f in BOISSONS.items(): carre('boisson-' + slug(n), 'Boissons/' + f + '.pn
 # le bois du graphiste), jamais le rond barre qui ferait croire a une rupture.
 fond = ouvrir('Boissons/Eau.png'); w, h = fond.size
 fond.crop((40, 120, 40 + round(h * 0.42), 120 + round(h * 0.42))).resize((320, 320), Image.LANCZOS).save(os.path.join(PHOTOS, 'boisson-autre.webp'), 'WEBP', quality=82, method=6)
+for nom in INTERNET:
+    im = Image.open(os.path.join(ICI, 'photos-internet', nom + '.jpg')).convert('RGB'); im.thumbnail((300, 300), Image.LANCZOS)
+    t = Image.new('RGB', (320, 320), (26, 23, 20)); t.paste(im, ((320 - im.width) // 2, (320 - im.height) // 2))
+    t.save(os.path.join(PHOTOS, 'boisson-' + nom + '.webp'), 'WEBP', quality=82, method=6)
 print(len(PLATS), 'plats,', len(SAUCES), 'sauces,', len(BOISSONS), 'boissons')

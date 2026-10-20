@@ -299,6 +299,36 @@
 "client": true,
 "min": true
 },
+"b-big-grill": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"b-boursin": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"b-fish-classique": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"b-quadruple-cheese": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"b-triple-cheese-nature": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
 "bo-canette": {
 "l": 1200,
 "h": 800,
@@ -312,6 +342,48 @@
 "min": true
 },
 "d-tiramisu": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"r-buffalo": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"r-jala": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"r-rio": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"r-suisse": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"sw-bavette": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"sw-suedois": {
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
+},
+"sw-veaudais": {
 "l": 1200,
 "h": 800,
 "client": true,
