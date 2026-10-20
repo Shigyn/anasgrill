@@ -1,3 +1,4 @@
+# OBSOLETE depuis le 20/10 : les vrais naans du graphiste sont dans photos_graphiste.py. Ne plus lancer.
 # Les 4 naans (17/10) : pas de photo du graphiste. Decoupes SERREES dans le
 # panneau des burgers (sans le titre au-dessus ni le texte en dessous), posees
 # sur le meme fond floute pour faire un 3:2 propre. A remplacer par des photos HD.

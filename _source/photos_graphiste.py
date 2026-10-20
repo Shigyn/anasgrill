@@ -17,7 +17,7 @@ PLATS = {
     'b-triple-cheese': 'burgers/seul/Triple Cheese bacon.jpg', 'b-240': 'burgers/seul/240 brioché.jpg',
     'b-fish': 'burgers/seul/Fish brioché.jpg', 'b-maxi': 'burgers/seul/maxi brioché.jpg',
     'b-chicken': 'burgers/seul/Chicken brioché.jpg',
-    'b-steak-house': 'burgers/menu/steak house.jpg',   # la version « seul » du graphiste est illisible
+    'b-steak-house': 'burgers/seul/steak house.png',   # reexport du 20/10 (le .jpg du 1er envoi est illisible)
     'b-chicken-house': 'burgers/seul/Chicken house.jpg', 'b-anas-grill': 'burgers/seul/Anas grill.jpg',
     'c-sandwich': 'sandwichs/seul/sandwich à composer.jpg', 'c-tacos': 'Tacos/seul/tacos à composer.png',
     'c-roule': 'roulés/seul/roulé à composer.png',
@@ -26,6 +26,12 @@ PLATS = {
     's-effiloches': 'sandwichs/seul/Éffiloché boeuf.jpg', 's-savoyards': 'burgers/seul/Savoyard.jpg',
     'f-classique': 'combos/combo 1.jpg', 'f-maxi-sandwich': 'combos/combo 3.jpg', 'f-maxi-tacos': 'combos/combo 4.jpg',
     'bo-canette': 'Boissons/dada cola.png', 'bo-eau': 'Boissons/Eau.png',
+    # 2e envoi du graphiste (20/10) : naans, a grignoter, menus enfant, L'Algerien.
+    'b-naan-beef': 'naans/seul/naan beef.png', 'b-naan-chicken': 'naans/seul/naan chicken.png',
+    'b-naan-curry': 'naans/seul/naan curry.png', 'b-naan-tandoori': 'naans/seul/naan tandoori.png',
+    'g-camembert': 'tex mex/bouchées de camembert.png', 'g-tenders': 'tex mex/tenders.png', 'g-nuggets': 'tex mex/nuggets.png',
+    'e-cheese': 'menus enfant/menu cheese.png', 'e-nuggets': 'menus enfant/menu nuggets.png',
+    'f-algerien': "burgers/menu/l'algérien.png",
 }
 # Signatures sans photo exacte du graphiste : la plus proche (17/10, a remplacer
 # si le graphiste envoie la vraie).
@@ -42,8 +48,10 @@ DUOS = {
     'f-rolls-dwich': ('roulés/seul/roulé jala.png', 'sandwichs/seul/sandwich à composer.jpg'),
     'f-street': ('roulés/seul/roulé rio.png', 'roulés/seul/roulé buffalo.png'),
     # 18/10 : les visuels de formules d'Hakim (titre imprime dessus) passent aussi
-    # aux photos du graphiste. Restent les siens : Crocs et Rolls and Croc's (le
-    # graphiste n'a pas de croc's) et L'Algerien (pas de pain matlouh).
+    # aux photos du graphiste. 20/10 : le croc's est arrive, les deux dernieres
+    # formules d'Hakim y passent aussi (L'Algerien a sa photo menu, plus haut).
+    'f-crocs': ("croc's/seul/croc's.png", 'burgers/seul/Cheese.jpg'),
+    'f-rolls': ('roulés/seul/roulé à composer.png', "croc's/seul/croc's.png"),
     'f-smash': ('burgers/seul/double Cheese.jpg', 'burgers/seul/Chicken brioché.jpg'),
     'f-turkish': ('roulés/seul/roulé buffalo.png', 'burgers/seul/Cheese.jpg'),
     'f-mielleux': ('burgers/seul/Boursin.jpg', 'roulés/seul/roulé suisse.png'),

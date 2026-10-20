@@ -138,24 +138,34 @@
 "min": true
 },
 "g-camembert": {
-"l": 300,
-"h": 220
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "g-tenders": {
-"l": 300,
-"h": 230
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "g-nuggets": {
-"l": 320,
-"h": 240
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "e-cheese": {
-"l": 510,
-"h": 152
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "e-nuggets": {
-"l": 510,
-"h": 172
+"l": 1200,
+"h": 800,
+"client": true,
+"min": true
 },
 "f-giant": {
 "l": 1200,
