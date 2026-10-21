@@ -58,7 +58,8 @@ DUOS = {
     # formules d'Hakim y passent aussi (L'Algerien a sa photo menu, plus haut).
     'f-crocs': ("croc's/seul/croc's.png", 'burgers/seul/Cheese.jpg'),
     'f-rolls': ('roulés/seul/roulé à composer.png', "croc's/seul/croc's.png"),
-    'f-smash': ('burgers/seul/double Cheese.jpg', 'burgers/seul/Chicken brioché.jpg'),
+    # f-smash : PAS de photo du graphiste (21/10, Hakim : « l'image n'est pas la
+    # bonne ») -> son visuel d'origine, dans photos-client/f-smash.webp.
     'f-turkish': ('roulés/seul/roulé buffalo.png', 'burgers/seul/Cheese.jpg'),
     'f-mielleux': ('burgers/seul/Boursin.jpg', 'roulés/seul/roulé suisse.png'),
     'f-forestier': ('sandwichs/seul/veaudais.png', 'burgers/seul/maxi brioché.jpg'),

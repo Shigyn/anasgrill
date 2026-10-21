@@ -27,6 +27,8 @@ const VIANDES = ['Steak', 'Merguez', 'Escalope', 'Tandoori', 'Curry', 'Tenders',
 const SAUCES = ['Mayo', 'Ketchup', 'Burger', 'Blanche', 'Barbecue', 'Fish', 'Algérienne', 'Curry', 'Samouraï', 'Harissa', 'Gruyère', 'Brazil', 'Tartare', 'Andalouse', 'Moutarde'];
 const SUPPLEMENTS = [['Emmental', 1], ['Kiri', 1], ['Cheddar', 1], ['Boursin', 1], ['Chakchouka', 1], ['Oignons crispy', 1], ['Bacon fumé', 1]];
 const GRATINAGE = [['Emmental', 2], ['Raclette', 2], ['Cheddar', 2], ['Chèvre', 2], ['Mozza', 2]];
+// Roules et tacos (Hakim, 21/10) : « emmental ou raclette ou cheddar, +2 € ».
+const GRATINAGE_RT = [['Emmental', 2], ['Raclette', 2], ['Cheddar', 2]];
 const o = (liste) => liste.map((x) => (Array.isArray(x) ? { n: x[0], p: x[1] } : { n: x, p: 0 }));
 
 // Les ingredients qu'on peut retirer (« sans oignon »...), en petites tuiles.
@@ -42,6 +44,7 @@ const G = {
   sauces: { id: 'sauces', titre: 'Sauces', aide: 'jusqu’à 2', min: 0, max: 2, options: o(SAUCES) },
   supplements: { id: 'supplements', titre: 'Suppléments', min: 0, max: 8, options: o(SUPPLEMENTS) },
   gratinage: { id: 'gratinage', titre: 'Gratiné', min: 0, max: 1, options: o(GRATINAGE) },
+  gratineRT: { id: 'gratinage', titre: 'Gratiné', min: 0, max: 1, options: o(GRATINAGE_RT) },
   menu: { id: 'menu', titre: 'En menu ?', min: 1, max: 1, options: o([['Seul', 0], ['En menu (frites + boisson)', 3], ['En menu, frites cheddar', 4]]) },
   // « Viande en plus » du panneau (+2,50 €), mais en disant laquelle (Nicolas, 2026-10-15). Prix a confirmer.
   viande2: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])) },
@@ -69,21 +72,16 @@ export const CARTE = [
     ],
   },
   {
-    id: 'formules-11', nom: 'Formules à 11 €', intro: 'Frites ou potatoes cheddar gruyère et boisson comprises.',
-    items: [
-      { id: 'formule-smash', n: 'Smash Grill', p: 11, photo: 'f-smash', d: 'Un smash burger double steak et un smash aux tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
-      { id: 'formule-turkish', n: 'Le Turkish', p: 11, photo: 'f-turkish', d: 'Une galette kebab avec la sauce de ton choix et un cheese, avec des frites ou potatoes cheddar gruyère et une boisson.', groupes: [{ ...G.sauces, titre: 'Sauce de la galette', max: 1, aide: '' }] },
-      { id: 'formule-mielleux', n: 'Le Mielleux', p: 11, photo: 'f-mielleux', d: 'Un burger chèvre-miel aux noix de pécan et un wrap poulet-chèvre, avec des frites ou potatoes cheddar gruyère et une boisson.' },
-      { id: 'formule-crocs', n: 'Formule Crocs', p: 11, photo: 'f-crocs', d: 'Deux croc’s au bacon et deux cheeseburgers, avec des frites ou potatoes cheddar gruyère et une boisson.' },
-      { id: 'formule-rolls', n: 'Rolls and Croc’s', p: 11, photo: 'f-rolls', d: 'Un roulé (steak, curry, tandoori ou paprika) et un croc’s, avec des frites ou potatoes cheddar gruyère et une boisson.', groupes: [
-        { id: 'roule', titre: 'Le roulé', min: 1, max: 1, options: o(['Steak', 'Curry', 'Tandoori', 'Paprika']) }] },
-      { id: 'formule-forestier', n: 'Le Forestier', p: 11, photo: 'f-forestier', d: 'Un sandwich forestier, un maxi brioché et un croc’s, avec des frites ou potatoes cheddar gruyère et une boisson.' },
-      { id: 'formule-mexicain', n: 'Le Mexicain', p: 11, photo: 'f-mexicain', d: 'Deux fajitas bien relevées aux jalapeños, avec des frites ou potatoes cheddar gruyère et une boisson.' },
-    ],
-  },
-  {
     id: 'formules-12', nom: 'Formules à 12 €', intro: 'Frites ou potatoes cheddar gruyère et boisson comprises.',
     items: [
+      { id: 'formule-smash', n: 'Smash Grill', p: 12, photo: 'f-smash', d: 'Un smash burger double steak et un smash aux tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-turkish', n: 'Le Turkish', p: 12, photo: 'f-turkish', d: 'Une galette kebab avec la sauce de ton choix et un cheese, avec des frites ou potatoes cheddar gruyère et une boisson.', groupes: [{ ...G.sauces, titre: 'Sauce de la galette', max: 1, aide: '' }] },
+      { id: 'formule-mielleux', n: 'Le Mielleux', p: 12, photo: 'f-mielleux', d: 'Un burger chèvre-miel aux noix de pécan et un wrap poulet-chèvre, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-crocs', n: 'Formule Crocs', p: 12, photo: 'f-crocs', d: 'Deux croc’s au bacon et deux cheeseburgers, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-rolls', n: 'Rolls and Croc’s', p: 12, photo: 'f-rolls', d: 'Un roulé (steak, curry, tandoori ou paprika) et un croc’s, avec des frites ou potatoes cheddar gruyère et une boisson.', groupes: [
+        { id: 'roule', titre: 'Le roulé', min: 1, max: 1, options: o(['Steak', 'Curry', 'Tandoori', 'Paprika']) }] },
+      { id: 'formule-forestier', n: 'Le Forestier', p: 12, photo: 'f-forestier', d: 'Un sandwich forestier, un maxi brioché et un croc’s, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-mexicain', n: 'Le Mexicain', p: 12, photo: 'f-mexicain', d: 'Deux fajitas bien relevées aux jalapeños, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-crousty', n: 'Crousty', p: 12, photo: 'f-crousty', d: 'Deux burgers crousty ou un tacos crousty, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-double-rolls', n: 'Double Rolls', p: 12, photo: 'f-double-rolls', d: 'Un rolls au steak et un rolls à l’escalope, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-rolls-dwich', n: 'Rolls and Dwich', p: 12, photo: 'f-rolls-dwich', d: 'Un rolls (escalope, curry, tandoori ou steak) et un sandwich, avec des frites ou potatoes cheddar gruyère et une boisson.' },
@@ -102,8 +100,8 @@ export const CARTE = [
     id: 'composer', nom: 'À composer', intro: 'Choisis ta viande, tes sauces et tes suppléments. En menu avec frites et boisson : 3 € de plus, et 1 € pour passer aux frites cheddar.',
     items: [
       { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Garni de la viande de ton choix, avec tes sauces préférées.', groupes: [G.viandeSandwich, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratinage, G.menu] },
-      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', groupes: [G.viande, G.maxi, G.viande2Tacos, G.sauces, G.supplements, G.menu] },
-      { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'La viande de ton choix et tes sauces, roulées dans une galette.', groupes: [G.viande, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.menu] },
+      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', groupes: [G.viande, G.maxi, G.viande2Tacos, G.sauces, G.supplements, G.gratineRT, G.menu] },
+      { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'La viande de ton choix et tes sauces, roulées dans une galette.', groupes: [G.viande, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratineRT, G.menu] },
     ],
   },
   {
@@ -124,20 +122,18 @@ export const CARTE = [
   },
   // 20/10 : sandwichs et roules des photos du graphiste. PRIX A CONFIRMER par Hakim.
   {
-    id: 'sandwichs', nom: 'Les sandwichs', intro: 'Garnis et prêts à partir. En menu avec frites et boisson : 3 € de plus.',
+    id: 'sandwichs', nom: 'Les sandwichs', intro: 'Garni et prêt à partir. En menu avec frites et boisson : 3 € de plus.',
     items: [
-      { id: 'suedois', n: 'Le Suédois', p: 7, photo: 'sw-suedois', d: 'Une viande grillée, du cheddar, de la salade, de la tomate et une sauce blanche.', groupes: [G.menu] },
-      { id: 'veaudais', n: 'Le Veaudais', p: 7, photo: 'sw-veaudais', d: 'Deux steaks, du cheddar, une sauce fromagère, de la salade, de la tomate et de l’oignon.', groupes: [G.menu] },
-      { id: 'bavette', n: 'La Bavette', p: 8, photo: 'sw-bavette', d: 'Des tranches de bavette, du cheddar, une sauce fromagère, de la salade et de la tomate.', groupes: [G.menu] },
+      { id: 'bavette', n: 'La Bavette', p: 8, seulement: ['lyon-8', 'vaulx-en-velin'], photo: 'sw-bavette', d: 'Des tranches de bavette, du cheddar, une sauce fromagère, de la salade et de la tomate.', groupes: [G.menu] },
     ],
   },
   {
     id: 'roules', nom: 'Les roulés', intro: 'Dans une grande galette. En menu avec frites et boisson : 3 € de plus.',
     items: [
-      { id: 'roule-jala', n: 'Le Jala', p: 8, photo: 'r-jala', d: 'Du bœuf grillé, des jalapeños, du cheddar et une sauce barbecue.', groupes: [G.menu] },
-      { id: 'roule-buffalo', n: 'Le Buffalo', p: 8, photo: 'r-buffalo', d: 'Du bœuf grillé, des bouchées de fromage panées, du cheddar et une sauce crémeuse.', groupes: [G.menu] },
-      { id: 'roule-rio', n: 'Le Rio', p: 8, photo: 'r-rio', d: 'Du poulet pané, du jambon de dinde, du fromage fondu et une sauce blanche aux herbes.', groupes: [G.menu] },
-      { id: 'roule-suisse', n: 'Le Suisse', p: 8, photo: 'r-suisse', d: 'Du poulet grillé, du jambon de dinde et de la raclette fondue.', groupes: [G.menu] },
+      { id: 'roule-jala', n: 'Le Jala', p: 8, photo: 'r-jala', d: 'Du bœuf grillé, des jalapeños, du cheddar et une sauce barbecue.', groupes: [G.gratineRT, G.menu] },
+      { id: 'roule-buffalo', n: 'Le Buffalo', p: 8, photo: 'r-buffalo', d: 'Du bœuf grillé, des bouchées de fromage panées, du cheddar et une sauce crémeuse.', groupes: [G.gratineRT, G.menu] },
+      { id: 'roule-rio', n: 'Le Rio', p: 8, photo: 'r-rio', d: 'Du poulet pané, du jambon de dinde, du fromage fondu et une sauce blanche aux herbes.', groupes: [G.gratineRT, G.menu] },
+      { id: 'roule-suisse', n: 'Le Suisse', p: 8, photo: 'r-suisse', d: 'Du poulet grillé, du jambon de dinde et de la raclette fondue.', groupes: [G.gratineRT, G.menu] },
     ],
   },
   {
@@ -290,6 +286,13 @@ CARTE.push(
     { id: 'eau', n: 'Eau 50 cl', p: 1, photo: 'bo-eau', d: 'Une petite bouteille d’eau.', groupes: [] },
   ] },
 );
+
+// Les formules en DERNIERE categorie, pas en premiere (Hakim, 21/10).
+{
+  const formules = CARTE.filter((c) => c.id.startsWith('formules'));
+  for (const f of formules) CARTE.splice(CARTE.indexOf(f), 1);
+  CARTE.push(...formules);
+}
 
 /* ---------------- les allergenes (Nicolas, 2026-10-15) ----------------
    Un bouton « Allergenes » sur chaque fiche. Deduits de la composition

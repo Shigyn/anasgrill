@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '66';
+const V = '67';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -141,6 +141,9 @@ function carteSvg(r) {
 </svg>`;
 }
 /* ---------------- 1. Choisis ton restaurant ---------------- */
+// Un plat reserve a certains snacks (« seulement ») n'apparait que sur leurs pages
+// (la Bavette : Lyon 8 et Vaulx-en-Velin) ; le serveur le refuse ailleurs.
+const dispo = (snack) => (i) => !i.seulement || i.seulement.includes(snack.id);
 const PAGES = [];
 PAGES.push(['', {
   titre: 'Anas Grill — Commande en ligne · Lyon et Isère',
@@ -234,16 +237,16 @@ for (const s of SNACKS) {
     <a class="entete-changer" href="${r}">Changer</a>
   </div>
   <nav class="onglets" aria-label="Catégories" data-onglets>
-    <div class="onglets-in">${CARTE.map((c) => `<a href="#${c.id}">${esc(c.nom)}</a>`).join('')}</div>
+    <div class="onglets-in">${CARTE.filter((c) => c.items.some(dispo(s))).map((c) => `<a href="#${c.id}">${esc(c.nom)}</a>`).join('')}</div>
   </nav>
 </header>
 <main id="contenu" class="snack-page" data-snack-id="${s.id}">
   <div class="cadre carte" id="carte">
-    ${CARTE.map((c) => `
+    ${CARTE.filter((c) => c.items.some(dispo(s))).map((c) => `
     <section class="categorie" id="${c.id}">
       <h2>${esc(c.nom)}</h2>
       ${c.intro ? `<p class="categorie-intro">${esc(c.intro)}</p>` : ''}
-      <ul class="plats">${c.items.map(ligne).join('')}
+      <ul class="plats">${c.items.filter(dispo(s)).map(ligne).join('')}
       </ul>
     </section>`).join('')}
   </div>
@@ -333,7 +336,7 @@ const CARTE_SERVEUR = {
   reglages: REGLAGES,
   snacks: SNACKS.map(({ id, nom, adresse, lat, lng, ouverture, fermeture }) => ({ id, nom, adresse, lat, lng, ouverture, fermeture })),
   plats: Object.fromEntries(CARTE.flatMap((c) => c.items).map((i) => [i.id, {
-    n: i.n, p: i.p,
+    n: i.n, p: i.p, ...(i.seulement ? { seulement: i.seulement } : {}),
     groupes: (i.groupes || []).filter((g) => g.type !== 'info').map((g) => ({
       id: g.id, type: g.type || null, titre: g.titre, court: g.court || null, min: g.min, max: g.max,
       options: g.options.map((o) => ({ n: o.n, p: o.p })),
