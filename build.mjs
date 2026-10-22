@@ -19,7 +19,7 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '68';
+const V = '69';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -95,6 +95,11 @@ ${corps(r)}
     ga4Id: ''
   };
   window.ANAS = ${JSON.stringify({ racine: r, reglages: REGLAGES })};
+  // Page gardee en cache par le telephone (ancienne carte, ancien mode de
+  // paiement) : si une version plus recente est en ligne, on recharge une fois.
+  fetch('${r}version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (x) { return x.json(); }).then(function (j) {
+    if (j.v !== '${V}' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
+  }).catch(function () {});
 </script>
 <script src="${r}assets/cookies.js?v=${V}" defer></script>
 <script src="${r}assets/appli.js?v=${V}" defer></script>
@@ -337,6 +342,7 @@ for (const [dossier, titre, js, tr] of [['cuisine', 'Cuisine', 'cuisine.js', tru
 }
 
 fs.writeFileSync(path.join(ICI, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${PAGES.filter(([c]) => !/mentions|cgv/.test(c)).map(([c]) => `  <url><loc>${abs(c)}</loc></url>`).join('\n')}\n</urlset>\n`);
+fs.writeFileSync(path.join(ICI, 'version.json'), JSON.stringify({ v: V }));
 fs.writeFileSync(path.join(ICI, 'robots.txt'), PROD ? `User-agent: *\nAllow: /\n\nSitemap: ${URL_SITE}sitemap.xml\n` : `# Apercu : pas d'indexation.\nUser-agent: *\nDisallow: /\n`);
 fs.writeFileSync(path.join(ICI, '.nojekyll'), '');
 console.log(`${PAGES.length} pages, ${SNACKS.length} snacks, ${CARTE.reduce((n, c) => n + c.items.length, 0)} plats — ${PROD ? 'PRODUCTION' : 'apercu'}`);
