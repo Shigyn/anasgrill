@@ -798,3 +798,17 @@ body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
   .feuille-tete { aspect-ratio: 16 / 9; }
   .plat-photo { width: 128px; height: 96px; aspect-ratio: 4 / 3; align-self: center; margin-left: 10px; border-radius: 12px; }
 }
+
+/* Bouton « L'appli » (ajout a l'ecran d'accueil, 22/10) */
+.entete-appli { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--ligne-forte); background: transparent; color: var(--texte); font: 700 .9rem/1 var(--texte-police); cursor: pointer; }
+.entete-appli svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.entete-appli:hover { border-color: var(--jaune); color: var(--jaune); }
+.entete-appli:not([hidden]) + .entete-changer { margin-left: 8px; }
+@media (max-width: 560px) { .entete-appli span { display: none; } .entete-appli { padding: 8px 10px; } }
+.appli-voile { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, .6); display: grid; place-items: end center; padding: 16px; }
+.appli-boite { width: 100%; max-width: 420px; background: #16120e; border: 1px solid var(--ligne-forte); border-radius: 22px; padding: 22px 20px; display: grid; gap: 10px; justify-items: start; color: var(--texte); }
+.appli-boite img { border-radius: 14px; }
+.appli-boite b { font-size: 1.15rem; }
+.appli-boite p { margin: 0; color: var(--doux, #c9bfb2); }
+.appli-boite ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.appli-boite .bouton { justify-self: stretch; margin-top: 6px; }

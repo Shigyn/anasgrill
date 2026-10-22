@@ -168,10 +168,8 @@
 "min": true
 },
 "f-giant": {
-"l": 1200,
-"h": 800,
-"client": true,
-"min": true
+"l": 600,
+"h": 400
 },
 "f-rolls-burger": {
 "l": 1200,

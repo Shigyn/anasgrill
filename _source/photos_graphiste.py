@@ -47,7 +47,7 @@ PLATS.update({
 })
 # Formules a deux plats sans combo du graphiste : deux de ses photos cote a cote.
 DUOS = {
-    'f-giant': ('burgers/seul/big grill.jpg', 'burgers/seul/double Cheese.jpg'),
+    # f-giant : PAS de photo du graphiste (22/10, Hakim) -> le visuel de son panneau des formules (vignettes.py).
     'f-rolls-burger': ('roulés/seul/roulé à composer.png', 'burgers/seul/Cheese.jpg'),
     'f-crousty': ('burgers/seul/Chicken brioché.jpg', 'Tacos/seul/tacos à composer.png'),
     'f-double-rolls': ('roulés/seul/roulé dz.png', 'roulés/seul/roulé suisse.png'),

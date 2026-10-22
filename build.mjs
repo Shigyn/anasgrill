@@ -19,11 +19,15 @@ const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)
 const PROD = process.env.PROD === '1';
 const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '67';
+const V = '68';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
-const STRIPE_PK = process.env.STRIPE_PK || '';
+// La cle publique Stripe : STRIPE_PK, sinon (apercu) la cle TEST du projet. Sans elle,
+// le site repasse en « simule » et plus aucune commande n'arrive en cuisine
+// (arrive le 20/10 : deux builds lances sans STRIPE_PK).
+const PK_TEST = path.join(ICI, '..', 'projet-8-snacks', 'STRIPE-PK-TEST.txt');
+const STRIPE_PK = (process.env.STRIPE_PK || (!PROD && fs.existsSync(PK_TEST) ? fs.readFileSync(PK_TEST, 'utf8') : '')).trim();
 const REGLAGES = { preparation: 15, minutesParKm: 3, departLivreur: 5, pas: 5, capaciteParQuartDHeure: 8, payerSurPlace: true, livraison: false, minimumLivraison: 20, debutCommandes: 8, pasCreneau: 15, avanceParCreneau: 3, arretAvantFermeture: 15, apercuToujoursOuvert: !PROD, paiement: STRIPE_PK ? 'stripe' : 'simule', stripePk: STRIPE_PK };
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -65,6 +69,7 @@ ${PROD ? '' : '<meta name="robots" content="noindex,nofollow">\n'}<link rel="can
 <meta property="og:image" content="${URL_SITE}photos/f-classique.webp">
 <meta name="theme-color" content="#0b0b0c">
 <link rel="icon" type="image/png" href="${r}assets/logo-192.png"><link rel="apple-touch-icon" href="${r}assets/logo-192.png">
+<link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-title" content="Anas Grill">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -92,6 +97,7 @@ ${corps(r)}
   window.ANAS = ${JSON.stringify({ racine: r, reglages: REGLAGES })};
 </script>
 <script src="${r}assets/cookies.js?v=${V}" defer></script>
+<script src="${r}assets/appli.js?v=${V}" defer></script>
 ${scripts.map((s) => `<script src="${r}assets/${s}?v=${V}" defer></script>`).join('\n')}
 </body>
 </html>
@@ -234,6 +240,7 @@ for (const s of SNACKS) {
       <p class="entete-adresse">${esc(s.adresse)}</p>
     </div>
     <a class="entete-tel" href="tel:${s.tel.replace(/\s/g, '')}" aria-label="Appeler Anas Grill ${esc(s.nom)}">${I.tel}<span>${esc(s.tel)}</span></a>
+    <button class="entete-appli" type="button" data-installer hidden aria-label="Installer l’appli Anas Grill sur l’écran d’accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/></svg><span>L’appli</span></button>
     <a class="entete-changer" href="${r}">Changer</a>
   </div>
   <nav class="onglets" aria-label="Catégories" data-onglets>
@@ -296,6 +303,12 @@ PAGES.push(['cgv/', { titre: 'Conditions générales de vente — Anas Grill', d
 for (const [ch, o] of PAGES) {
   fs.mkdirSync(path.join(ICI, ch), { recursive: true });
   fs.writeFileSync(path.join(ICI, ch, 'index.html'), page(ch, o));
+  const r0 = ch ? '../'.repeat(ch.split('/').filter(Boolean).length) : '';
+  fs.writeFileSync(path.join(ICI, ch, 'manifest.webmanifest'), JSON.stringify({
+    name: SNACKS.some((x) => ch.replace(/\/$/, '') === x.id) ? 'Anas Grill ' + SNACKS.find((x) => ch.replace(/\/$/, '') === x.id).nom : 'Anas Grill', short_name: 'Anas Grill', start_url: './', scope: './',
+    display: 'standalone', background_color: '#0b0b0c', theme_color: '#0b0b0c', lang: 'fr',
+    icons: [{ src: r0 + 'assets/logo-192.png', sizes: '192x192', type: 'image/png' }, { src: r0 + 'assets/logo-512.png', sizes: '512x512', type: 'image/png' }],
+  }));
 }
 // Les espaces Cuisine (tablette de chaque snack) et Gerant : pages a part,
 // sans bandeau cookies (outil de travail, aucune mesure), jamais indexees.
