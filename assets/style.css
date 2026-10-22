@@ -812,3 +812,8 @@ body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
 .appli-boite p { margin: 0; color: var(--doux, #c9bfb2); }
 .appli-boite ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 .appli-boite .bouton { justify-self: stretch; margin-top: 6px; }
+
+/* Panier : toucher une ligne pour la modifier (22/10) */
+button.ligne-texte { background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+.ligne-modifier { display: inline-block; margin-top: 4px; font-size: .8rem; font-weight: 700; color: var(--jaune); text-decoration: underline; text-underline-offset: 3px; }
+button.ligne-texte:hover b { color: var(--jaune); }

@@ -154,11 +154,13 @@
     });
     return p;
   }
-  function ouvrirFiche(i) {
+  function ouvrirFiche(i, n) {
     i.groupes = i.groupes || [];
     if (ETAT.epuises.indexOf(i.id) >= 0) { toast(i.n + ' est épuisé aujourd’hui'); return; }
-    enCours = { plat: i, choix: {}, qte: 1 };
-    i.groupes.forEach(function (g) { if (g.min === 1 && g.max === 1 && g.id !== 'boisson' && g.id !== 'parfum') enCours.choix[g.id] = [g.options[0].n]; });
+    // n : la ligne du panier qu'on modifie (ses choix et sa quantite sont repris).
+    var edit = n != null ? etat.lignes[n] : null;
+    enCours = { plat: i, choix: edit ? JSON.parse(JSON.stringify(edit.choix || {})) : {}, qte: edit ? edit.qte : 1, ligne: edit ? n : null };
+    if (!edit) i.groupes.forEach(function (g) { if (g.min === 1 && g.max === 1 && g.id !== 'boisson' && g.id !== 'parfum') enCours.choix[g.id] = [g.options[0].n]; });
     // Un choix unique facultatif (le gratine) : « Sans » coche par defaut, pour pouvoir revenir en arriere.
     var optionsDe = function (g) { return g.max === 1 && g.min === 0 ? [{ n: 'Sans', p: 0 }].concat(g.options) : g.options; };
     feuille.innerHTML =
@@ -171,7 +173,7 @@
         if (g.type === 'retirer') {
           return '<fieldset class="groupe groupe-retirer" data-groupe="' + g.id + '" data-retirer><legend><b>' + esc(g.titre) + '</b><small>' + esc(g.aide) + '</small></legend><div class="ings">' +
             g.options.map(function (o) {
-              return '<label class="ing"><input type="checkbox" value="' + esc(o.n) + '" checked>' + iconeDe(o.n) + '<span>' + esc(o.n) + '</span><em>Sans</em></label>';
+              return '<label class="ing"><input type="checkbox" value="' + esc(o.n) + '"' + ((enCours.choix[g.id] || []).indexOf(o.n) >= 0 ? '' : ' checked') + '>' + iconeDe(o.n) + '<span>' + esc(o.n) + '</span><em>Sans</em></label>';
             }).join('') + '</div></fieldset>';
         }
         if (g.type === 'sauces') {
@@ -194,7 +196,7 @@
       }) + '</div>' +
       '<div class="feuille-pied"><div class="qte"><button type="button" data-q="-1" aria-label="Moins">−</button><span data-q-n>1</span><button type="button" data-q="1" aria-label="Plus">+</button></div>' +
       (i.p == null ? '<button type="button" class="bouton bouton-feu" disabled>Prix bientôt</button></div>'
-        : '<button type="button" class="bouton bouton-feu" data-ajouter-fiche>Ajouter · <span data-prix-fiche>' + euros(i.p) + '</span></button></div>');
+        : '<button type="button" class="bouton bouton-feu" data-ajouter-fiche>' + (edit ? 'Modifier' : 'Ajouter') + ' · <span data-prix-fiche>' + euros(i.p) + '</span></button></div>');
     majFiche();
     montrer(feuille);
     feuille.querySelector('.feuille-corps').scrollTop = 0;
@@ -262,7 +264,7 @@
     b.setAttribute('aria-expanded', ouvert ? 'true' : 'false'); l.hidden = !ouvert; f.classList.toggle('ouverte', ouvert);
   }
   feuille.addEventListener('click', function (e) {
-    if (e.target.closest('[data-fermer-fiche]')) { cacher(feuille); return; }
+    if (e.target.closest('[data-fermer-fiche]')) { cacher(feuille); if (enCours && enCours.ligne != null) rouvrirPanier(); return; }
     if (e.target.closest('[data-allergenes]')) { allergenes(enCours.plat); return; }
     if (e.target.closest('[data-allerg-fermer]') || e.target.classList.contains('allerg-pop')) { var ap = feuille.querySelector('.allerg-pop'); if (ap) ap.remove(); return; }
     var so = e.target.closest('[data-sauce-ouvrir]');
@@ -286,6 +288,7 @@
     if (e.target.closest('[data-ajouter-fiche]')) {
       var manque = enCours.plat.groupes.filter(function (g) { return (enCours.choix[g.id] || []).length < minDe(g); })[0];
       if (manque) { toast('Choisis : ' + manque.titre.replace(/\s*\?$/, '').toLowerCase()); return; }
+      if (enCours.ligne != null) { remplacer(enCours.ligne, enCours.plat, enCours.choix, enCours.qte, prixFiche()); cacher(feuille); rouvrirPanier(); return; }
       ajouter(enCours.plat, enCours.choix, enCours.qte, prixFiche()); cacher(feuille);
     }
   });
@@ -323,6 +326,17 @@
     garder(); majBarre(true); toast(i.n + ' ajouté');
   }
 
+  // La ligne modifiee garde sa place ; si elle devient identique a une autre, elles fusionnent.
+  function remplacer(n, i, choix, qte, prixU) {
+    var cle = i.id + '|' + JSON.stringify(choix);
+    etat.lignes.splice(n, 1);
+    var l = etat.lignes.filter(function (x) { return x.k === cle; })[0];
+    if (l) l.qte += qte;
+    else etat.lignes.splice(n, 0, { k: cle, id: i.id, n: i.n, choix: choix, qte: qte, prix: prixU == null ? i.p : prixU, resume: resume(i, choix) });
+    garder(); majBarre(); toast(i.n + ' modifié');
+  }
+  function rouvrirPanier() { etape = 'panier'; rendre(); montrer(tiroir); }
+
   /* ===================== 2. Le tiroir : panier, infos, paiement ===================== */
   var etape = 'panier', corps = $('[data-tiroir-corps]'), pied = $('[data-tiroir-pied]');
   barre.addEventListener('click', function () { etape = 'panier'; rendre(); montrer(tiroir); });
@@ -348,7 +362,7 @@
     }
     corps.innerHTML = '<ul class="lignes">' + etat.lignes.map(function (l, n) {
       var p = PLATS[l.id] || l;
-      return '<li class="ligne"><div class="ligne-texte"><b>' + esc(p.n) + '</b>' + (l.resume ? '<small>' + esc(l.resume) + '</small>' : '') + '</div>' +
+      return '<li class="ligne"><button type="button" class="ligne-texte" data-modifier="' + n + '" aria-label="Modifier ' + esc(p.n) + '"><b>' + esc(p.n) + '</b>' + (l.resume ? '<small>' + esc(l.resume) + '</small>' : '') + '<span class="ligne-modifier">Modifier</span></button>' +
         '<div class="qte qte-petite"><button type="button" data-moins="' + n + '" aria-label="Retirer">−</button><span>' + l.qte + '</span><button type="button" data-plus="' + n + '" aria-label="Ajouter">+</button></div>' +
         '<span class="prix">' + euros(l.prix * l.qte) + '</span></li>';
     }).join('') + '</ul><p class="tiroir-snack">' + 'Commande chez <b>Anas Grill ' + esc(SNACK.nom) + '</b></p>';
@@ -360,6 +374,13 @@
       var l = etat.lignes[+(m || p).getAttribute(m ? 'data-moins' : 'data-plus')];
       l.qte += m ? -1 : 1; if (l.qte <= 0) etat.lignes.splice(etat.lignes.indexOf(l), 1);
       garder(); majBarre(); rendre(); return;
+    }
+    var md = e.target.closest('[data-modifier]');
+    if (md) {
+      var n0 = +md.getAttribute('data-modifier'), l0 = etat.lignes[n0];
+      var plat = l0 && (l0.id === 'offre' ? (ETAT.offre ? platOffre(ETAT.offre) : null) : PLATS[l0.id]);
+      if (!plat) { toast('Ce plat n’est plus à la carte : retire-le du panier.'); return; }
+      cacher(tiroir); ouvrirFiche(plat, n0); return;
     }
     var s = e.target.closest('[data-adr]');
     if (s) { choisirAdresse(+s.getAttribute('data-lat'), +s.getAttribute('data-lng'), s.textContent); }
