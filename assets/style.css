@@ -815,5 +815,5 @@ body:has(.barre-panier:not([hidden])) .cookies { bottom: 96px; }
 
 /* Panier : toucher une ligne pour la modifier (22/10) */
 button.ligne-texte { background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; }
-.ligne-modifier { display: inline-block; margin-top: 4px; font-size: .8rem; font-weight: 700; color: var(--jaune); text-decoration: underline; text-underline-offset: 3px; }
+.ligne-modifier { display: block; margin-top: 4px; width: max-content; font-size: .8rem; font-weight: 700; color: var(--jaune); text-decoration: underline; text-underline-offset: 3px; }
 button.ligne-texte:hover b { color: var(--jaune); }
