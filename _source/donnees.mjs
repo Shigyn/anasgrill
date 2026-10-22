@@ -287,6 +287,13 @@ CARTE.push(
   ] },
 );
 
+// Tacos : au moins une sauce obligatoire (Nicolas, 22/10), aussi dans la formule Maxi Tacos.
+const SAUCE_OBLIGATOIRE = { tacos: 'sauces', 'formule-maxi-tacos': 'sauces-0' };
+for (const c of CARTE) for (const i of c.items) {
+  const g = SAUCE_OBLIGATOIRE[i.id] && (i.groupes || []).find((x) => x.id === SAUCE_OBLIGATOIRE[i.id]);
+  if (g) { g.min = 1; g.aide = 'au moins 1, jusqu’à ' + g.max + ' offertes'; }
+}
+
 // Les formules en DERNIERE categorie, pas en premiere (Hakim, 21/10).
 {
   const formules = CARTE.filter((c) => c.id.startsWith('formules'));
