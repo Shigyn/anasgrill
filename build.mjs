@@ -17,9 +17,10 @@ import { SNACKS, CARTE } from './_source/donnees.mjs';
 
 const ICI = path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)/, '$1');
 const PROD = process.env.PROD === '1';
-const URL_SITE = PROD ? 'https://www.anasgrill.fr/' : 'https://shigyn.github.io/anasgrill/';
+// Domaine achete par Nicolas le 27/10 : l'apercu y est aussi (toujours en noindex).
+const URL_SITE = 'https://www.anasgrill.fr/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '72';
+const V = '73';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
