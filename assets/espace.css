@@ -234,3 +234,10 @@ body.gerant .ge-kpi { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)
 .insc ul { margin: 0; padding: 14px 18px 14px 34px; text-align: left; border-radius: 14px; border: 1px solid var(--ligne); background: #141210; color: var(--texte); }
 .insc .bouton { width: 100%; }
 .insc-err { color: #ffb4ac; }
+
+/* Paiement en ligne, tout en bas du menu du gerant, en rouge (2026-10-28). */
+.cu-carte[data-rouge] { border-color: #d62828; background: #d62828; color: #fff; }
+.cu-carte[data-rouge]:hover { background: #b91f1f; border-color: #b91f1f; }
+.cu-carte[data-rouge] .cu-ico { background: rgba(255, 255, 255, .18); color: #fff; }
+.cu-carte[data-rouge] .cu-carte-txt small { color: rgba(255, 255, 255, .85); }
+.cu-carte[data-rouge].cu-carte-on { border-color: #fff; box-shadow: 0 0 0 1px #fff; }

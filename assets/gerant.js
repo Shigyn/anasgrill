@@ -165,12 +165,13 @@
           carteMenu('data-vue="resume"', 'resume', 'Vue d’ensemble') +
           carteMenu('data-vue="commandes"', 'commandes', 'Commandes') +
           carteMenu('data-vue="snacks"', 'snacks', 'Snacks et tablettes') +
-          carteMenu('data-vue="paiement"', 'paiement', 'Paiement en ligne') +
           carteMenu('data-vue="rembourse"', 'rembourse', 'Remboursements') +
           carteMenu('data-vue="offre"', 'offre', 'Offre du moment') +
           carteMenu('data-vue="fermetures"', 'fermetures', 'Fermetures') +
           carteMenu('data-export', 'export', 'Export Excel') +
           carteMenu('data-sortir', 'sortir', 'Se déconnecter') +
+          // En rouge, tout en bas : la derniere etape avant le paiement par carte (28/10).
+          carteMenu('data-vue="paiement" data-rouge', 'paiement', 'Paiement en ligne') +
         '</nav></aside>' +
       '<main class="ge">' +
         '<header class="ge-tete"><h2 class="ge-titre" data-titre></h2>' +
