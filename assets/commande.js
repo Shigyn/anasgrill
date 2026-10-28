@@ -535,8 +535,12 @@
   /* --- Le paiement (simule dans l'apercu) --- */
   function rendrePaiement() {
     var i = etat.infos, e = estimation(), liv = i.mode === 'livraison';
-    var surPlace = R.payerSurPlace && i.reglement === 'sur_place';
-    var choix = R.payerSurPlace ? '<div class="reglements" role="radiogroup" aria-label="Paiement">' +
+    // Tant que la societe du snack n'encaisse pas (compte Stripe pas encore
+    // valide), seul le paiement sur place est propose.
+    var horsLigne = STRIPE && ETAT.en_ligne === false && R.payerSurPlace;
+    var surPlace = R.payerSurPlace && (horsLigne || i.reglement === 'sur_place');
+    var choix = horsLigne ? '<p class="info-zone">Dans ce restaurant, le paiement se fait au comptoir pour l’instant. Le paiement en ligne arrive très bientôt.</p>'
+      : R.payerSurPlace ? '<div class="reglements" role="radiogroup" aria-label="Paiement">' +
       '<button type="button" class="reglement' + (surPlace ? '' : ' actif') + '" data-reglement="ligne" role="radio" aria-checked="' + !surPlace + '"><b>Payer en ligne</b><small>Carte, Apple Pay, Google Pay</small></button>' +
       '<button type="button" class="reglement' + (surPlace ? ' actif' : '') + '" data-reglement="sur_place" role="radio" aria-checked="' + surPlace + '"><b>Payer sur place</b><small>Au comptoir, en récupérant ta commande</small></button></div>' : '';
     corps.innerHTML = choix +

@@ -20,7 +20,7 @@ const PROD = process.env.PROD === '1';
 // Domaine achete par Nicolas le 27/10 : l'apercu y est aussi (toujours en noindex).
 const URL_SITE = 'https://www.anasgrill.fr/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '73';
+const V = '74';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -282,7 +282,7 @@ for (const s of SNACKS) {
 
 PAGES.push(['confidentialite/', { titre: 'Confidentialité et cookies — Anas Grill', description: 'Ce que le site Anas Grill fait de tes données et de ses cookies.', classe: 'page-texte', corps: () => `
 <main id="contenu" class="cadre etroit texte"><h1>Confidentialité et cookies</h1>
-<p>Le restaurant Anas Grill qui prépare ta commande est responsable de tes données. [Raison sociale, SIRET et adresse de chaque société à compléter avec les KBIS.]</p>
+<p>La société qui exploite le restaurant Anas Grill où tu commandes est responsable de tes données. Son nom figure sur ton relevé bancaire et sur ton reçu de paiement. Pour toute question : le restaurant, ou ANASGRILL SAS, 61 boulevard Laurent Gérin, 69200 Vénissieux.</p>
 <h2>Ce qu’on te demande, et pourquoi</h2>
 <p>Pour préparer et te remettre ta commande : ton <b>prénom</b>, et ton <b>téléphone</b> (la cuisine t’appelle si besoin). Le paiement est traité par <b>Stripe</b> : ta carte bancaire n’est jamais vue ni gardée par le restaurant.</p>
 <h2>Qui les voit</h2>
@@ -298,10 +298,11 @@ PAGES.push(['confidentialite/', { titre: 'Confidentialité et cookies — Anas G
 <p>Tu peux demander à voir, corriger ou effacer tes données en appelant le restaurant de ta commande. Si la réponse ne te convient pas, tu peux saisir la CNIL (cnil.fr).</p>
 </main>` }]);
 PAGES.push(['mentions-legales/', { titre: 'Mentions légales — Anas Grill', description: 'Mentions légales du site Anas Grill.', classe: 'page-texte', corps: () => `
-<main id="contenu" class="cadre etroit texte"><h1>Mentions légales</h1><p>[Raison sociale, SIRET et adresse de l’éditeur à compléter avec le client.]</p><h2>Hébergement</h2><p>[À compléter à la mise en ligne.]</p><h2>Crédits</h2><p>Visuels : Anas Grill. Réalisation : LocWeb.</p></main>` }]);
+<main id="contenu" class="cadre etroit texte"><h1>Mentions légales</h1><h2>Éditeur</h2><p>ANASGRILL SAS, RCS Lyon 108 900 630, 61 boulevard Laurent Gérin, 69200 Vénissieux. Directeur de la publication : Tarek Rabia, président.</p><p>Chaque restaurant Anas Grill est exploité par sa propre société, qui vend les commandes passées pour ce restaurant. Son nom figure sur le relevé bancaire et sur le reçu de paiement.</p><h2>Hébergement</h2><p>Site : GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis. Commandes : Supabase, serveurs situés dans l’Union européenne. Paiements : Stripe Payments Europe, Ltd., Dublin, Irlande.</p><h2>Crédits</h2><p>Visuels : Anas Grill. Réalisation : LocWeb.</p></main>` }]);
 PAGES.push(['cgv/', { titre: 'Conditions générales de vente — Anas Grill', description: 'Conditions de vente des commandes en ligne Anas Grill.', classe: 'page-texte', corps: () => `
-<main id="contenu" class="cadre etroit texte"><h1>Conditions générales de vente</h1><p>Projet à valider avec le client avant la mise en ligne.</p>
-<h2>Paiement</h2><p>Le paiement s’effectue en ligne par carte bancaire au moment de la commande, sur une page sécurisée opérée par Stripe. La commande n’est transmise à la cuisine qu’une fois le paiement accepté.</p>
+<main id="contenu" class="cadre etroit texte"><h1>Conditions générales de vente</h1>
+<h2>Vendeur</h2><p>Chaque commande est vendue par la société qui exploite le restaurant Anas Grill choisi. Son nom figure sur le relevé bancaire et sur le reçu de paiement.</p>
+<h2>Paiement</h2><p>En ligne, par carte bancaire, Apple Pay ou Google Pay, sur un module sécurisé opéré par Stripe : la commande n’est transmise à la cuisine qu’une fois le paiement accepté. Ou au comptoir, au moment du retrait, quand le restaurant le propose : la commande part alors en cuisine dès sa validation.</p>
 <h2>Retrait</h2><p>Les commandes sont à retirer au restaurant choisi, à l’heure annoncée sur l’écran de confirmation.</p>
 <h2>Rétractation</h2><p>Conformément à l’article L221-28 du Code de la consommation, le droit de rétractation ne s’applique pas aux denrées alimentaires susceptibles de se détériorer rapidement.</p>
 <h2>Allergènes</h2><p>La liste des allergènes est disponible dans chaque restaurant et par téléphone.</p></main>` }]);
@@ -320,7 +321,7 @@ for (const [ch, o] of PAGES) {
 // sans bandeau cookies (outil de travail, aucune mesure), jamais indexees.
 // Les sauces de la carte : le gerant choisit celles de son offre du moment.
 const SAUCES_CARTE = [...new Set(CARTE.flatMap((c) => c.items).flatMap((i) => i.groupes || []).filter((g) => g.type === 'sauces').flatMap((g) => g.options.map((o) => o.n)))];
-const espace = (titre, js, avecTempsReel) => `<!doctype html>
+const espace = (titre, js, avecTempsReel, avant = '') => `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>${titre} — Anas Grill</title>
 <meta name="theme-color" content="#0b0b0c"><link rel="icon" type="image/png" href="../assets/logo-192.png">
@@ -332,12 +333,16 @@ const espace = (titre, js, avecTempsReel) => `<!doctype html>
 <div id="app"></div>
 <script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' }; window.AG_V = '${V}'; window.AG_SAUCES = ${JSON.stringify(SAUCES_CARTE)};</script>
 ${avecTempsReel ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>' : ''}
+${avant}
 <script src="../assets/${js}?v=${V}" defer></script>
 </body></html>
 `;
-for (const [dossier, titre, js, tr] of [['cuisine', 'Cuisine', 'cuisine.js', true], ['gerant', 'Gérant', 'gerant.js', false]]) {
+// Le gerant dessine les QR des liens d'inscription Stripe (qrcode-generator).
+// L'inscription : page ouverte par le patron de chaque snack (lien du gerant).
+const QR = '<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>';
+for (const [dossier, titre, js, tr, avant] of [['cuisine', 'Cuisine', 'cuisine.js', true], ['gerant', 'Gérant', 'gerant.js', false, QR], ['inscription', 'Paiement en ligne', 'inscription.js', false]]) {
   fs.mkdirSync(path.join(ICI, dossier), { recursive: true });
-  fs.writeFileSync(path.join(ICI, dossier, 'index.html'), espace(titre, js, tr));
+  fs.writeFileSync(path.join(ICI, dossier, 'index.html'), espace(titre, js, tr, avant));
   // La version de la page : la tablette la compare pour se mettre a jour HORS service.
   fs.writeFileSync(path.join(ICI, dossier, 'version.json'), JSON.stringify({ v: V }));
 }

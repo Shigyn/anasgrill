@@ -214,3 +214,23 @@ body.gerant .ge-kpi { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)
 .ge-modale .ge-alerte-boite h2 { color: var(--texte); }
 @media (max-width: 900px) { .ge-offre-form { grid-template-columns: 1fr; } .ge-apercu { position: static; } }
 .cu-a-payer { background: #ffbe28; color: #1b0d00; font-size: .85rem; }
+
+/* Paiement en ligne : une carte par snack, avec le lien fixe et son QR (2026-10-28). */
+.ge-insc { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.ge-insc-carte { display: grid; gap: 10px; align-content: start; justify-items: start; padding: 16px; border-radius: 14px; border: 1px solid var(--ligne); background: #141210; }
+.ge-insc-carte h3 { margin: 0; font: 400 1.4rem/1 var(--titre); text-transform: uppercase; }
+.ge-insc-carte p { margin: 0; color: var(--doux); }
+.ge-insc-qr { width: 100%; max-width: 180px; padding: 8px; border-radius: 10px; background: #fff; }
+.ge-insc-qr svg { display: block; width: 100%; height: auto; }
+.ge-insc-url { width: 100%; min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--ligne-forte); background: #0b0b0c; color: var(--doux); font: .8rem/1 var(--texte-police); }
+.ge-insc-boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.ge-insc-boutons a.cu-bouton { display: inline-flex; align-items: center; text-decoration: none; }
+
+/* La page /inscription/ ouverte par le patron d'un snack. */
+.insc { width: min(440px, 100% - 32px); margin: 0 auto; padding: 10vh 0 40px; display: grid; gap: 16px; text-align: center; justify-items: center; }
+.insc .logo { width: 88px; height: 88px; }
+.insc h1 { margin: 0; font: 400 2.2rem/1.05 var(--titre); text-transform: uppercase; }
+.insc p { margin: 0; color: var(--doux); }
+.insc ul { margin: 0; padding: 14px 18px 14px 34px; text-align: left; border-radius: 14px; border: 1px solid var(--ligne); background: #141210; color: var(--texte); }
+.insc .bouton { width: 100%; }
+.insc-err { color: #ffb4ac; }

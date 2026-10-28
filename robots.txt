@@ -1,3 +1,4 @@
-# Apercu : pas d'indexation.
 User-agent: *
-Disallow: /
+Allow: /
+
+Sitemap: https://www.anasgrill.fr/sitemap.xml

@@ -6,7 +6,6 @@
 <script>document.documentElement.classList.add('js')</script>
 <title>Mentions légales — Anas Grill</title>
 <meta name="description" content="Mentions légales du site Anas Grill.">
-<meta name="robots" content="noindex,nofollow">
 <link rel="canonical" href="https://www.anasgrill.fr/mentions-legales/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
@@ -20,19 +19,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css?v=73">
+<link rel="stylesheet" href="../assets/style.css?v=74">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.anasgrill.fr/#anas-grill","name":"Anas Grill","url":"https://www.anasgrill.fr/","description":"Fast-food aux formules à 10 € toute l’année : sandwichs, tacos, burgers, à Lyon et en Isère."}]}</script>
 </head>
 <body class="page-texte">
 <a class="evitement" href="#contenu">Aller au contenu</a>
 
-<main id="contenu" class="cadre etroit texte"><h1>Mentions légales</h1><p>[Raison sociale, SIRET et adresse de l’éditeur à compléter avec le client.]</p><h2>Hébergement</h2><p>[À compléter à la mise en ligne.]</p><h2>Crédits</h2><p>Visuels : Anas Grill. Réalisation : LocWeb.</p></main>
+<main id="contenu" class="cadre etroit texte"><h1>Mentions légales</h1><h2>Éditeur</h2><p>ANASGRILL SAS, RCS Lyon 108 900 630, 61 boulevard Laurent Gérin, 69200 Vénissieux. Directeur de la publication : Tarek Rabia, président.</p><p>Chaque restaurant Anas Grill est exploité par sa propre société, qui vend les commandes passées pour ce restaurant. Son nom figure sur le relevé bancaire et sur le reçu de paiement.</p><h2>Hébergement</h2><p>Site : GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis. Commandes : Supabase, serveurs situés dans l’Union européenne. Paiements : Stripe Payments Europe, Ltd., Dublin, Irlande.</p><h2>Crédits</h2><p>Visuels : Anas Grill. Réalisation : LocWeb.</p></main>
 <footer class="pied">
   <div class="cadre pied-in">
-    <a class="pied-logo" href="../"><img class="logo" src="../assets/logo.webp?v=73" alt="Anas Grill" width="512" height="512"></a>
+    <a class="pied-logo" href="../"><img class="logo" src="../assets/logo.webp?v=74" alt="Anas Grill" width="512" height="512"></a>
     <p>Les formules à 10 € toute l’année, dans nos 7 restaurants de Lyon et d’Isère.</p>
     <nav class="pied-snacks" aria-label="Nos restaurants"><a href="../lyon-8/">Lyon 8</a><a href="../charpennes/">Charpennes</a><a href="../la-duchere/">La Duchère</a><a href="../rillieux-la-pape/">Rillieux-la-Pape</a><a href="../vaulx-en-velin/">Vaulx-en-Velin</a><a href="../venissieux/">Vénissieux</a><a href="../bourgoin-jallieu/">Bourgoin-Jallieu</a></nav>
-    <p class="pied-bas">© 2026 Anas Grill · <a href="../mentions-legales/">Mentions légales</a> · <a href="../cgv/">Conditions de vente</a> · <a href="../confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a></p>
+    <p class="pied-bas">© 2026 Anas Grill · <a href="../mentions-legales/">Mentions légales</a> · <a href="../cgv/">Conditions de vente</a> · <a href="../confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a> · Site réalisé par <a href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a></p>
   </div>
 </footer>
 <script>
@@ -42,15 +41,15 @@
     clientId: '',
     ga4Id: ''
   };
-  window.ANAS = {"racine":"../","reglages":{"preparation":15,"minutesParKm":3,"departLivreur":5,"pas":5,"capaciteParQuartDHeure":8,"payerSurPlace":true,"livraison":false,"minimumLivraison":20,"debutCommandes":8,"pasCreneau":15,"avanceParCreneau":3,"arretAvantFermeture":15,"apercuToujoursOuvert":true,"paiement":"stripe","stripePk":"pk_test_51TGJlEGVYebRpMykm8xs6LtgNueJnGQDGqvEaHoIMJWqkOWy5z5qiyuarwISDXmOV0pQFbuOZbZD9rFDx4v34mSP00qSukOmfK"}};
+  window.ANAS = {"racine":"../","reglages":{"preparation":15,"minutesParKm":3,"departLivreur":5,"pas":5,"capaciteParQuartDHeure":8,"payerSurPlace":true,"livraison":false,"minimumLivraison":20,"debutCommandes":8,"pasCreneau":15,"avanceParCreneau":3,"arretAvantFermeture":15,"apercuToujoursOuvert":false,"paiement":"stripe","stripePk":"pk_live_51TGJl5GXvfVcUqOfrLH92HlozqZKp5qhxjL6cDiJT8IAjmNpJlvgjxOFoe4ArCyRa1wDizSZ4v64oGzmigt6uwLv00VxR4UvEQ"}};
   // Page gardee en cache par le telephone (ancienne carte, ancien mode de
   // paiement) : si une version plus recente est en ligne, on recharge une fois.
   fetch('../version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (x) { return x.json(); }).then(function (j) {
-    if (j.v !== '73' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
+    if (j.v !== '74' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
   }).catch(function () {});
 </script>
-<script src="../assets/cookies.js?v=73" defer></script>
-<script src="../assets/appli.js?v=73" defer></script>
+<script src="../assets/cookies.js?v=74" defer></script>
+<script src="../assets/appli.js?v=74" defer></script>
 
 </body>
 </html>

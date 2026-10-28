@@ -45,12 +45,13 @@
     rembourse: '<path d="M4 12a8 8 0 1 0 2.3-5.7"/><path d="M4 4v5h5"/><path d="M12 8v8M9.5 10.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/>',
     offre: '<path d="M3 11l15-6v14L3 13z"/><path d="M7 13.5V18a2 2 0 0 0 4 0v-3"/>',
     fermetures: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m10 14 4 4M14 14l-4 4"/>',
+    paiement: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
     export: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
     sortir: '<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4M6 12h10"/>'
   };
   var ECRANS = {
     resume: 'Vue d’ensemble', commandes: 'Commandes', snacks: 'Snacks et tablettes', rembourse: 'Remboursements',
-    offre: 'Offre du moment', fermetures: 'Fermetures exceptionnelles'
+    offre: 'Offre du moment', fermetures: 'Fermetures exceptionnelles', paiement: 'Paiement en ligne'
   };
   var AVEC_PERIODE = { resume: 1, commandes: 1, rembourse: 1 };
   var vue = 'resume';
@@ -164,6 +165,7 @@
           carteMenu('data-vue="resume"', 'resume', 'Vue d’ensemble') +
           carteMenu('data-vue="commandes"', 'commandes', 'Commandes') +
           carteMenu('data-vue="snacks"', 'snacks', 'Snacks et tablettes') +
+          carteMenu('data-vue="paiement"', 'paiement', 'Paiement en ligne') +
           carteMenu('data-vue="rembourse"', 'rembourse', 'Remboursements') +
           carteMenu('data-vue="offre"', 'offre', 'Offre du moment') +
           carteMenu('data-vue="fermetures"', 'fermetures', 'Fermetures') +
@@ -177,6 +179,7 @@
         '<section data-ecran="resume"><div class="ge-kpi" data-kpi></div><h3>Par snack</h3><div class="ge-table-zone"><table class="ge-table" data-par-snack></table></div></section>' +
         '<section data-ecran="commandes" hidden><div class="ge-outils"><select data-filtre aria-label="Snack"></select></div><div class="ge-table-zone"><table class="ge-table" data-cmds></table></div></section>' +
         '<section data-ecran="snacks" hidden><p class="ge-aide">La tablette est « en ligne » quand elle a donné signe de vie il y a moins de 7 minutes. Le paiement doit être « activé » pour encaisser.</p><p class="ge-test" data-mode-test hidden><b>Mode test</b> : les paiements sont simulés, aucun argent réel n’est encaissé. Les vrais comptes des sociétés seront branchés à l’ouverture.</p><div class="ge-table-zone"><table class="ge-table" data-snacks></table></div></section>' +
+        '<section data-ecran="paiement" hidden><p class="ge-aide">Chaque snack a <b>son lien</b> : envoie-le au patron de la société, ou fais-lui scanner le QR. Il y ouvre son compte de paiement Stripe (SIREN, RIB, pièce d’identité du président). Dès que Stripe l’a validé, la carte passe à <b>Actif</b> et le site propose « Payer en ligne » dans ce snack. Avant, les clients paient sur place.</p><p class="ge-test" data-mode-test-p hidden><b>Mode test</b> : les liens ne marcheront qu’au passage en réel.</p><div class="ge-insc" data-insc></div></section>' +
         '<section data-ecran="rembourse" hidden><p class="ge-aide">Pour rembourser une commande : ouvre <b>Commandes</b> et touche <b>Rembourser</b> sur la ligne. Le client est remboursé sur sa carte sous 5 à 10 jours.</p><div class="ge-table-zone"><table class="ge-table" data-rembs></table></div></section>' +
         '<section data-ecran="offre" hidden><p class="ge-aide">L’offre s’affiche <b>tout en haut de la carte</b>, comme un plat : le client la personnalise et la commande.</p>' +
           '<form class="ge-offre-form" data-offre><div class="ge-champs">' +
@@ -230,6 +233,8 @@
         return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + euros(t) + '</td><td>' + l.length + '</td><td>' + (l.length ? euros(Math.round(t / l.length)) : '—') + '</td></tr>';
       }).join('') + '</tbody>';
     $('[data-mode-test]').hidden = !donnees.test;
+    $('[data-mode-test-p]').hidden = !donnees.test;
+    $('[data-insc]').innerHTML = snacks.map(carteInscription).join('');
     $('[data-snacks]').innerHTML = '<thead><tr><th>Snack</th><th>Tablette</th><th>Paiement</th><th>Commandes en ligne</th></tr></thead><tbody>' +
       snacks.map(function (s) {
         return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + vu(s) + '</td>' +
@@ -266,6 +271,8 @@
     sousCarte('commandes', cmds.length ? cmds.length + ' sur la période' : 'Aucune sur la période');
     var cs = sousCarte('snacks', pb ? pb + ' problème' + (pb > 1 ? 's' : '') + ' de paiement' : enPause ? enPause + ' en pause' : 'Tout est ouvert');
     if (cs) cs.classList.toggle('cu-carte-alerte', !!(pb || enPause));
+    var actifs = snacks.filter(function (s) { var c = (donnees.comptes || {})[s.id]; return c && c.encaisse; }).length;
+    sousCarte('paiement', actifs === snacks.length ? 'Tous les snacks encaissent' : actifs + ' snack' + (actifs > 1 ? 's' : '') + ' sur ' + snacks.length + ' encaisse' + (actifs > 1 ? 'nt' : ''));
     sousCarte('rembourse', rb.length ? euros(rb.reduce(function (t, c) { return t + c.rembourse_cents; }, 0)) + ' remboursés' : 'Aucun sur la période');
     sousCarte('offre', ol.length ? ol.length + ' snack' + (ol.length > 1 ? 's' : '') + ' avec une offre' : 'Aucune en ligne');
     sousCarte('fermetures', fl.length ? fl.length + ' prévue' + (fl.length > 1 ? 's' : '') : 'Aucune prévue');
@@ -292,6 +299,28 @@
     if (pb) return '<span class="cu-badge cu-rouge">problème</span>';
     return donnees.test ? '<span class="cu-badge cu-bleu" title="Compte de test : aucun vrai paiement">activé · test</span>' : '<span class="cu-badge cu-vert">activé</span>';
   }
+  /* Le lien fixe d'inscription Stripe de chaque snack, avec son QR. Il ouvre la
+     page /inscription/, qui redemande un lien Stripe neuf a chaque fois : il
+     n'expire jamais. Un compte actif n'a plus besoin de lien. */
+  function qr(url) {
+    if (!window.qrcode) return '';
+    var q = window.qrcode(0, 'M'); q.addData(url); q.make();
+    return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+  }
+  function carteInscription(s) {
+    var c = (donnees.comptes || {})[s.id], url = (donnees.inscriptions || {})[s.id] || '';
+    var etat = !s.stripe_account_id ? ['cu-jaune', 'Pas encore ouvert']
+      : c && c.encaisse ? ['cu-vert', 'Actif']
+      : c && (c.manque || []).length ? ['cu-jaune', 'À compléter']
+      : ['cu-bleu', 'Stripe vérifie'];
+    if (c && c.encaisse) return '<article class="ge-insc-carte ge-insc-ok"><h3>' + esc(s.nom) + '</h3><span class="cu-badge cu-vert">✓ Actif</span><p>Le site propose « Payer en ligne » dans ce snack.</p></article>';
+    return '<article class="ge-insc-carte"><h3>' + esc(s.nom) + '</h3><span class="cu-badge ' + etat[0] + '">' + etat[1] + '</span>' +
+      '<div class="ge-insc-qr" aria-label="QR du lien d’inscription de ' + esc(s.nom) + '">' + qr(url) + '</div>' +
+      '<input class="ge-insc-url" readonly value="' + esc(url) + '" aria-label="Lien d’inscription de ' + esc(s.nom) + '">' +
+      '<div class="ge-insc-boutons"><button type="button" class="cu-bouton cu-feu" data-copier="' + esc(url) + '">Copier le lien</button>' +
+      '<a class="cu-bouton cu-discret" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent('Anas Grill ' + s.nom + ' : ouvre ici le compte qui reçoit les paiements en ligne (SIREN, RIB, pièce d’identité du président) : ' + url) + '">WhatsApp</a></div></article>';
+  }
+
   function alerteComptes() {
     var l = donnees.snacks.map(function (s) { var pb = probleme(s); return pb ? { nom: s.nom, pb: pb } : null; }).filter(Boolean);
     var deja = $('.ge-alerte'); if (deja) deja.remove();
@@ -319,6 +348,13 @@
     var t = e.target, per = t.closest('[data-per]');
     if (per) { choisirPeriode(per.getAttribute('data-per')); return; }
     if (t.closest('[data-export]')) { if (donnees) panneauExport(); return; }
+    var cp = t.closest('[data-copier]');
+    if (cp) {
+      var u = cp.getAttribute('data-copier');
+      (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function () { cp.textContent = 'Lien copié'; setTimeout(function () { cp.textContent = 'Copier le lien'; }, 2000); })
+        .catch(function () { var i = cp.closest('article').querySelector('input'); i.select(); });
+      return;
+    }
     if (t.closest('[data-offre-ajouter]')) {
       var aj = $('[data-offre-ajout]'), v0 = aj.value.trim();
       if (v0) { $('[data-offre-sans]').insertAdjacentHTML('beforeend', puce(v0.charAt(0).toUpperCase() + v0.slice(1), true)); aj.value = ''; apercuOffre(); }
