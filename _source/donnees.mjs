@@ -91,7 +91,7 @@ export const CARTE = [
   {
     id: 'formules-15', nom: 'Formules à 15 €', intro: 'Les maxi. Frites ou potatoes cheddar gruyère et boisson comprises.',
     items: [
-      { id: 'formule-maxi-tacos', n: 'Maxi Tacos', p: 15, photo: 'f-maxi-tacos', d: 'Un maxi tacos (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-maxi-tacos', n: 'Maxi Tacos', p: 15, photo: 'f-maxi-tacos', d: 'Un maxi tacos sans légumes (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-maxi-sandwich', n: 'Maxi Sandwich', p: 15, photo: 'f-maxi-sandwich', d: 'Un maxi sandwich (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-street', n: 'Street', p: 15, photo: 'f-street', d: 'Deux wraps chicken, 5 wings et 3 tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
     ],
@@ -100,7 +100,7 @@ export const CARTE = [
     id: 'composer', nom: 'À composer', intro: 'Choisis ta viande, tes sauces et tes suppléments. En menu avec frites et boisson : 3 € de plus, et 1 € pour passer aux frites cheddar.',
     items: [
       { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Garni de la viande de ton choix, avec tes sauces préférées.', groupes: [G.viandeSandwich, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratinage, G.menu] },
-      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', groupes: [G.viande, G.maxi, G.viande2Tacos, G.sauces, G.supplements, G.gratineRT, G.menu] },
+      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée. Sans légumes.', groupes: [G.viande, G.maxi, G.viande2Tacos, G.sauces, G.supplements, G.gratineRT, G.menu] },
       { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'La viande de ton choix et tes sauces, roulées dans une galette.', groupes: [G.viande, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratineRT, G.menu] },
     ],
   },
@@ -187,7 +187,7 @@ export const CARTE = [
 // (Nicolas, 2026-10-15). « Legumes au choix » = salade, tomate, oignon.
 const LEG = ['Salade', 'Tomate', 'Oignon'];
 const PERSO = {
-  sandwich: [...LEG], tacos: ['Légumes', 'Cheddar'], roule: [...LEG],
+  sandwich: [...LEG], tacos: ['Cheddar'], roule: [...LEG],
   'sig-dz': ['Cheddar'], 'sig-tajs': ['Salade', 'Tomate', 'Kiri', 'Cheddar', 'Piment'], 'sig-bollys': ['Kiri', 'Cheddar'], 'sig-forestiers': ['Cheddar'],
   'sig-savoyards': ['Bacon'], 'sig-anas-food': ['Cheddar'],
   'sig-effiloches': [...LEG, 'Cheddar', 'Bacon'], 'sig-keftas': [...LEG, 'Cheddar'], 'sig-bresiliens': ['Salade', 'Bacon', 'Cheddar'], 'sig-normands': ['Salade', 'Oignons crispy'],
@@ -233,7 +233,7 @@ const FORMULES = {
   'formule-rolls-dwich': [P('Rolls', 'Le rolls', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) }),
     P('Sandwich', 'Le sandwich', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) })],
   'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', [...LEG]), P('Burger escalope', 'Le burger matlouh escalope', [...LEG])],
-  'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Légumes', 'Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI) }),
+  'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI) }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
   'formule-maxi-sandwich': [P('Maxi sandwich', 'Le maxi sandwich', [...LEG], { choix: choixDe('Viande', VIANDES_MAXI) }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
