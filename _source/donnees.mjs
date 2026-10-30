@@ -91,7 +91,7 @@ export const CARTE = [
   {
     id: 'formules-15', nom: 'Formules à 15 €', intro: 'Les maxi. Frites ou potatoes cheddar gruyère et boisson comprises.',
     items: [
-      { id: 'formule-maxi-tacos', n: 'Maxi Tacos', p: 15, photo: 'f-maxi-tacos', d: 'Un maxi tacos sans légumes (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-maxi-tacos', n: 'Maxi Tacos', p: 15, photo: 'f-maxi-tacos', bulle: 'Sans sauces et sans légumes', d: 'Un maxi tacos (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-maxi-sandwich', n: 'Maxi Sandwich', p: 15, photo: 'f-maxi-sandwich', d: 'Un maxi sandwich (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-street', n: 'Street', p: 15, photo: 'f-street', d: 'Deux wraps chicken, 5 wings et 3 tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
     ],
@@ -100,7 +100,7 @@ export const CARTE = [
     id: 'composer', nom: 'À composer', intro: 'Choisis ta viande, tes sauces et tes suppléments. En menu avec frites et boisson : 3 € de plus, et 1 € pour passer aux frites cheddar.',
     items: [
       { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Garni de la viande de ton choix, avec tes sauces préférées.', groupes: [G.viandeSandwich, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratinage, G.menu] },
-      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée. Sans légumes.', groupes: [G.viande, G.maxi, G.viande2Tacos, G.sauces, G.supplements, G.gratineRT, G.menu] },
+      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', bulle: 'Sans sauces et sans légumes', groupes: [G.viande, G.maxi, G.viande2Tacos, G.sauces, G.supplements, G.gratineRT, G.menu] },
       { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'La viande de ton choix et tes sauces, roulées dans une galette.', groupes: [G.viande, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratineRT, G.menu] },
     ],
   },
@@ -290,11 +290,7 @@ CARTE.push(
 const SAUCE_OBLIGATOIRE = { tacos: 'sauces', 'formule-maxi-tacos': 'sauces-0' };
 for (const c of CARTE) for (const i of c.items) {
   const g = SAUCE_OBLIGATOIRE[i.id] && (i.groupes || []).find((x) => x.id === SAUCE_OBLIGATOIRE[i.id]);
-  if (g) {
-    g.min = 1; g.aide = 'au moins 1 choix, jusqu’à ' + g.max + ' offertes';
-    // « Sans sauce » (Hakim, 30/10) : la question reste posee, mais le client peut dire non.
-    g.options = [{ n: 'Sans sauce', p: 0 }, ...g.options];
-  }
+  if (g) { g.min = 1; g.aide = 'au moins 1, jusqu’à ' + g.max + ' offertes'; }
 }
 
 // Les formules en DERNIERE categorie, pas en premiere (Hakim, 21/10).
@@ -337,7 +333,7 @@ const photoBoisson = (n) => BOISSONS_GRAPHISTE.has(slug(n)) ? 'boisson-' + slug(
 const PHOTO_OPT = {
   viande: (n) => 'opt/' + slug(n),
   viande2: (n) => 'opt/' + slug(n),
-  sauces: (n) => n === 'Sans sauce' ? null : SAUCES_GRAPHISTE.has(slug(n)) ? 'sauce-' + slug(n) : 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
+  sauces: (n) => SAUCES_GRAPHISTE.has(slug(n)) ? 'sauce-' + slug(n) : 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
   boisson: photoBoisson,
   parfum: photoBoisson,
   supplements: (n) => 'opt/u-' + slug(n.replace(' fumé', '')),

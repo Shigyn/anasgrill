@@ -19,7 +19,7 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   // Les ingredients qu'on peut retirer : une petite photo (Unsplash) par ingredient.
   var iconeDe = function (n) {
-    var k = /salade|l[eé]gume/i.test(n) ? 'salade' : /tomate/i.test(n) ? 'tomate' : /oignon/i.test(n) ? 'oignon' : /cornichon/i.test(n) ? 'cornichon'
+    var k = /salade/i.test(n) ? 'salade' : /tomate/i.test(n) ? 'tomate' : /oignon/i.test(n) ? 'oignon' : /cornichon/i.test(n) ? 'cornichon'
       : /jalap/i.test(n) ? 'jalapeno' : /piment/i.test(n) ? 'piment' : /bacon/i.test(n) ? 'bacon' : /sauce/i.test(n) ? 'sauce' : /gruy/i.test(n) ? 'gruyere' : /kiri/i.test(n) ? 'kiri' : 'cheddar';
     return '<img class="ing-photo" src="../photos/ing-' + k + '.webp" alt="" width="160" height="160">';
   };
@@ -166,7 +166,9 @@
     feuille.innerHTML =
       '<div class="feuille-tete">' + (i.image ? '<img src="' + esc(i.image) + '" alt="">' : i.photo ? '<img src="../photos/' + i.photo + '.webp" alt="">' : '') +
       '<button type="button" class="feuille-fermer" data-fermer-fiche aria-label="Fermer">×</button></div>' +
-      '<div class="feuille-corps"><div class="feuille-titre-ligne"><h3 id="feuille-titre">' + esc(i.n) + '</h3>' +
+      '<div class="feuille-corps"><div class="feuille-titre-ligne"><h3 id="feuille-titre">' + esc(i.n) +
+        // Le « ? » qui precise ce que le plat n'a pas (Hakim, 30/10) : au survol, ou au toucher sur telephone.
+        (i.bulle ? ' <span class="bulle" tabindex="0" role="note" aria-label="' + esc(i.bulle) + '" data-bulle="' + esc(i.bulle) + '">?</span>' : '') + '</h3>' +
       (i.allergenes ? '<button type="button" class="allerg-btn" data-allergenes aria-haspopup="dialog">Allergènes</button>' : '') + '</div>' + (i.d ? '<p class="feuille-desc">' + esc(i.d) + '</p>' : '') +
       parties(i.groupes, function (g) {
         if (g.type === 'info') return '<p class="partie-info">' + esc(g.texte) + '</p>';
