@@ -824,3 +824,7 @@ button.ligne-texte:hover b { color: var(--jaune); }
 .bulle:hover, .bulle:focus { opacity: 1; outline: none }
 .bulle:hover::after, .bulle:focus::after { content: attr(data-bulle); position: absolute; z-index: 20; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   white-space: nowrap; padding: 7px 11px; border-radius: 8px; background: #111; color: #fff; font-size: 12.5px; font-weight: 600; letter-spacing: 0; text-transform: none; box-shadow: 0 6px 18px rgba(0,0,0,.4) }
+
+/* Le lien LocWeb du pied de page : a peine plus visible, dans la couleur du site (2026-10-30). */
+.pied .lien-locweb { color: var(--orange); opacity: .85; font-weight: 600; }
+.pied .lien-locweb:hover { opacity: 1; }

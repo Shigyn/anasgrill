@@ -20,7 +20,7 @@ const PROD = process.env.PROD === '1';
 // Domaine achete par Nicolas le 27/10 : l'apercu y est aussi (toujours en noindex).
 const URL_SITE = 'https://www.anasgrill.fr/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '84';
+const V = '85';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -85,7 +85,7 @@ ${corps(r)}
     <a class="pied-logo" href="${r || './'}">${LOGO_R(r)}</a>
     <p>Les formules à 10 € toute l’année, dans nos ${SNACKS.length} restaurants de Lyon et d’Isère.</p>
     <nav class="pied-snacks" aria-label="Nos restaurants">${SNACKS.map((s) => `<a href="${r}${s.id}/">${esc(s.nom)}</a>`).join('')}</nav>
-    <p class="pied-bas">© ${new Date().getFullYear()} Anas Grill · <a href="${r}mentions-legales/">Mentions légales</a> · <a href="${r}cgv/">Conditions de vente</a> · <a href="${r}confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a>${PROD ? ' · Site réalisé par <a href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a>' : ''}</p>
+    <p class="pied-bas">© ${new Date().getFullYear()} Anas Grill · <a href="${r}mentions-legales/">Mentions légales</a> · <a href="${r}cgv/">Conditions de vente</a> · <a href="${r}confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a>${PROD ? ' · Site réalisé par <a class="lien-locweb" href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a>' : ''}</p>
   </div>
 </footer>
 <script>
