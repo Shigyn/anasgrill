@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css?v=80">
+<link rel="stylesheet" href="../assets/style.css?v=81">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.anasgrill.fr/#anas-grill","name":"Anas Grill","url":"https://www.anasgrill.fr/","description":"Fast-food aux formules à 10 € toute l’année : sandwichs, tacos, burgers, à Lyon et en Isère."}]}</script>
 </head>
 <body class="page-texte">
@@ -43,7 +43,7 @@
 </main>
 <footer class="pied">
   <div class="cadre pied-in">
-    <a class="pied-logo" href="../"><img class="logo" src="../assets/logo.webp?v=80" alt="Anas Grill" width="512" height="512"></a>
+    <a class="pied-logo" href="../"><img class="logo" src="../assets/logo.webp?v=81" alt="Anas Grill" width="512" height="512"></a>
     <p>Les formules à 10 € toute l’année, dans nos 7 restaurants de Lyon et d’Isère.</p>
     <nav class="pied-snacks" aria-label="Nos restaurants"><a href="../lyon-8/">Lyon 8</a><a href="../charpennes/">Charpennes</a><a href="../la-duchere/">La Duchère</a><a href="../rillieux-la-pape/">Rillieux-la-Pape</a><a href="../vaulx-en-velin/">Vaulx-en-Velin</a><a href="../venissieux/">Vénissieux</a><a href="../bourgoin-jallieu/">Bourgoin-Jallieu</a></nav>
     <p class="pied-bas">© 2026 Anas Grill · <a href="../mentions-legales/">Mentions légales</a> · <a href="../cgv/">Conditions de vente</a> · <a href="../confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a> · Site réalisé par <a href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a></p>
@@ -60,11 +60,11 @@
   // Page gardee en cache par le telephone (ancienne carte, ancien mode de
   // paiement) : si une version plus recente est en ligne, on recharge une fois.
   fetch('../version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (x) { return x.json(); }).then(function (j) {
-    if (j.v !== '80' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
+    if (j.v !== '81' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
   }).catch(function () {});
 </script>
-<script src="../assets/cookies.js?v=80" defer></script>
-<script src="../assets/appli.js?v=80" defer></script>
+<script src="../assets/cookies.js?v=81" defer></script>
+<script src="../assets/appli.js?v=81" defer></script>
 
 </body>
 </html>
