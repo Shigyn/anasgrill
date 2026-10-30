@@ -124,14 +124,13 @@ export const CARTE = [
   {
     id: 'sandwichs', nom: 'Les sandwichs', intro: 'Garni et prêt à partir. En menu avec frites et boisson : 3 € de plus.',
     items: [
-      { id: 'bavette', n: 'La Bavette', p: 8, seulement: ['lyon-8', 'vaulx-en-velin'], photo: 'sw-bavette', d: 'Des tranches de bavette, du cheddar, une sauce fromagère, de la salade et de la tomate.', groupes: [G.menu] },
+      { id: 'bavette', n: 'La Bavette', p: 7.5, seulement: ['lyon-8', 'vaulx-en-velin'], photo: 'sw-bavette', d: 'Des tranches de bavette, du cheddar, une sauce fromagère, de la salade et de la tomate.', groupes: [G.menu] },
     ],
   },
   {
     id: 'roules', nom: 'Les roulés', intro: 'Dans une grande galette. En menu avec frites et boisson : 3 € de plus.',
     items: [
-      { id: 'roule-jala', n: 'Le Jala', p: 8, photo: 'r-jala', d: 'Du bœuf grillé, des jalapeños, du cheddar et une sauce barbecue.', groupes: [G.gratineRT, G.menu] },
-      { id: 'roule-buffalo', n: 'Le Buffalo', p: 8, photo: 'r-buffalo', d: 'Du bœuf grillé, des bouchées de fromage panées, du cheddar et une sauce crémeuse.', groupes: [G.gratineRT, G.menu] },
+      { id: 'roule-buffalo', n: 'Le Buffalo', p: 8, photo: 'r-buffalo', d: 'Du steak, des bouchées de fromage panées, du cheddar et une sauce crémeuse.', groupes: [G.gratineRT, G.menu] },
       { id: 'roule-rio', n: 'Le Rio', p: 8, photo: 'r-rio', d: 'Du poulet pané, du jambon de dinde, du fromage fondu et une sauce blanche aux herbes.', groupes: [G.gratineRT, G.menu] },
       { id: 'roule-suisse', n: 'Le Suisse', p: 8, photo: 'r-suisse', d: 'Du poulet grillé, du jambon de dinde et de la raclette fondue.', groupes: [G.gratineRT, G.menu] },
     ],
@@ -160,7 +159,7 @@ export const CARTE = [
       // 20/10 : produits des photos du graphiste (sa carte Uber Eats). PRIX A CONFIRMER par Hakim.
       { id: 'triple-cheese', n: 'Triple cheese', p: 5, photo: 'b-triple-cheese-nature', d: 'Trois steaks, trois tranches de cheddar, des cornichons et des oignons.' },
       { id: 'quadruple-cheese', n: 'Quadruple cheese', p: 7, photo: 'b-quadruple-cheese', d: 'Quatre steaks, quatre tranches de cheddar, des cornichons et des oignons.' },
-      { id: 'big-grill', n: 'Le Big Grill', p: 6, photo: 'b-big-grill', d: 'Deux steaks, deux tranches de cheddar et des oignons dans un pain brioché, avec la sauce de ton choix.' },
+      { id: 'big-grill', n: 'Le Big Grill', p: 6, photo: 'b-big-grill', d: 'Deux steaks, deux tranches de cheddar et des oignons dans un pain au sésame à trois étages, avec la sauce de ton choix.' },
       { id: 'boursin', n: 'Le Boursin', p: 5.5, photo: 'b-boursin', d: 'Un steak, du cheddar, des cornichons et une sauce au Boursin, dans un pain brioché.' },
       { id: 'fish', n: 'Le Fish', p: 3.5, photo: 'b-fish-classique', d: 'Un filet de poisson pané, du cheddar et une sauce tartare.' },
       { id: 'le-240', n: 'Le 240 brioché', p: 7.5, photo: 'b-240', d: 'Deux steaks et deux tranches de cheddar, avec la sauce et les légumes de ton choix.', groupes: [sans('Salade', 'Tomate', 'Oignon', 'Cornichon', 'Cheddar'), G.sauces] },
@@ -188,7 +187,7 @@ export const CARTE = [
 // (Nicolas, 2026-10-15). « Legumes au choix » = salade, tomate, oignon.
 const LEG = ['Salade', 'Tomate', 'Oignon'];
 const PERSO = {
-  sandwich: [...LEG], tacos: ['Cheddar'], roule: [...LEG],
+  sandwich: [...LEG], tacos: ['Légumes', 'Cheddar'], roule: [...LEG],
   'sig-dz': ['Cheddar'], 'sig-tajs': ['Salade', 'Tomate', 'Kiri', 'Cheddar', 'Piment'], 'sig-bollys': ['Kiri', 'Cheddar'], 'sig-forestiers': ['Cheddar'],
   'sig-savoyards': ['Bacon'], 'sig-anas-food': ['Cheddar'],
   'sig-effiloches': [...LEG, 'Cheddar', 'Bacon'], 'sig-keftas': [...LEG, 'Cheddar'], 'sig-bresiliens': ['Salade', 'Bacon', 'Cheddar'], 'sig-normands': ['Salade', 'Oignons crispy'],
@@ -199,7 +198,7 @@ const PERSO = {
   'triple-cheese': ['Oignon', 'Cornichon', 'Cheddar'], 'quadruple-cheese': ['Oignon', 'Cornichon', 'Cheddar'], 'big-grill': ['Oignon', 'Cheddar'],
   boursin: ['Cornichon', 'Cheddar'], fish: ['Cheddar'],
   suedois: ['Salade', 'Tomate', 'Cheddar'], veaudais: [...LEG, 'Cheddar'], bavette: ['Salade', 'Tomate', 'Cheddar'],
-  'roule-jala': ['Jalapeños', 'Cheddar'], 'roule-buffalo': ['Cheddar'], 'roule-rio': ['Fromage'], 'roule-suisse': ['Raclette'],
+  'roule-buffalo': ['Cheddar'], 'roule-rio': ['Fromage'], 'roule-suisse': ['Raclette'],
   'naan-beef': ['Salade', 'Cheddar', 'Gruyère'], 'naan-chicken': ['Salade', 'Cheddar', 'Gruyère'], 'naan-curry': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'], 'naan-tandoori': ['Salade', 'Kiri', 'Cheddar', 'Gruyère'],
 };
 // A grignoter et menus enfant : une sauce offerte, 1 EUR la sauce en plus.
@@ -234,7 +233,7 @@ const FORMULES = {
   'formule-rolls-dwich': [P('Rolls', 'Le rolls', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) }),
     P('Sandwich', 'Le sandwich', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) })],
   'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', [...LEG]), P('Burger escalope', 'Le burger matlouh escalope', [...LEG])],
-  'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI) }),
+  'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Légumes', 'Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI) }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
   'formule-maxi-sandwich': [P('Maxi sandwich', 'Le maxi sandwich', [...LEG], { choix: choixDe('Viande', VIANDES_MAXI) }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
@@ -291,7 +290,11 @@ CARTE.push(
 const SAUCE_OBLIGATOIRE = { tacos: 'sauces', 'formule-maxi-tacos': 'sauces-0' };
 for (const c of CARTE) for (const i of c.items) {
   const g = SAUCE_OBLIGATOIRE[i.id] && (i.groupes || []).find((x) => x.id === SAUCE_OBLIGATOIRE[i.id]);
-  if (g) { g.min = 1; g.aide = 'au moins 1, jusqu’à ' + g.max + ' offertes'; }
+  if (g) {
+    g.min = 1; g.aide = 'au moins 1 choix, jusqu’à ' + g.max + ' offertes';
+    // « Sans sauce » (Hakim, 30/10) : la question reste posee, mais le client peut dire non.
+    g.options = [{ n: 'Sans sauce', p: 0 }, ...g.options];
+  }
 }
 
 // Les formules en DERNIERE categorie, pas en premiere (Hakim, 21/10).
@@ -334,7 +337,7 @@ const photoBoisson = (n) => BOISSONS_GRAPHISTE.has(slug(n)) ? 'boisson-' + slug(
 const PHOTO_OPT = {
   viande: (n) => 'opt/' + slug(n),
   viande2: (n) => 'opt/' + slug(n),
-  sauces: (n) => SAUCES_GRAPHISTE.has(slug(n)) ? 'sauce-' + slug(n) : 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
+  sauces: (n) => n === 'Sans sauce' ? null : SAUCES_GRAPHISTE.has(slug(n)) ? 'sauce-' + slug(n) : 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
   boisson: photoBoisson,
   parfum: photoBoisson,
   supplements: (n) => 'opt/u-' + slug(n.replace(' fumé', '')),

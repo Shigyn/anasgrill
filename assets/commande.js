@@ -19,7 +19,7 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   // Les ingredients qu'on peut retirer : une petite photo (Unsplash) par ingredient.
   var iconeDe = function (n) {
-    var k = /salade/i.test(n) ? 'salade' : /tomate/i.test(n) ? 'tomate' : /oignon/i.test(n) ? 'oignon' : /cornichon/i.test(n) ? 'cornichon'
+    var k = /salade|l[eé]gume/i.test(n) ? 'salade' : /tomate/i.test(n) ? 'tomate' : /oignon/i.test(n) ? 'oignon' : /cornichon/i.test(n) ? 'cornichon'
       : /jalap/i.test(n) ? 'jalapeno' : /piment/i.test(n) ? 'piment' : /bacon/i.test(n) ? 'bacon' : /sauce/i.test(n) ? 'sauce' : /gruy/i.test(n) ? 'gruyere' : /kiri/i.test(n) ? 'kiri' : 'cheddar';
     return '<img class="ing-photo" src="../photos/ing-' + k + '.webp" alt="" width="160" height="160">';
   };

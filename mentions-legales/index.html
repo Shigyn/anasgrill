@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css?v=75">
+<link rel="stylesheet" href="../assets/style.css?v=76">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.anasgrill.fr/#anas-grill","name":"Anas Grill","url":"https://www.anasgrill.fr/","description":"Fast-food aux formules à 10 € toute l’année : sandwichs, tacos, burgers, à Lyon et en Isère."}]}</script>
 </head>
 <body class="page-texte">
@@ -28,7 +28,7 @@
 <main id="contenu" class="cadre etroit texte"><h1>Mentions légales</h1><h2>Éditeur</h2><p>ANASGRILL SAS, RCS Lyon 108 900 630, 61 boulevard Laurent Gérin, 69200 Vénissieux. Directeur de la publication : Tarek Rabia, président.</p><p>Chaque restaurant Anas Grill est exploité par sa propre société, qui vend les commandes passées pour ce restaurant. Son nom figure sur le relevé bancaire et sur le reçu de paiement.</p><h2>Hébergement</h2><p>Site : GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis. Commandes : Supabase, serveurs situés dans l’Union européenne. Paiements : Stripe Payments Europe, Ltd., Dublin, Irlande.</p><h2>Crédits</h2><p>Visuels : Anas Grill. Réalisation : LocWeb.</p></main>
 <footer class="pied">
   <div class="cadre pied-in">
-    <a class="pied-logo" href="../"><img class="logo" src="../assets/logo.webp?v=75" alt="Anas Grill" width="512" height="512"></a>
+    <a class="pied-logo" href="../"><img class="logo" src="../assets/logo.webp?v=76" alt="Anas Grill" width="512" height="512"></a>
     <p>Les formules à 10 € toute l’année, dans nos 7 restaurants de Lyon et d’Isère.</p>
     <nav class="pied-snacks" aria-label="Nos restaurants"><a href="../lyon-8/">Lyon 8</a><a href="../charpennes/">Charpennes</a><a href="../la-duchere/">La Duchère</a><a href="../rillieux-la-pape/">Rillieux-la-Pape</a><a href="../vaulx-en-velin/">Vaulx-en-Velin</a><a href="../venissieux/">Vénissieux</a><a href="../bourgoin-jallieu/">Bourgoin-Jallieu</a></nav>
     <p class="pied-bas">© 2026 Anas Grill · <a href="../mentions-legales/">Mentions légales</a> · <a href="../cgv/">Conditions de vente</a> · <a href="../confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a> · Site réalisé par <a href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a></p>
@@ -45,11 +45,11 @@
   // Page gardee en cache par le telephone (ancienne carte, ancien mode de
   // paiement) : si une version plus recente est en ligne, on recharge une fois.
   fetch('../version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (x) { return x.json(); }).then(function (j) {
-    if (j.v !== '75' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
+    if (j.v !== '76' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
   }).catch(function () {});
 </script>
-<script src="../assets/cookies.js?v=75" defer></script>
-<script src="../assets/appli.js?v=75" defer></script>
+<script src="../assets/cookies.js?v=76" defer></script>
+<script src="../assets/appli.js?v=76" defer></script>
 
 </body>
 </html>
