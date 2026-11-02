@@ -88,6 +88,7 @@
           carteMenu('data-aide', 'aide', 'Aide') +
           (APPLI ? '' : carteMenu('data-installer', 'installer', 'Installer l’appli')) +
           carteMenu('data-appliquer hidden', 'maj', 'Mise à jour prête') +
+          carteMenu('data-maj-go hidden', 'maj', 'Mettre à jour l’appli') +
         '</nav></aside>' +
       '<main class="cu-zone">' +
         '<p class="cu-alerte" data-alerte hidden></p>' +
@@ -101,8 +102,9 @@
     rafraichir();
     boucle(); // signe de vie + filet de securite
     clearInterval(minuteurVersion); minuteurVersion = setInterval(verifierPage, 30 * 60000);
+    if (MAJ) { verifierMaj(false, true); clearInterval(minuteurMaj); minuteurMaj = setInterval(function () { verifierMaj(false, true); }, 6 * 3600000); }
     if (reglage.impression === 'a-choisir') setTimeout(panneauRole, 600);
-    else if (APPLI && principale() && window.LocWebImprimante.chercher && !reglage.ip) setTimeout(function () { panneauRecherche(); }, 800);
+    else if (APPLI && principale() && window.LocWebImprimante.chercher && !reglage.ip) setTimeout(guideImprimante, 800);
     ecouter();
     garderEcranAllume();
   }
@@ -168,7 +170,7 @@
   // signe de vie, et SEULE la tablette principale (celle qui imprime) le fait :
   // 5 min quand le direct marche, 1 min sinon. Un telephone ou un ordi qui
   // regarde ne fait aucun appel regulier ; une page cachee non plus.
-  var canalOk = false, minuteurVersion = null;
+  var canalOk = false, minuteurVersion = null, minuteurMaj = null;
   function principale() { return reglage.impression === 'appli' || reglage.impression === 'navigateur'; }
   function boucle() {
     clearTimeout(minuteur);
@@ -281,7 +283,7 @@
   // L'appli Android LocWeb envoie les octets ESC/POS a l'imprimante, port 9100, sans fenetre.
   function viaAppli(c) {
     if (!APPLI) return false;
-    if (!reglage.ip) { majEtat(); alerteImpression('Indique l’adresse de l’imprimante dans Réglages.'); return false; }
+    if (!reglage.ip) { majEtat(); alerteImpression('L’imprimante n’est pas réglée : va dans Réglages → Chercher l’imprimante.'); return false; }
     var r = window.LocWebImprimante.imprimer(reglage.ip, +reglage.port || 9100, btoa(ticketTexte(c)));
     if (r === 'ok') return true;
     if (r === 'papier') alerteImpression('Plus de papier dans l’imprimante : change la bobine, puis touche « Réimprimer » sur les commandes en rouge.');
@@ -306,6 +308,21 @@
      2. la preuve physique : chaque candidate imprime un ticket avec un gros
         numero, et la cuisine dit lequel est sorti CHEZ ELLE. */
   var CANDIDATES = [];
+  // Le guide de la tablette : mise a jour si besoin, branchements, puis la recherche.
+  function appliUsb() { return parseInt(window.LocWebImprimante.version(), 10) >= 5; }
+  function guideImprimante() {
+    if (!appliUsb()) {
+      panneau('<h2>Étape 1 : mettre à jour l’appli</h2><p>Touche le bouton, puis <b>Mettre à jour</b> quand Android le demande. Si l’appli se ferme ensuite, rouvre-la : tu arrives à l’étape suivante.</p>' +
+        '<div class="cu-actions">' + (MAJ ? '<button type="button" class="cu-bouton cu-feu" data-maj-go>Mettre à jour l’appli</button>' : '<a class="cu-bouton cu-feu cu-lien" href="' + APK + '">Télécharger la nouvelle appli</a>') +
+        '<button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
+      return;
+    }
+    panneau('<h2>Brancher l’imprimante</h2><ol class="cu-guide">' +
+      '<li><b>Allume l’imprimante</b> et vérifie qu’il y a du papier.</li>' +
+      '<li>Branche le <b>câble USB</b> entre l’imprimante et la tablette.</li>' +
+      '<li>Si Android pose une question sur l’appareil USB, coche <b>Toujours</b> et touche <b>OK</b>.</li></ol>' +
+      '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>C’est branché</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
+  }
   function octetsNumero(n) {
     var ESC = '\x1b', GS = '\x1d';
     return ESC + '@' + ESC + 'a1' + GS + '!' + '\x11' + 'IMPRIMANTE\n' + GS + '!' + '\x77' + n + '\n' + GS + '!' + '\x00' +
@@ -321,12 +338,17 @@
       var bureau = liste.filter(function (x) { return x.bureau; });
       CANDIDATES = tickets.length ? tickets : muettes;   // si aucune ne repond, on essaie celles qui se taisent
       if (!CANDIDATES.length) {
-        panneau('<h2>Aucune imprimante à tickets trouvée</h2><p>Vérifie que l’imprimante est <b>allumée</b> et branchée à la <b>tablette par un câble USB</b>. Ou, si tu as une box : reliée à la <b>box par un câble réseau</b>, avec la tablette sur le <b>même Wi-Fi</b>.</p>' +
+        panneau('<h2>Aucune imprimante à tickets trouvée</h2><p>Vérifie que l’imprimante est <b>allumée</b>. Débranche le <b>câble USB</b>, rebranche-le bien aux deux bouts, et touche <b>OK</b> si Android demande une autorisation. Avec une box : câble réseau vers la box et tablette sur le même Wi-Fi.</p><p>Toujours rien ? Appelle Nicolas.</p>' +
           (bureau.length ? '<p>' + bureau.length + ' imprimante(s) de bureau trouvée(s), écartée(s).</p>' : '') +
           '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Chercher encore</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
         return;
       }
       CANDIDATES.forEach(function (c, i) { setTimeout(function () { envoyerBrut(c.ip, octetsNumero(i + 1)); }, i * 1200); });
+      if (CANDIDATES.length === 1 && CANDIDATES[0].ip === 'usb') {
+        panneau('<h2>Un ticket vient de sortir ?</h2><p>L’imprimante devrait avoir imprimé un ticket avec un gros <b>1</b>.</p>' +
+          '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-choisir-ip="usb">Oui, le ticket est sorti</button><button type="button" class="cu-bouton" data-guide-rien>Non, rien n’est sorti</button></div>');
+        return;
+      }
       panneau('<h2>Quel ticket est sorti en cuisine ?</h2><p>' + (CANDIDATES.length > 1
           ? 'On a trouvé ' + CANDIDATES.length + ' imprimantes. Chacune vient d’imprimer un ticket avec un gros numéro. Touche le numéro du ticket sorti <b>dans la cuisine</b>.'
           : 'L’imprimante trouvée vient d’imprimer un ticket avec le numéro 1. Est-il sorti <b>dans la cuisine</b> ?') + '</p>' +
@@ -341,9 +363,12 @@
      (releases GitHub du depot des applis), et l'installe elle-meme apres un
      toucher. Android demande seulement de confirmer « Mettre a jour ». */
   var MAJ = APPLI && !!window.LocWebImprimante.verifierMiseAJour, DERNIERE = null;
-  function verifierMaj(manuel) {
+  // discret : on montre seulement le bouton du menu (Android exige toujours un toucher pour installer).
+  function verifierMaj(manuel, discret) {
     window.__agMaj = function (r) {
       DERNIERE = r;
+      var b = $('.cu-cartes [data-maj-go]'); if (b) b.hidden = !r.disponible;
+      if (discret) return;
       if (r.disponible) proposerMaj(manuel);
       else if (manuel) alert(r.erreur ? 'Vérification impossible : ' + r.erreur : 'L’appli est à jour (version ' + r.actuelle + ').');
     };
@@ -491,8 +516,8 @@
     panneau('<h2>Réglages de la tablette</h2><label class="cu-choix"><span>Impression</span><select data-imp>' +
       (APPLI ? [['appli', 'Cet appareil imprime (tablette principale)']] : []).concat([['navigateur', 'Navigateur (PC)'], ['aucune', 'Aucune : cet appareil regarde seulement']]).map(function (o) { return '<option value="' + o[0] + '"' + (reglage.impression === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
       '</select></label>' +
-      (APPLI ? '<label class="cu-choix"><span>Adresse de l’imprimante</span><input data-ip inputmode="decimal" placeholder="192.168.1.87" value="' + esc(reglage.ip) + '"></label>' +
-        (window.LocWebImprimante.chercher ? '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Chercher l’imprimante</button></div>' : '') : '') +
+      (APPLI ? (reglage.ip === 'usb' ? '<p class="cu-note">Imprimante branchée par câble USB ✓</p>' : '<label class="cu-choix"><span>Adresse de l’imprimante</span><input data-ip inputmode="decimal" placeholder="192.168.1.87" value="' + esc(reglage.ip) + '"></label>') +
+        (window.LocWebImprimante.chercher ? '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-guide>Chercher l’imprimante</button></div>' : '') : '') +
       '<label class="cu-choix"><span>Sonnerie</span><input type="checkbox" data-son' + (reglage.son ? ' checked' : '') + '></label>' +
       (MAJ ? '<div class="cu-choix"><span>Version de l’appli : ' + window.LocWebImprimante.versionAppli() + '</span><button type="button" class="cu-bouton" data-maj-verifier>Vérifier les mises à jour</button></div>' : '') +
       '<div class="cu-actions"><button type="button" class="cu-bouton" data-test-imp>Ticket de test</button><button type="button" class="cu-bouton" data-test-son>Tester le son</button></div>' +
@@ -511,25 +536,30 @@
     if (ro) {
       reglage.impression = ro.getAttribute('data-role'); ecrire('ag-cuisine-reglage', reglage);
       fermerPanneau(); boucle();
-      if (principale() && window.LocWebImprimante && window.LocWebImprimante.chercher && !reglage.ip) panneauRecherche();
+      if (principale() && window.LocWebImprimante && window.LocWebImprimante.chercher && !reglage.ip) guideImprimante();
       else if (principale()) imprimerEnAttente();
       return;
     }
     if (t.closest('[data-appliquer]')) { location.reload(); return; }
     if (t.closest('[data-maj-go]')) {
-      if (!DERNIERE || !DERNIERE.url) { verifierMaj(true); return; }
-      panneau('<h2>Mise à jour en cours…</h2><span class="cu-attente" aria-hidden="true"></span><p>Téléchargement de la nouvelle version. Android va te demander de confirmer : touche <b>Mettre à jour</b>.</p>');
-      window.LocWebImprimante.mettreAJour(DERNIERE.url);
+      panneau('<h2>Mise à jour en cours…</h2><span class="cu-attente" aria-hidden="true"></span><p>Téléchargement de la nouvelle version. Android va te demander de confirmer : touche <b>Mettre à jour</b>. Si l’appli se ferme ensuite, rouvre-la.</p>');
+      window.LocWebImprimante.mettreAJour(DERNIERE && DERNIERE.url || APK);
       return;
     }
     if (t.closest('[data-maj-verifier]')) { fermerPanneau(); verifierMaj(true); return; }
     var cp = t.closest('[data-copier-lien]');
     if (cp) { try { navigator.clipboard.writeText(APK); cp.textContent = 'Lien copié ✓'; } catch (x) { prompt('Lien de l’appli :', APK); } return; }
     if (t.closest('[data-chercher]')) { panneauRecherche(); return; }
+    if (t.closest('[data-guide]')) { guideImprimante(); return; }
+    if (t.closest('[data-guide-rien]')) {
+      panneau('<h2>Rien n’est sorti</h2><p>Vérifie le <b>papier</b>, le <b>capot</b> bien fermé et l’imprimante <b>allumée</b>. Rebranche le câble USB, puis réessaie.</p><p>Toujours rien ? Appelle Nicolas.</p>' +
+        '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Réessayer</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
+      return;
+    }
     var ch = t.closest('[data-choisir-ip]');
     if (ch) {
       reglage.ip = ch.getAttribute('data-choisir-ip'); reglage.port = 9100; reglage.impression = 'appli'; ecrire('ag-cuisine-reglage', reglage);
-      panneau('<h2>Imprimante réglée ✓</h2><p>Les tickets sortiront sur l’imprimante <b>' + (reglage.ip === 'usb' ? 'branchée en USB' : esc(reglage.ip)) + '</b>. Tu peux la retrouver à tout moment dans <b>Réglages → Chercher l’imprimante</b>.</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-fermer>Terminé</button></div>');
+      panneau('<h2>Imprimante réglée ✓</h2><p>' + (reglage.ip === 'usb' ? 'Chaque commande sortira toute seule sur l’imprimante. Laisse le câble USB branché et l’appli ouverte.' : 'Les tickets sortiront sur l’imprimante <b>' + esc(reglage.ip) + '</b>.') + ' Pour recommencer : <b>Réglages → Chercher l’imprimante</b>.</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-fermer>Terminé</button></div>');
       imprimerEnAttente();
       return;
     }
@@ -565,7 +595,7 @@
     var c = { id: 'test', numero: 0, heure_prevue: new Date(Date.now() + 900000).toISOString(), creneau: null, prenom: 'Test', telephone: '06 00 00 00 00', note: 'Ticket de test : si tu le lis, l’impression marche.', total_cents: 1000,
       lignes: [{ qte: 1, n: 'Le Classique', resume: 'Sandwich : Curry, sauce mayo ×2 · Burger : Steak, sans cornichon' }] };
     var r = reglage.impression === 'appli' ? viaAppli(c) : viaNavigateur(c);
-    if (r && reglage.impression === 'appli') alerteImpression('Ticket de test envoyé à ' + reglage.ip + '.');
+    if (r && reglage.impression === 'appli') alerteImpression('Ticket de test envoyé à l’imprimante.');
   }
 
   if (session && session.jeton) demarrer(); else ecranCode();

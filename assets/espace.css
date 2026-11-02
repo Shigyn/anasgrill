@@ -104,6 +104,7 @@ body.cuisine::before, body.cuisine::after, body.gerant::before, body.gerant::aft
 /* --- Recherche de l'imprimante --- */
 .cu-attente { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(255, 140, 30, .25); border-top-color: var(--orange); animation: cu-tourne .8s linear infinite; }
 @keyframes cu-tourne { to { transform: rotate(360deg); } }
+.cu-guide { margin: 0 0 4px; padding-left: 22px; display: grid; gap: 10px; font-size: 1.05rem; line-height: 1.4; }
 .cu-numero { display: grid; justify-items: center; gap: 4px; padding: 14px 8px; }
 .cu-numero b { font: 400 2.6rem/1 var(--titre); color: var(--jaune); }
 .cu-numero small { color: var(--doux); font-size: .78rem; }
