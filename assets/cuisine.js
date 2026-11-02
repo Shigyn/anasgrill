@@ -139,7 +139,7 @@
     if (cp) cp.classList.toggle('cu-carte-alerte', !!pause);
     var ep = ((donnees.snack || {}).epuises || []).length;
     sousCarte('epuises', ep ? ep + ' plat' + (ep > 1 ? 's' : '') + ' retiré' + (ep > 1 ? 's' : '') : 'Tout est disponible');
-    sousCarte('reglages', reglage.impression === 'appli' ? (reglage.ip ? 'Imprime sur ' + reglage.ip : 'Imprimante à choisir')
+    sousCarte('reglages', reglage.impression === 'appli' ? (reglage.ip === 'usb' ? 'Imprime par câble USB' : reglage.ip ? 'Imprime sur ' + reglage.ip : 'Imprimante à choisir')
       : reglage.impression === 'navigateur' ? 'Imprime depuis ce PC' : reglage.impression === 'a-choisir' ? 'À régler' : 'Regarde seulement');
     sousCarte('aide', 'Que faire si…');
     sousCarte('installer', 'Pour la tablette Android');
@@ -321,7 +321,7 @@
       var bureau = liste.filter(function (x) { return x.bureau; });
       CANDIDATES = tickets.length ? tickets : muettes;   // si aucune ne repond, on essaie celles qui se taisent
       if (!CANDIDATES.length) {
-        panneau('<h2>Aucune imprimante à tickets trouvée</h2><p>Vérifie que l’imprimante est <b>allumée</b> et reliée à la <b>box par un câble réseau</b>, et que la tablette est sur le <b>même Wi-Fi</b> que la box.</p>' +
+        panneau('<h2>Aucune imprimante à tickets trouvée</h2><p>Vérifie que l’imprimante est <b>allumée</b> et branchée à la <b>tablette par un câble USB</b>. Ou, si tu as une box : reliée à la <b>box par un câble réseau</b>, avec la tablette sur le <b>même Wi-Fi</b>.</p>' +
           (bureau.length ? '<p>' + bureau.length + ' imprimante(s) de bureau trouvée(s), écartée(s).</p>' : '') +
           '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-chercher>Chercher encore</button><button type="button" class="cu-bouton cu-discret" data-fermer>Plus tard</button></div>');
         return;
@@ -430,7 +430,7 @@
      de la cuisine. Elle s'imprime aussi, pour l'afficher au mur. */
   var AIDE = [
     ['Une commande arrive', 'Ça sonne et le ticket sort tout seul. Prépare-la pour l’heure écrite en gros (« À remettre à … »). Quand elle est prête, touche <b>Prête</b>. Quand le client la récupère, vérifie son <b>numéro</b>, puis touche <b>Remise au client</b>.'],
-    ['Le ticket ne sort pas', 'La commande devient rouge et un bandeau te prévient. Vérifie le <b>papier</b>, que l’imprimante est <b>allumée</b> et que son <b>câble réseau</b> est branché. Puis touche <b>Réimprimer</b> sur la commande. Pour tester : <b>Réglages → Ticket de test</b>. En attendant, prépare la commande en lisant l’écran : tout y est.'],
+    ['Le ticket ne sort pas', 'La commande devient rouge et un bandeau te prévient. Vérifie le <b>papier</b>, que l’imprimante est <b>allumée</b> et que son <b>câble</b> est branché. Puis touche <b>Réimprimer</b> sur la commande. Pour tester : <b>Réglages → Ticket de test</b>. En attendant, prépare la commande en lisant l’écran : tout y est.'],
     ['Trop de monde, on ne suit plus', 'Touche <b>Pause</b> en haut. Le site n’accepte plus de nouvelles commandes ; celles déjà payées restent à préparer. Quand ça se calme, touche <b>Reprendre les commandes</b>.'],
     ['Il n’y a plus d’un produit', 'Touche <b>Plats épuisés</b>, puis le plat : il disparaît du site tout de suite. <b>Pense à le remettre</b> quand il revient (même bouton), sinon il reste caché.'],
     ['Un plat déjà payé manque', 'Appelle le client (son numéro est sur la commande) et propose-lui autre chose. S’il préfère être remboursé, préviens le <b>gérant</b> : il rembourse le plat depuis sa page, le client est recrédité sur sa carte.'],
@@ -529,7 +529,7 @@
     var ch = t.closest('[data-choisir-ip]');
     if (ch) {
       reglage.ip = ch.getAttribute('data-choisir-ip'); reglage.port = 9100; reglage.impression = 'appli'; ecrire('ag-cuisine-reglage', reglage);
-      panneau('<h2>Imprimante réglée ✓</h2><p>Les tickets sortiront sur l’imprimante <b>' + esc(reglage.ip) + '</b>. Tu peux la retrouver à tout moment dans <b>Réglages → Chercher l’imprimante</b>.</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-fermer>Terminé</button></div>');
+      panneau('<h2>Imprimante réglée ✓</h2><p>Les tickets sortiront sur l’imprimante <b>' + (reglage.ip === 'usb' ? 'branchée en USB' : esc(reglage.ip)) + '</b>. Tu peux la retrouver à tout moment dans <b>Réglages → Chercher l’imprimante</b>.</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-fermer>Terminé</button></div>');
       imprimerEnAttente();
       return;
     }
