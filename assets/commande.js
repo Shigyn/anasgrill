@@ -35,6 +35,7 @@
   var PHOTO_SAUCE = {};
   D.carte.forEach(function (c) { c.items.forEach(function (i) { (i.groupes || []).forEach(function (g) { if (g.type === 'sauces') g.options.forEach(function (o) { if (o.photo) PHOTO_SAUCE[o.n] = o.photo; }); }); }); });
   var pot = function (n) {
+    if (n === 'Sans sauce') return '<i class="sauce-pot sauce-pot-aucune"></i>';
     return PHOTO_SAUCE[n] ? '<i class="sauce-pot sauce-pot-photo"><img src="../photos/' + PHOTO_SAUCE[n] + '.webp" alt="" width="160" height="160"></i>'
       : '<i class="sauce-pot" style="--c:' + (TEINTES[n] || '#e2ae1c') + '"></i>';
   };
@@ -276,13 +277,15 @@
       var f = sb.closest('[data-sauces]'), id = f.getAttribute('data-groupe'), nom = sb.getAttribute('data-sauce');
       var g = enCours.plat.groupes.filter(function (x) { return x.id === id; })[0], ch = (enCours.choix[id] || []).slice();
       var deja = ch.indexOf(nom) >= 0;
-      if (g.max === 1) ch = deja ? [] : [nom];
+      // « Sans sauce » remplace les sauces choisies, et une sauce choisie l'efface (Hakim, 07/11).
+      if (nom === 'Sans sauce') ch = deja ? [] : ['Sans sauce'];
+      else if ((ch = ch.filter(function (x) { return x !== 'Sans sauce'; })) && g.max === 1) ch = deja ? [] : [nom];
       else if (ch.length < g.max) ch.push(nom);           // x1, puis x2
       else if (deja) ch = ch.filter(function (x) { return x !== nom; }); // plein : on la retire
       else { toast(g.max + ' sauces maximum : touche une sauce choisie pour la retirer'); return; }
       enCours.choix[id] = ch; majFiche();
       // Complet : on replie, la carte affiche le choix (« Mayo ×2 »).
-      if (ch.length >= g.max) setTimeout(function () { ouvrirSauces(f, false); }, 450);
+      if (ch.length >= g.max || ch[0] === 'Sans sauce') setTimeout(function () { ouvrirSauces(f, false); }, 450);
       return;
     }
     var q = e.target.closest('[data-q]');
@@ -315,7 +318,7 @@
     if (g.siChoix && ((choix[g.siChoix.groupe] || [])[0] || g.siChoix.sauf) === g.siChoix.sauf) return '';
     return [g].map(function (g) {
       if (g.type === 'retirer') return (choix[g.id] || []).map(function (n) { return 'sans ' + n.toLowerCase(); }).join(', ');
-      if (g.type === 'sauces') return (choix[g.id] || []).length ? 'sauce ' + fmtSauces(choix[g.id]).toLowerCase() : '';
+      if (g.type === 'sauces') return (choix[g.id] || [])[0] === 'Sans sauce' ? 'sans sauce' : (choix[g.id] || []).length ? 'sauce ' + fmtSauces(choix[g.id]).toLowerCase() : '';
       if (g.prefixe) return (choix[g.id] || []).length ? g.prefixe + choix[g.id].join(', ').toLowerCase() : '';
       var c = (choix[g.id] || []).filter(function (n) { return !/^Seul$|^Normal/.test(n); });
       return c.length ? c.join(', ') : '';

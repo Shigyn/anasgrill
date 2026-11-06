@@ -828,3 +828,8 @@ button.ligne-texte:hover b { color: var(--jaune); }
 /* Le lien LocWeb du pied de page : a peine plus visible, dans la couleur du site (2026-10-30). */
 .pied .lien-locweb { color: var(--orange); opacity: .85; font-weight: 600; }
 .pied .lien-locweb:hover { opacity: 1; }
+
+/* « Sans sauce » (07/11) : un pot vide, barre. */
+.sauce-pot-aucune { position: relative; background: transparent; border-style: dashed; border-color: var(--doux); box-shadow: none; }
+.sauce-pot-aucune::after { content: ''; position: absolute; left: 50%; top: 10%; bottom: 10%; width: 2px; margin-left: -1px; background: var(--doux); transform: rotate(45deg); }
+.sauce .sauce-pot-aucune { width: 44px; height: 44px; }

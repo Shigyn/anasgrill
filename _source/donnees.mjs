@@ -50,6 +50,8 @@ const G = {
   viande2: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])) },
   maxi: { id: 'taille', titre: 'Taille', min: 1, max: 1, options: o([['Normal (1 viande)', 0], ['Maxi (2 viandes)', 3]]) },
   // Dans le maxi, la 2e viande est comprise : obligatoire et sans supplement.
+  // Tacos : les legumes au choix, offerts (Hakim, 07/11). Rien par defaut.
+  legumes: { id: 'legumes', titre: 'Légumes', aide: 'au choix, offerts', prefixe: 'avec ', min: 0, max: 3, options: o(['Salade', 'Tomate', 'Oignon']) },
   viande2Tacos: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])), inclusSi: { groupe: 'taille', option: 'Maxi (2 viandes)' } },
 };
 
@@ -91,7 +93,7 @@ export const CARTE = [
   {
     id: 'formules-15', nom: 'Formules à 15 €', intro: 'Les maxi. Frites ou potatoes cheddar gruyère et boisson comprises.',
     items: [
-      { id: 'formule-maxi-tacos', n: 'Maxi Tacos', p: 15, photo: 'f-maxi-tacos', bulle: 'Sans sauces et sans légumes', d: 'Un maxi tacos (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-maxi-tacos', n: 'Maxi Tacos', p: 15, photo: 'f-maxi-tacos', d: 'Un maxi tacos (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-maxi-sandwich', n: 'Maxi Sandwich', p: 15, photo: 'f-maxi-sandwich', d: 'Un maxi sandwich (escalope, escalope curry, escalope tandoori ou steak) et un maxi brioché ou chicken brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-street', n: 'Street', p: 15, photo: 'f-street', d: 'Deux wraps chicken, 5 wings et 3 tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
     ],
@@ -100,7 +102,7 @@ export const CARTE = [
     id: 'composer', nom: 'À composer', intro: 'Choisis ta viande, tes sauces et tes suppléments. En menu avec frites et boisson : 3 € de plus, et 1 € pour passer aux frites cheddar.',
     items: [
       { id: 'sandwich', n: 'Sandwich', p: 6, photo: 'c-sandwich', d: 'Garni de la viande de ton choix, avec tes sauces préférées.', groupes: [G.viandeSandwich, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratinage, G.menu] },
-      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', bulle: 'Sans sauces et sans légumes', groupes: [G.viande, G.maxi, G.viande2Tacos, G.sauces, G.supplements, G.gratineRT, G.menu] },
+      { id: 'tacos', n: 'Tacos', p: 7.5, photo: 'c-tacos', d: 'La viande de ton choix, du cheddar fondu et tes sauces, roulés dans une galette dorée.', groupes: [G.viande, G.maxi, G.viande2Tacos, G.legumes, G.sauces, G.supplements, G.gratineRT, G.menu] },
       { id: 'roule', n: 'Roulé classique', p: 7.5, photo: 'c-roule', d: 'La viande de ton choix et tes sauces, roulées dans une galette.', groupes: [G.viande, G.viande2, sans('Salade', 'Tomate', 'Oignon'), G.sauces, G.supplements, G.gratineRT, G.menu] },
     ],
   },
@@ -233,7 +235,7 @@ const FORMULES = {
   'formule-rolls-dwich': [P('Rolls', 'Le rolls', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) }),
     P('Sandwich', 'Le sandwich', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) })],
   'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', [...LEG]), P('Burger escalope', 'Le burger matlouh escalope', [...LEG])],
-  'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI) }),
+  'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI), legumes: true }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
   'formule-maxi-sandwich': [P('Maxi sandwich', 'Le maxi sandwich', [...LEG], { choix: choixDe('Viande', VIANDES_MAXI) }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
@@ -256,6 +258,7 @@ for (const c of CARTE) for (const i of c.items) {
     return [
       ...(p.choix ? [{ id: 'choix-' + n, ...p.choix, ...tag }] : []),
       ...(p.ing.length ? [{ ...sans(...p.ing), id: 'retirer-' + n, ...tag }] : []),
+      ...(p.legumes ? [{ ...G.legumes, id: 'legumes-' + n, ...tag }] : []),
       ...(p.info ? [{ id: 'info-' + n, type: 'info', texte: p.info, ...tag }] : []),
       // Un croc's (croque-monsieur) ne prend pas de sauce : pas de carte Sauces.
       ...(p.sauces === 0 ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
@@ -290,7 +293,8 @@ CARTE.push(
 const SAUCE_OBLIGATOIRE = { tacos: 'sauces', 'formule-maxi-tacos': 'sauces-0' };
 for (const c of CARTE) for (const i of c.items) {
   const g = SAUCE_OBLIGATOIRE[i.id] && (i.groupes || []).find((x) => x.id === SAUCE_OBLIGATOIRE[i.id]);
-  if (g) { g.min = 1; g.aide = 'au moins 1, jusqu’à ' + g.max + ' offertes'; }
+  // « Sans sauce » se choisit comme une sauce (Hakim, 07/11) : le client dit toujours ce qu'il veut.
+  if (g) { g.min = 1; g.aide = 'jusqu’à ' + g.max + ' offertes, ou sans sauce'; g.options = [{ n: 'Sans sauce', p: 0 }, ...g.options]; }
 }
 
 // Les formules en DERNIERE categorie, pas en premiere (Hakim, 21/10).
@@ -333,7 +337,7 @@ const photoBoisson = (n) => BOISSONS_GRAPHISTE.has(slug(n)) ? 'boisson-' + slug(
 const PHOTO_OPT = {
   viande: (n) => 'opt/' + slug(n),
   viande2: (n) => 'opt/' + slug(n),
-  sauces: (n) => SAUCES_GRAPHISTE.has(slug(n)) ? 'sauce-' + slug(n) : 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
+  sauces: (n) => n === 'Sans sauce' ? null : SAUCES_GRAPHISTE.has(slug(n)) ? 'sauce-' + slug(n) : 'opt/' + (n === 'Curry' ? 'sauce-curry' : slug(n)),
   boisson: photoBoisson,
   parfum: photoBoisson,
   supplements: (n) => 'opt/u-' + slug(n.replace(' fumé', '')),
