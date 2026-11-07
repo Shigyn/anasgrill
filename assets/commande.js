@@ -93,7 +93,9 @@
     var bandeau = document.querySelector('[data-etat-snack]');
     if (!bandeau) { bandeau = document.createElement('div'); bandeau.setAttribute('data-etat-snack', ''); bandeau.className = 'etat-snack cadre'; var m = document.querySelector('.snack-page'); if (m) m.insertBefore(bandeau, m.firstChild); }
     var msg = ETAT.ferme ? 'Fermé en ce moment (' + esc(ETAT.ferme) + ').'
-      : ETAT.pause ? 'Anas Grill ' + esc(SNACK.nom) + ' ne prend plus de commandes en ligne pour le moment. Réessaie un peu plus tard.' : '';
+      : ETAT.pause ? 'Anas Grill ' + esc(SNACK.nom) + ' ne prend plus de commandes en ligne pour le moment. ' + (ETAT.reprise ? 'Reprise vers ' + hm(new Date(ETAT.reprise)) + '.' : 'Réessaie un peu plus tard.')
+      // Le delai en plus choisi par la cuisine pendant le rush (Hakim, 07/11).
+      : ETAT.delai ? 'Beaucoup de commandes en ce moment : compte environ ' + ETAT.delai + ' min de plus que d’habitude.' : '';
     bandeau.innerHTML = (msg ? '<p class="etat-alerte">' + msg + '</p>' : '') +
       (ETAT.offre && !PLATS.offre ? '<p class="etat-offre"><b>' + esc(ETAT.offre.titre) + '</b>' + (ETAT.offre.texte ? ' ' + esc(ETAT.offre.texte) : '') + '</p>' : '');
     bandeau.hidden = !msg && !(ETAT.offre && !PLATS.offre);
@@ -524,7 +526,7 @@
 
   /* --- L'heure estimee --- */
   function dureeMin() {
-    var i = etat.infos, min = R.preparation || 15;
+    var i = etat.infos, min = (R.preparation || 15) + (ETAT.delai || 0);
     if (i.mode === 'livraison' && i.lat != null) min += (R.departLivreur || 5) + Math.round(distanceKm(i.lat, i.lng) * (R.minutesParKm || 3));
     return min;
   }

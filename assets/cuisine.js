@@ -83,6 +83,7 @@
           carteMenu('data-vue="commandes"', 'commandes', 'Commandes') +
           carteMenu('data-vue="remises"', 'remises', 'Remises du jour') +
           carteMenu('data-pause', 'pause', 'Pause') +
+          carteMenu('data-delai', 'delai', 'Délai') +
           carteMenu('data-epuises', 'epuises', 'Plats épuisés') +
           carteMenu('data-reglages', 'reglages', 'Réglages') +
           carteMenu('data-aide', 'aide', 'Aide') +
@@ -114,6 +115,7 @@
     commandes: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
     remises: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="m9.5 14 2 2 3.5-3.5"/>',
     pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
+    delai: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
     epuises: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
     reglages: '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
     aide: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14"/><path d="M12 17.5v.01"/>',
@@ -136,9 +138,11 @@
     donnees.commandes.forEach(function (c) { if (n[c.statut] != null) n[c.statut]++; });
     sousCarte('commandes', n.recue + ' à préparer · ' + n.prete + ' prête' + (n.prete > 1 ? 's' : ''));
     sousCarte('remises', n.remise ? n.remise + ' aujourd’hui' : 'Aucune pour l’instant');
-    var pause = donnees.snack && donnees.snack.pause;
-    var cp = sousCarte('pause', pause ? 'Touche pour reprendre' : 'Commandes ouvertes', pause ? 'En pause' : 'Pause');
+    var pause = enPause(), sn = donnees.snack || {}, d = delaiEnCours();
+    var cp = sousCarte('pause', pause ? (sn.reprise ? 'Reprise à ' + hm(sn.reprise) + ' · touche pour reprendre' : 'Touche pour reprendre') : 'Commandes ouvertes', pause ? 'En pause' : 'Pause');
     if (cp) cp.classList.toggle('cu-carte-alerte', !!pause);
+    var cd = sousCarte('delai', d ? 'Jusqu’à ' + hm(sn.delai_fin) + ' · touche pour changer' : 'Normal', d ? 'Délai +' + d + ' min' : 'Délai');
+    if (cd) cd.classList.toggle('cu-carte-alerte', !!d);
     var ep = ((donnees.snack || {}).epuises || []).length;
     sousCarte('epuises', ep ? ep + ' plat' + (ep > 1 ? 's' : '') + ' retiré' + (ep > 1 ? 's' : '') : 'Tout est disponible');
     sousCarte('reglages', reglage.impression === 'appli' ? (reglage.ip === 'usb' ? 'Imprime par câble USB' : reglage.ip ? 'Imprime sur ' + reglage.ip : 'Imprimante à choisir')
@@ -196,9 +200,12 @@
     }).catch(function (e) { horsLigne = true; majEtat(e.message); });
   }
 
+  // La pause et le delai en plus s'arretent tout seuls a leur heure (Hakim, 07/11).
+  function enPause() { var s = donnees.snack || {}; return !!s.pause && (!s.reprise || Date.parse(s.reprise) > Date.now()); }
+  function delaiEnCours() { var s = donnees.snack || {}; return s.delai && s.delai_fin && Date.parse(s.delai_fin) > Date.now() ? s.delai : 0; }
   function majEtat(msg) {
     var e = $('[data-etat]'); if (!e) return;
-    var pause = donnees.snack && donnees.snack.pause;
+    var pause = enPause();
     e.textContent = horsLigne ? 'Hors ligne' : pause ? 'En pause' : 'En ligne';
     e.className = 'cu-etat ' + (horsLigne ? 'cu-rouge' : pause ? 'cu-jaune' : 'cu-vert');
     majMenu();
@@ -573,10 +580,37 @@
       appel('epuise', { plat: pl.getAttribute('data-plat'), valeur: v }).then(function (j) { donnees.snack.epuises = j.epuises; pl.classList.toggle('cu-ep', v); }).catch(function (x) { alert(x.message); });
       return;
     }
+    // Pause : 30 min, 1 h ou jusqu'a reprise. En pause, un toucher reprend tout de suite.
+    var pm = t.closest('[data-pause-min]');
+    if (pm) {
+      appel('pause', { valeur: true, minutes: +pm.getAttribute('data-pause-min') }).then(function (j) {
+        donnees.snack.pause = true; donnees.snack.reprise = j.reprise; fermerPanneau(); majEtat();
+      }).catch(function (x) { alert(x.message); });
+      return;
+    }
     if (t.closest('[data-pause]')) {
-      var p = !donnees.snack.pause;
-      if (p && !confirm('Mettre les commandes en ligne en pause ? Les commandes déjà payées restent à préparer.')) return;
-      appel('pause', { valeur: p }).then(function () { donnees.snack.pause = p; majEtat(); });
+      if (enPause()) { appel('pause', { valeur: false }).then(function () { donnees.snack.pause = false; donnees.snack.reprise = null; majEtat(); }); return; }
+      panneau('<h2>Mettre en pause</h2><p>Plus aucune commande en ligne pendant la pause. Les commandes déjà reçues restent à préparer.</p>' +
+        '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-pause-min="30">30 min</button><button type="button" class="cu-bouton cu-feu" data-pause-min="60">1 heure</button>' +
+        '<button type="button" class="cu-bouton" data-pause-min="0">Jusqu’à ce que je reprenne</button></div>' +
+        '<p>Les commandes reprennent toutes seules à la fin de la pause.</p><div class="cu-actions"><button type="button" class="cu-bouton cu-discret" data-fermer>Annuler</button></div>');
+      return;
+    }
+    // Delai en plus : +10, +20 ou +30 min pendant 1 h, puis retour tout seul au delai normal.
+    var dm = t.closest('[data-delai-min]');
+    if (dm) {
+      appel('delai', { minutes: +dm.getAttribute('data-delai-min') }).then(function (j) {
+        donnees.snack.delai = j.delai; donnees.snack.delai_fin = j.delai_fin; fermerPanneau(); majEtat();
+      }).catch(function (x) { alert(x.message); });
+      return;
+    }
+    if (t.closest('[data-delai]')) {
+      var dc = delaiEnCours();
+      panneau('<h2>Rallonger le délai</h2><p>Beaucoup de commandes ? Les nouvelles commandes en ligne auront plus de temps, et le site l’annonce aux clients.</p>' +
+        '<div class="cu-actions">' + [10, 20, 30].map(function (m) { return '<button type="button" class="cu-bouton' + (dc === m ? '' : ' cu-feu') + '" data-delai-min="' + m + '">+' + m + ' min</button>'; }).join('') + '</div>' +
+        '<p>Pendant 1 heure, puis retour tout seul au délai normal.</p><div class="cu-actions">' +
+        (dc ? '<button type="button" class="cu-bouton" data-delai-min="0">Revenir au délai normal</button>' : '') +
+        '<button type="button" class="cu-bouton cu-discret" data-fermer>Annuler</button></div>');
       return;
     }
     var art = t.closest('[data-id]'); if (!art) return;

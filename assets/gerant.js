@@ -240,7 +240,7 @@
       snacks.map(function (s) {
         return '<tr><td><b>' + esc(s.nom) + '</b></td><td>' + vu(s) + '</td>' +
           '<td>' + badgeCompte(s) + '</td>' +
-          '<td><button type="button" class="cu-bouton ' + (s.pause ? 'cu-actif' : 'cu-discret') + '" data-pause-snack="' + s.id + '">' + (s.pause ? 'En pause · reprendre' : 'Ouvertes · mettre en pause') + '</button></td></tr>';
+          '<td><button type="button" class="cu-bouton ' + (s.pause ? 'cu-actif' : 'cu-discret') + '" data-pause-snack="' + s.id + '">' + (s.pause ? 'En pause' + (s.reprise ? ' jusqu’à ' + new Date(s.reprise).getHours() + 'h' + String(new Date(s.reprise).getMinutes()).padStart(2, '0') : '') + ' · reprendre' : 'Ouvertes · mettre en pause' + (s.delai ? ' · délai +' + s.delai + ' min' : '')) + '</button></td></tr>';
       }).join('') + '</tbody>';
     var opts = '<option value="tous">Tous les snacks</option>' + snacks.map(function (s) { return '<option value="' + s.id + '"' + (filtre === s.id ? ' selected' : '') + '>' + esc(s.nom) + '</option>'; }).join('');
     $('[data-filtre]').innerHTML = opts;
