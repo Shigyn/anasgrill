@@ -863,3 +863,7 @@ button.ligne-texte:hover b { color: var(--jaune); }
 /* Legumes a ajouter, dans les tuiles des ingredients (07/11) : decoches = pas dedans, sans barre ni « Sans ». */
 .ing.ing-ajout:has(input:not(:checked)) span { text-decoration: none; }
 .ing.ing-ajout em { background: #3a332d; color: var(--jaune); font-size: .8rem; padding: 3px 7px; }
+
+/* Supplements payants dans les tuiles (07/11) : le prix reste affiche, meme coche. */
+.ing.ing-payant em { opacity: 1; transform: none; font-size: .62rem; padding: 4px 6px; }
+.ing.ing-payant:has(input:checked) em { background: var(--feu); color: #1b0d00; }
