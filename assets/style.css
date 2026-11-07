@@ -859,3 +859,7 @@ button.ligne-texte:hover b { color: var(--jaune); }
   .menu-ico svg { width: 17px; height: 17px; }
   .menu-carte small { font-size: .72rem; }
 }
+
+/* Legumes a ajouter, dans les tuiles des ingredients (07/11) : decoches = pas dedans, sans barre ni « Sans ». */
+.ing.ing-ajout:has(input:not(:checked)) span { text-decoration: none; }
+.ing.ing-ajout em { background: #3a332d; color: var(--jaune); font-size: .8rem; padding: 3px 7px; }

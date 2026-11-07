@@ -175,11 +175,18 @@
       (i.allergenes ? '<button type="button" class="allerg-btn" data-allergenes aria-haspopup="dialog">Allergènes</button>' : '') + '</div>' + (i.d ? '<p class="feuille-desc">' + esc(i.d) + '</p>' : '') +
       parties(i.groupes, function (g) {
         if (g.type === 'info') return '<p class="partie-info">' + esc(g.texte) + '</p>';
+        // Les legumes du tacos sont dans les memes tuiles que les ingredients, decoches :
+        // le client touche pour les ajouter (Nicolas, 07/11). Le groupe « legumes » reste a part pour le serveur.
+        if (/^legumes/.test(g.id) && legumesDe(i, g.id.replace('legumes', 'retirer'))) return '';
         if (g.type === 'retirer') {
-          return '<fieldset class="groupe groupe-retirer" data-groupe="' + g.id + '" data-retirer><legend><b>' + esc(g.titre) + '</b><small>' + esc(g.aide) + '</small></legend><div class="ings">' +
+          var leg = legumesDe(i, g.id);
+          return '<fieldset class="groupe groupe-retirer" data-groupe="' + g.id + '" data-retirer><legend><b>' + esc(g.titre) + '</b><small>' + (leg ? 'touche pour retirer ou ajouter' : esc(g.aide)) + '</small></legend><div class="ings">' +
             g.options.map(function (o) {
               return '<label class="ing"><input type="checkbox" value="' + esc(o.n) + '"' + ((enCours.choix[g.id] || []).indexOf(o.n) >= 0 ? '' : ' checked') + '>' + iconeDe(o.n) + '<span>' + esc(o.n) + '</span><em>Sans</em></label>';
-            }).join('') + '</div></fieldset>';
+            }).join('') +
+            (leg ? leg.options.map(function (o) {
+              return '<label class="ing ing-ajout"><input type="checkbox" data-leg="' + leg.id + '" value="' + esc(o.n) + '"' + ((enCours.choix[leg.id] || []).indexOf(o.n) >= 0 ? ' checked' : '') + '>' + iconeDe(o.n) + '<span>' + esc(o.n) + '</span><em>+</em></label>';
+            }).join('') : '') + '</div></fieldset>';
         }
         if (g.type === 'sauces') {
           return '<fieldset class="groupe groupe-sauces" data-groupe="' + g.id + '" data-sauces>' +
@@ -226,6 +233,11 @@
           '<span class="menu-visuel">' + visuel + '</span><b>' + esc(t[0]) + '</b><small>' + esc(t[1]) + '</small>' +
           '<em>' + (o.p ? '+' + (Number.isInteger(o.p) ? o.p + ' €' : euros(o.p)) : 'Sans supplément') + '</em></label>';
       }).join('') + '</div></fieldset>';
+  }
+  // Le groupe « legumes » qui va avec ce groupe d'ingredients (retirer -> legumes, retirer-0 -> legumes-0).
+  function legumesDe(i, idRetirer) {
+    if (!/^retirer/.test(idRetirer) || !(i.groupes || []).some(function (x) { return x.id === idRetirer; })) return null;
+    return (i.groupes || []).filter(function (x) { return x.id === idRetirer.replace('retirer', 'legumes'); })[0] || null;
   }
   // Les groupes d'une formule portent « partie » : on les range sous le titre de leur plat.
   function parties(groupes, rendu) {
@@ -279,7 +291,9 @@
   feuille.addEventListener('change', function (e) {
     var f = e.target.closest('[data-groupe]'); if (!f) return;
     if (f.hasAttribute('data-retirer')) {
-      enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:not(:checked)'), function (x) { return x.value; });
+      enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:not([data-leg]):not(:checked)'), function (x) { return x.value; });
+      var lg = f.querySelector('[data-leg]');
+      if (lg) enCours.choix[lg.getAttribute('data-leg')] = [].map.call(f.querySelectorAll('input[data-leg]:checked'), function (x) { return x.value; });
       majFiche(); return;
     }
     enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:checked'), function (x) { return x.value; }).filter(function (v) { return v !== 'Sans'; });
