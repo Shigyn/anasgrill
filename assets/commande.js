@@ -190,6 +190,7 @@
               return '<button type="button" class="sauce" data-sauce="' + esc(o.n) + '" aria-pressed="false">' + pot(o.n) + '<span>' + esc(o.n) + '</span><em data-sauce-n></em></button>';
             }).join('') + '</div></div></fieldset>';
         }
+        if (g.id === 'menu') return menuCartes(g, i);
         var type = g.max === 1 ? 'radio' : 'checkbox', tuiles = g.options.some(function (o) { return o.photo; });
         return '<fieldset class="groupe" data-groupe="' + g.id + '"><legend><b>' + esc(g.titre) + '</b><small>' +
           (g.min ? 'Obligatoire' : 'Facultatif') + (g.max > 1 && g.aide ? ' · ' + esc(g.aide) : '') + '</small></legend><div class="options' + (tuiles ? ' tuiles' : '') + '">' +
@@ -205,6 +206,26 @@
     majFiche();
     montrer(feuille);
     feuille.querySelector('.feuille-corps').scrollTop = 0;
+  }
+  // Seul ou en menu : 3 grandes cartes, en fin de fiche, une fois le plat compose (Nicolas, 07/11).
+  // Seulement sur les plats qui avaient deja l'option menu ; les noms envoyes au serveur ne changent pas.
+  var MENU_TXT = {
+    'Seul': ['Seul', 'Juste le plat'],
+    'En menu (frites + boisson)': ['Menu', 'Frites + boisson'],
+    'En menu, frites cheddar': ['Menu cheddar', 'Frites cheddar + boisson']
+  };
+  var ICO_FRITES = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10V4M11 10V3M14 10V4M16.5 10V5"/><path d="M5.5 10h13l-1.6 10.5H7.1z"/></svg>';
+  var ICO_CANETTE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M7 7.5h10M7 16.5h10"/></svg>';
+  function menuCartes(g, i) {
+    var plat = i.photo ? '<img src="../photos/' + i.photo + '.webp" alt="" width="160" height="160">' : '';
+    return '<fieldset class="groupe groupe-menu" data-groupe="' + g.id + '"><legend><b>Seul ou en menu ?</b><small>Obligatoire</small></legend><div class="menu-cartes">' +
+      g.options.map(function (o, n) {
+        var t = MENU_TXT[o.n] || [o.n, ''], coche = (enCours.choix[g.id] || []).indexOf(o.n) >= 0;
+        var visuel = plat + (n > 0 ? '<i class="menu-ico' + (n > 1 ? ' menu-ico-cheddar' : '') + '">' + ICO_FRITES + '</i><i class="menu-ico">' + ICO_CANETTE + '</i>' : '');
+        return '<label class="menu-carte"><input type="radio" name="g-' + g.id + '" value="' + esc(o.n) + '"' + (coche ? ' checked' : '') + '>' +
+          '<span class="menu-visuel">' + visuel + '</span><b>' + esc(t[0]) + '</b><small>' + esc(t[1]) + '</small>' +
+          '<em>' + (o.p ? '+' + (Number.isInteger(o.p) ? o.p + ' €' : euros(o.p)) : 'Sans supplément') + '</em></label>';
+      }).join('') + '</div></fieldset>';
   }
   // Les groupes d'une formule portent « partie » : on les range sous le titre de leur plat.
   function parties(groupes, rendu) {

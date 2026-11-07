@@ -833,3 +833,29 @@ button.ligne-texte:hover b { color: var(--jaune); }
 .sauce-pot-aucune { position: relative; background: transparent; border-style: dashed; border-color: var(--doux); box-shadow: none; }
 .sauce-pot-aucune::after { content: ''; position: absolute; left: 50%; top: 10%; bottom: 10%; width: 2px; margin-left: -1px; background: var(--doux); transform: rotate(45deg); }
 .sauce .sauce-pot-aucune { width: 44px; height: 44px; }
+
+/* Seul ou en menu (07/11) : trois grandes cartes en fin de fiche. */
+.menu-cartes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.menu-carte { position: relative; display: grid; justify-items: center; align-content: start; gap: 5px; padding: 14px 6px 12px; border-radius: 16px; border: 1.5px solid var(--ligne); text-align: center; cursor: pointer; transition: border-color .2s, background .2s, transform .15s; user-select: none; }
+.menu-carte:active { transform: scale(.97); }
+.menu-carte input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: pointer; }
+.menu-carte:has(input:checked) { border-color: var(--orange); background: rgba(255, 122, 0, .1); }
+.menu-carte:has(input:checked)::after { content: ''; position: absolute; top: 7px; right: 7px; width: 16px; height: 16px; border-radius: 50%; background: var(--feu) center / 10px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2 4 7.6 8.5 2.6' fill='none' stroke='%231b0d00' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.menu-carte:has(input:focus-visible) { outline: 2px solid var(--jaune); outline-offset: 2px; }
+.menu-visuel { display: flex; justify-content: center; margin-bottom: 4px; }
+.menu-visuel > * { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #2b2724; }
+.menu-visuel > * + * { margin-left: -10px; }
+.menu-visuel img { object-fit: cover; background: #2b2724; }
+.menu-ico { display: grid; place-items: center; background: #221e1b; }
+.menu-ico svg { width: 21px; height: 21px; fill: none; stroke: var(--jaune); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.menu-ico-cheddar svg path:last-child { fill: rgba(255, 196, 0, .35); }
+.menu-carte b { font: 700 .92rem/1.05 var(--etroite); letter-spacing: .05em; text-transform: uppercase; color: var(--texte); }
+.menu-carte small { color: var(--doux); font-size: .78rem; line-height: 1.2; }
+.menu-carte em { font-style: normal; font-weight: 700; font-size: .84rem; color: var(--jaune); }
+@media (max-width: 480px) {
+  .menu-carte { padding: 12px 4px 10px; }
+  .menu-visuel > * { width: 32px; height: 32px; }
+  .menu-visuel > * + * { margin-left: -11px; }
+  .menu-ico svg { width: 17px; height: 17px; }
+  .menu-carte small { font-size: .72rem; }
+}
