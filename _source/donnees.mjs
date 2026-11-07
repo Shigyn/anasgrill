@@ -52,7 +52,8 @@ const G = {
   // Dans le maxi, la 2e viande est comprise : obligatoire et sans supplement.
   // Tacos : les legumes au choix, offerts (Hakim, 07/11). Rien par defaut.
   legumes: { id: 'legumes', titre: 'Légumes', aide: 'au choix, offerts', prefixe: 'avec ', min: 0, max: 3, options: o(['Salade', 'Tomate', 'Oignon']) },
-  viande2Tacos: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])), inclusSi: { groupe: 'taille', option: 'Maxi (2 viandes)' } },
+  // Tacos : la 2e viande n'apparait qu'en Maxi, comprise et obligatoire (Nicolas, 07/11 : « 2e viande » + « Maxi », c'etait en double).
+  viande2Tacos: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])), inclusSi: { groupe: 'taille', option: 'Maxi (2 viandes)' }, siChoix: { groupe: 'taille', sauf: 'Normal (1 viande)' } },
 };
 
 // Chaque signature existe en 4 formats (panneau « Les signatures ») :
