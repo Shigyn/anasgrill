@@ -82,6 +82,7 @@
         '<nav class="cu-cartes" aria-label="Menu de la cuisine">' +
           carteMenu('data-vue="commandes"', 'commandes', 'Commandes') +
           carteMenu('data-vue="remises"', 'remises', 'Remises du jour') +
+          carteMenu('data-vue="rapport"', 'rapport', 'Rapport') +
           carteMenu('data-pause', 'pause', 'Pause') +
           carteMenu('data-delai', 'delai', 'Délai') +
           carteMenu('data-epuises', 'epuises', 'Plats épuisés') +
@@ -97,6 +98,9 @@
           '<section><h2>À préparer <span data-n-recue></span></h2><div data-col="recue"></div></section>' +
           '<section><h2>Prêtes <span data-n-prete></span></h2><div data-col="prete"></div></section></div>' +
         '<section class="cu-remises" data-ecran="remises" hidden><h2>Remises aujourd’hui <span data-n-remise></span></h2><div data-col="remise"></div></section>' +
+        '<section class="cu-rapport" data-ecran="rapport" hidden><div class="cu-rap-tete"><h2>Rapport</h2><div class="cu-rap-nav">' +
+          '<button type="button" class="cu-bouton" data-rap-pas="-1" aria-label="Jour précédent">‹</button><input type="date" data-rap-date aria-label="Jour du rapport">' +
+          '<button type="button" class="cu-bouton" data-rap-pas="1" aria-label="Jour suivant">›</button></div></div><div data-rap></div></section>' +
       '</main>' +
       '<div class="cu-voile" data-voile hidden></div><div class="cu-panneau" data-panneau hidden></div>';
     montrer(vue);
@@ -114,6 +118,7 @@
   var ICONES = {
     commandes: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
     remises: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="m9.5 14 2 2 3.5-3.5"/>',
+    rapport: '<path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/>',
     pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
     delai: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
     epuises: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
@@ -138,6 +143,7 @@
     donnees.commandes.forEach(function (c) { if (n[c.statut] != null) n[c.statut]++; });
     sousCarte('commandes', n.recue + ' à préparer · ' + n.prete + ' prête' + (n.prete > 1 ? 's' : ''));
     sousCarte('remises', n.remise ? n.remise + ' aujourd’hui' : 'Aucune pour l’instant');
+    sousCarte('rapport', 'Les comptes, jour par jour');
     var pause = enPause(), sn = donnees.snack || {}, d = delaiEnCours();
     var cp = sousCarte('pause', pause ? (sn.reprise ? 'Reprise à ' + hm(sn.reprise) + ' · touche pour reprendre' : 'Touche pour reprendre') : 'Commandes ouvertes', pause ? 'En pause' : 'Pause');
     if (cp) cp.classList.toggle('cu-carte-alerte', !!pause);
@@ -157,6 +163,64 @@
     vue = v;
     document.querySelectorAll('[data-ecran]').forEach(function (e) { e.hidden = e.getAttribute('data-ecran') !== v; });
     document.querySelectorAll('[data-vue]').forEach(function (b) { b.classList.toggle('cu-carte-on', b.getAttribute('data-vue') === v); });
+    if (v === 'rapport') chargerRapport(rap.jour);
+  }
+
+  /* ---------------- le rapport (Riad, 08/11) ----------------
+     Les comptes d'un jour de service (de 6 h a 6 h : apres minuit = la veille),
+     n'importe quel jour passe, et le recap de son mois. Charge a la demande. */
+  var rap = { jour: null, aujourdhui: null, jours: {}, detail: [] };
+  var VIDE = { commandes: 0, en_ligne: 0, sur_place: 0, rembourse: 0, pas_venus: 0, pas_venus_cents: 0, non_remises: 0 };
+  var midi = function (j) { return new Date(j + 'T12:00:00'); };
+  // Les montants du rapport avec l'espace des milliers (1 011,00 €).
+  var eurosRap = function (c) { return (c / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; };
+  var majuscule = function (t) { return t.charAt(0).toUpperCase() + t.slice(1); };
+  function decaler(j, n) { var d = new Date(j + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function chargerRapport(jour) {
+    var z = $('[data-rap]'); if (!z) return;
+    if (!rap.jour) z.innerHTML = '<p class="cu-vide">Chargement…</p>';
+    appel('rapport', { jour: jour || '' }).then(function (j) { rap = j; afficherRapport(); })
+      .catch(function (e) { z.innerHTML = '<p class="cu-vide">Le rapport n’a pas pu se charger : ' + esc(e.message) + '</p>'; });
+  }
+  function afficherRapport() {
+    var euros = eurosRap, j = rap.jour, t = rap.jours[j] || VIDE, pl = function (n, m) { return n + ' ' + m + (n > 1 ? 's' : ''); };
+    var d = $('[data-rap-date]'); d.value = j; d.max = rap.aujourdhui;
+    $('[data-rap-pas="1"]').disabled = j >= rap.aujourdhui;
+    var court = function (x) { return midi(x).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }); };
+    var tuile = function (nom, val, sous, fort) { return '<div class="cu-rap-tuile' + (fort ? ' cu-rap-fort' : '') + '"><small>' + nom + '</small><b>' + val + '</b><span>' + sous + '</span></div>'; };
+    var etatDe = function (c) {
+      if (c.paiement === 'sur_place' && c.statut === 'annulee') return 'Pas venu';
+      if (c.paiement === 'remboursee') return 'Remboursée';
+      return { recue: 'À préparer', prete: 'Prête', remise: 'Remise', annulee: 'Annulée' }[c.statut] || c.statut;
+    };
+    $('[data-rap]').innerHTML =
+      '<p class="cu-rap-jour"><b>' + majuscule(midi(j).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })) + '</b>' +
+        '<small>Du ' + court(j) + ' 6 h au ' + court(decaler(j, 1)) + ' 6 h : les commandes passées après minuit comptent dans cette journée.</small></p>' +
+      '<div class="cu-rap-tuiles">' +
+        tuile('Total', euros(t.en_ligne + t.sur_place), pl(t.commandes, 'commande'), true) +
+        tuile('Payé en ligne', euros(t.en_ligne), t.rembourse ? 'après ' + euros(t.rembourse) + ' remboursés' : 'déjà encaissé') +
+        tuile('Sur place', euros(t.sur_place), 'payé au comptoir') +
+        tuile('Pas venus', String(t.pas_venus), t.pas_venus ? euros(t.pas_venus_cents) + ', hors total' : 'aucun') +
+      '</div>' +
+      (t.non_remises ? '<p class="cu-note">' + pl(t.non_remises, 'commande') + ' sur place pas marquée' + (t.non_remises > 1 ? 's' : '') + ' « Remise » : vérifie qu’elle' + (t.non_remises > 1 ? 's ont' : ' a') + ' bien été payée' + (t.non_remises > 1 ? 's' : '') + '.</p>' : '') +
+      (rap.detail.length ? '<details class="cu-rap-detail"><summary>Détail des ' + pl(rap.detail.length, 'commande') + '</summary><div class="ge-table-zone"><table class="ge-table"><thead><tr><th>N°</th><th>Heure</th><th>Paiement</th><th>État</th><th>Montant</th></tr></thead><tbody>' +
+        rap.detail.map(function (c) {
+          return '<tr' + (c.statut === 'annulee' ? ' class="cu-rap-barre"' : '') + '><td>' + c.numero + '</td><td>' + hm(c.heure) + '</td><td>' + (c.paiement === 'sur_place' ? 'Sur place' : 'En ligne') + '</td><td>' + etatDe(c) + '</td><td>' +
+            euros(c.total_cents - (c.rembourse_cents || 0)) + (c.rembourse_cents ? ' <small>(' + euros(c.rembourse_cents) + ' remb.)</small>' : '') + '</td></tr>';
+        }).join('') + '</tbody></table></div></details>' : '<p class="cu-vide">Aucune commande ce jour-là.</p>') +
+      moisRapport();
+  }
+  // Le recap du mois : une ligne par jour avec des commandes ; un toucher ouvre le jour.
+  function moisRapport() {
+    var euros = eurosRap, cles = Object.keys(rap.jours).sort(), s = { commandes: 0, en_ligne: 0, sur_place: 0 };
+    var mois = midi(rap.jour).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    if (!cles.length) return '<h3 class="cu-h3">' + mois + '</h3><p class="cu-vide">Aucune commande ce mois-ci.</p>';
+    return '<h3 class="cu-h3">' + mois.charAt(0).toUpperCase() + mois.slice(1) + '</h3><div class="ge-table-zone"><table class="ge-table cu-rap-mois"><thead><tr><th>Jour</th><th>Commandes</th><th>En ligne</th><th>Sur place</th><th>Total</th></tr></thead><tbody>' +
+      cles.map(function (k) {
+        var t = rap.jours[k]; s.commandes += t.commandes; s.en_ligne += t.en_ligne; s.sur_place += t.sur_place;
+        return '<tr data-rap-jour="' + k + '"' + (k === rap.jour ? ' class="cu-rap-on"' : '') + '><td>' + midi(k).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }) + '</td><td>' + t.commandes + '</td><td>' + euros(t.en_ligne) + '</td><td>' + euros(t.sur_place) + '</td><td><b>' + euros(t.en_ligne + t.sur_place) + '</b></td></tr>';
+      }).join('') +
+      '</tbody><tfoot><tr><td>Mois</td><td>' + s.commandes + '</td><td>' + euros(s.en_ligne) + '</td><td>' + euros(s.sur_place) + '</td><td><b>' + euros(s.en_ligne + s.sur_place) + '</b></td></tr></tfoot></table></div>';
   }
 
   // Le direct : un message sur le canal du snack = « va voir, il y a du nouveau ».
@@ -222,6 +286,7 @@
     Object.keys(cols).forEach(function (k) {
       var l = cols[k];
       if (k === 'remise') l = l.slice().reverse().slice(0, 30);
+      else l.sort(function (a, b) { return Date.parse(a.heure_prevue) - Date.parse(b.heure_prevue); });
       $('[data-col="' + k + '"]').innerHTML = l.map(carte).join('') || '<p class="cu-vide">Rien pour l’instant.</p>';
       $('[data-n-' + k + ']').textContent = l.length ? '(' + l.length + ')' : '';
     });
@@ -230,7 +295,9 @@
   function carte(c) {
     var rb = c.paiement === 'sur_place' ? '<span class="cu-badge cu-a-payer">À payer · ' + euros(c.total_cents) + '</span>' : c.paiement === 'remboursee' ? '<span class="cu-badge cu-rouge">Remboursée</span>' : c.paiement === 'remboursee_partiel' ? '<span class="cu-badge cu-jaune">Remb. ' + euros(c.rembourse_cents) + '</span>' : '<span class="cu-badge cu-vert">Payée</span>';
     return '<article class="cu-cmd' + (c.imprimee_le ? '' : ' cu-non-imp') + '" data-id="' + c.id + '">' +
-      '<div class="cu-cmd-tete"><b class="cu-num">N° ' + c.numero + '</b><span class="cu-heure">' + (c.creneau ? 'Programmée · ' : '') + 'À remettre à <b>' + hm(c.heure_prevue) + '</b></span>' + rb + '</div>' +
+      '<div class="cu-cmd-tete"><b class="cu-num">N° ' + c.numero + '</b>' + (c.statut === 'recue' && !c.creneau
+        ? '<button type="button" class="cu-heure cu-heure-btn" data-heure>À remettre à <b>' + hm(c.heure_prevue) + '</b><i>Changer</i></button>'
+        : '<span class="cu-heure">' + (c.creneau ? 'Programmée · ' : '') + 'À remettre à <b>' + hm(c.heure_prevue) + '</b></span>') + rb + '</div>' +
       '<p class="cu-client">' + esc(c.prenom) + ' · <a href="tel:' + esc(c.telephone) + '">' + esc(c.telephone) + '</a></p>' +
       '<ul class="cu-lignes">' + c.lignes.map(function (l) { return '<li><b>' + l.qte + ' × ' + esc(l.n) + '</b>' + (l.resume ? '<span>' + esc(l.resume) + '</span>' : '') + '</li>'; }).join('') + '</ul>' +
       (c.note ? '<p class="cu-note">« ' + esc(c.note) + ' »</p>' : '') +
@@ -377,7 +444,7 @@
       var b = $('.cu-cartes [data-maj-go]'); if (b) b.hidden = !r.disponible;
       if (discret) return;
       if (r.disponible) proposerMaj(manuel);
-      else if (manuel) alert(r.erreur ? 'Vérification impossible : ' + r.erreur : 'L’appli est à jour (version ' + r.actuelle + ').');
+      else if (manuel) avertir(r.erreur ? 'Vérification impossible : ' + r.erreur : 'L’appli est à jour (version ' + r.actuelle + ').', r.erreur ? '' : 'Appli à jour');
     };
     window.LocWebImprimante.verifierMiseAJour('__agMaj');
   }
@@ -393,8 +460,9 @@
   // Une seule verification par 24 h, au lancement de l'appli, et JAMAIS pendant le
   // service : relancee en plein rush (apres une coupure), la tablette ne propose rien.
   function enService() {
-    var s0 = donnees.snack || {}, o = s0.ouverture == null ? 11 : s0.ouverture, f = s0.fermeture == null ? 1 : s0.fermeture;
-    var h = new Date().getHours();
+    var s0 = donnees.snack || {}, o = s0.ouverture, f = s0.fermeture;
+    if (o == null || f == null) return false; // ferme aujourd'hui
+    var n = new Date(), h = n.getHours() + n.getMinutes() / 60;
     return f <= o ? (h >= o || h < f) : (h >= o && h < f);
   }
   function majAuLancement() {
@@ -450,6 +518,15 @@
   }
 
   /* ---------------- panneaux : epuises, reglages ---------------- */
+  // L'appli Android de la tablette n'affiche pas les fenetres du navigateur (alert,
+  // confirm) : confirm() y repond toujours « non ». Tout passe par le panneau.
+  function avertir(m, titre) { panneau('<h2>' + esc(titre || 'Ça n’a pas marché') + '</h2><p>' + esc(m) + '</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-fermer>OK</button></div>'); }
+  function panneauHeure(c) {
+    var reste = Math.max(0, Math.round((Date.parse(c.heure_prevue) - Date.now()) / 60000));
+    panneau('<h2>N° ' + c.numero + ' : prête dans…</h2><p>Prévue à <b>' + hm(c.heure_prevue) + '</b> (dans ' + reste + ' min). Choisis le temps qu’il faut pour <b>cette</b> commande : le site affiche la nouvelle heure au client.</p>' +
+      '<div class="cu-actions">' + [5, 10, 15, 20, 25, 30, 40, 50, 60].map(function (m) { return '<button type="button" class="cu-bouton cu-feu" data-heure-min="' + m + '" data-heure-id="' + c.id + '">' + m + ' min</button>'; }).join('') + '</div>' +
+      '<p>Le ticket déjà imprimé garde l’ancienne heure : touche <b>Réimprimer</b> si besoin.</p><div class="cu-actions"><button type="button" class="cu-bouton cu-discret" data-fermer>Annuler</button></div>');
+  }
   function panneau(html) { $('[data-panneau]').innerHTML = html; $('[data-panneau]').hidden = false; $('[data-voile]').hidden = false; }
   function fermerPanneau() { $('[data-panneau]').hidden = true; $('[data-voile]').hidden = true; if (session && donnees.snack) majMenu(); }
   function panneauEpuises() {
@@ -571,13 +648,38 @@
       return;
     }
     if (t.closest('[data-aide-imprimer]')) { imprimerAide(); return; }
-    if (t.closest('[data-deco]')) { if (confirm('Se déconnecter de cette tablette ? Il faudra retaper le code.')) deconnecter(); return; }
+    if (t.closest('[data-deco-oui]')) { fermerPanneau(); deconnecter(); return; }
+    if (t.closest('[data-deco]')) {
+      panneau('<h2>Se déconnecter ?</h2><p>Il faudra retaper le code du snack sur cette tablette.</p><div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-deco-oui>Se déconnecter</button><button type="button" class="cu-bouton cu-discret" data-fermer>Annuler</button></div>');
+      return;
+    }
+    // Rapport : jour precedent / suivant, ou un jour du recap du mois.
+    var rp = t.closest('[data-rap-pas]');
+    if (rp) { if (!rp.disabled && rap.jour) chargerRapport(decaler(rap.jour, +rp.getAttribute('data-rap-pas'))); return; }
+    var rj = t.closest('[data-rap-jour]');
+    if (rj) { chargerRapport(rj.getAttribute('data-rap-jour')); $('.cu-zone').scrollTop = 0; window.scrollTo(0, 0); return; }
+    var hmin = t.closest('[data-heure-min]');
+    if (hmin) {
+      var ch0 = donnees.commandes.filter(function (x) { return x.id === hmin.getAttribute('data-heure-id'); })[0];
+      appel('heure', { id: hmin.getAttribute('data-heure-id'), minutes: +hmin.getAttribute('data-heure-min') }).then(function (j) {
+        if (ch0) ch0.heure_prevue = j.heure_prevue; fermerPanneau(); afficher();
+      }).catch(function (x) { avertir(x.message); });
+      return;
+    }
+    var pv = t.closest('[data-pas-venu]');
+    if (pv) {
+      var cp0 = donnees.commandes.filter(function (x) { return x.id === pv.getAttribute('data-pas-venu'); })[0];
+      appel('statut', { id: pv.getAttribute('data-pas-venu'), statut: 'annulee' }).then(function () {
+        if (cp0) cp0.statut = 'annulee'; fermerPanneau(); afficher();
+      }).catch(function (x) { avertir(x.message); });
+      return;
+    }
     if (t.closest('[data-test-son]')) { var s0 = reglage.son; reglage.son = true; sonner(); reglage.son = s0; return; }
     if (t.closest('[data-test-imp]')) { imprimerTest(); return; }
     var pl = t.closest('[data-plat]');
     if (pl) {
       var v = !pl.classList.contains('cu-ep');
-      appel('epuise', { plat: pl.getAttribute('data-plat'), valeur: v }).then(function (j) { donnees.snack.epuises = j.epuises; pl.classList.toggle('cu-ep', v); }).catch(function (x) { alert(x.message); });
+      appel('epuise', { plat: pl.getAttribute('data-plat'), valeur: v }).then(function (j) { donnees.snack.epuises = j.epuises; pl.classList.toggle('cu-ep', v); }).catch(function (x) { avertir(x.message); });
       return;
     }
     // Pause : 30 min, 1 h ou jusqu'a reprise. En pause, un toucher reprend tout de suite.
@@ -585,7 +687,7 @@
     if (pm) {
       appel('pause', { valeur: true, minutes: +pm.getAttribute('data-pause-min') }).then(function (j) {
         donnees.snack.pause = true; donnees.snack.reprise = j.reprise; fermerPanneau(); majEtat();
-      }).catch(function (x) { alert(x.message); });
+      }).catch(function (x) { avertir(x.message); });
       return;
     }
     if (t.closest('[data-pause]')) {
@@ -601,7 +703,7 @@
     if (dm) {
       appel('delai', { minutes: +dm.getAttribute('data-delai-min') }).then(function (j) {
         donnees.snack.delai = j.delai; donnees.snack.delai_fin = j.delai_fin; fermerPanneau(); majEtat();
-      }).catch(function (x) { alert(x.message); });
+      }).catch(function (x) { avertir(x.message); });
       return;
     }
     if (t.closest('[data-delai]')) {
@@ -616,11 +718,17 @@
     var art = t.closest('[data-id]'); if (!art) return;
     var c = donnees.commandes.filter(function (x) { return x.id === art.getAttribute('data-id'); })[0];
     var st = t.closest('[data-statut]');
-    if (st && st.getAttribute('data-statut') === 'annulee' && !confirm('Le client n’est pas venu chercher la commande N° ' + c.numero + ' ? Elle sera annulée.')) return;
-    if (st) { var nv = st.getAttribute('data-statut'); appel('statut', { id: c.id, statut: nv }).then(function () { c.statut = nv; afficher(); }); return; }
+    if (st && st.getAttribute('data-statut') === 'annulee') {
+      panneau('<h2>N° ' + c.numero + ' : pas venu ?</h2><p>Le client n’est pas venu chercher sa commande (' + euros(c.total_cents) + ', à payer sur place). Elle sort des commandes et le rapport la compte à part, hors total.</p>' +
+        '<div class="cu-actions"><button type="button" class="cu-bouton cu-feu" data-pas-venu="' + c.id + '">Oui, pas venu</button><button type="button" class="cu-bouton cu-discret" data-fermer>Annuler</button></div>');
+      return;
+    }
+    if (st) { var nv = st.getAttribute('data-statut'); appel('statut', { id: c.id, statut: nv }).then(function () { c.statut = nv; afficher(); }).catch(function (x) { avertir(x.message); }); return; }
+    if (t.closest('[data-heure]')) { panneauHeure(c); return; }
     if (t.closest('[data-reimprimer]')) { imprimees[c.id] = false; imprimer(c, true); }
   });
   document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-rap-date]') && e.target.value) { chargerRapport(e.target.value); return; }
     if (e.target.matches('[data-imp]')) { reglage.impression = e.target.value; ecrire('ag-cuisine-reglage', reglage); }
     if (e.target.matches('[data-son]')) { reglage.son = e.target.checked; ecrire('ag-cuisine-reglage', reglage); }
     if (e.target.matches('[data-ip]')) { reglage.ip = e.target.value.trim(); ecrire('ag-cuisine-reglage', reglage); }

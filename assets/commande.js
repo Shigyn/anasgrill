@@ -464,7 +464,7 @@
   }
   function blocQuand() {
     var i = etat.infos, f = fenetre();
-    if (!f) return '<p class="info-zone attention">Les commandes en ligne ouvrent à ' + (R.debutCommandes || 8) + ' h, pour un service à partir de ' + SNACK.ouverture + ' h.</p>';
+    if (!f) return '<p class="info-zone attention">Les commandes en ligne ouvrent à ' + (R.debutCommandes || 8) + ' h les jours d’ouverture. Horaires : ' + esc(SNACK.horaires) + '.</p>';
     var ouvert = Date.now() >= f.ouv.getTime(), l = creneaux(f);
     if (!ouvert) i.quand = 'plus-tard';
     if (i.quand !== 'plus-tard' || !l.length) i.quand = 'vite';
@@ -473,7 +473,7 @@
     return '<div class="quand"><span class="quand-titre">Quand ?</span>' +
       (f.apercu ? '<p class="quand-note">Aperçu : on te laisse tester même si le snack est fermé en ce moment.</p>' : '') +
       (choix ? '<div class="segment" role="radiogroup" aria-label="Quand"><label><input type="radio" name="quand" value="vite"' + (i.quand === 'vite' ? ' checked' : '') + '><span>Au plus vite</span></label><label><input type="radio" name="quand" value="plus-tard"' + (i.quand === 'plus-tard' ? ' checked' : '') + '><span>Programmer</span></label></div>'
-        : ouvert ? '<p class="quand-note">Au plus vite : c’est bientôt la fermeture.</p>' : '<p class="quand-note">On ouvre à ' + SNACK.ouverture + ' h : choisis l’heure de ta commande.</p>') +
+        : ouvert ? '<p class="quand-note">Au plus vite : c’est bientôt la fermeture.</p>' : '<p class="quand-note">On ouvre à ' + hm(f.ouv) + ' : choisis l’heure de ta commande.</p>') +
       (i.quand === 'plus-tard' ? '<label class="champ"><span>Heure souhaitée</span><select name="creneau" data-creneau><option value="">Choisis un créneau</option>' +
         l.map(function (t) { var v = t.toISOString(), plein = ETAT.creneaux_pleins.indexOf(v) >= 0; return '<option value="' + v + '"' + (plein ? ' disabled' : i.creneau === v ? ' selected' : '') + '>' + hm(t) + (plein ? ' · complet' : '') + '</option>'; }).join('') + '</select></label>' : '') +
       '</div>';
@@ -543,9 +543,9 @@
   var PARIS = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   function partiesParis(t) { var o = {}; PARIS.formatToParts(new Date(t)).forEach(function (x) { if (x.type !== 'literal') o[x.type] = +x.value; }); return o; }
   // (annee, mois 1-12, jour, heure) a l'heure de Paris -> instant reel (ms).
-  function depuisParis(a, m, j, h) {
+  function depuisParis(a, m, j, h, mi) {
     // Deux passes : la nuit du changement d'heure, le decalage lu a « essai » n'est pas celui du resultat.
-    var essai = Date.UTC(a, m - 1, j, h, 0), r = essai;
+    var essai = Date.UTC(a, m - 1, j, h, mi || 0), r = essai;
     for (var n = 0; n < 2; n++) { var q = partiesParis(r); r = essai - (Date.UTC(q.year, q.month - 1, q.day, q.hour, q.minute) - r); }
     return r;
   }
@@ -553,9 +553,12 @@
     var now = Date.now(), p = partiesParis(now);
     for (var k = -1; k <= 0; k++) {
       var d = new Date(Date.UTC(p.year, p.month - 1, p.day + k)), a = d.getUTCFullYear(), m = d.getUTCMonth() + 1, jj = d.getUTCDate();
-      var debut = depuisParis(a, m, jj, R.debutCommandes || 8), ouv = depuisParis(a, m, jj, SNACK.ouverture || 11);
-      var l = new Date(Date.UTC(a, m - 1, jj + (SNACK.fermeture <= SNACK.ouverture ? 1 : 0)));
-      var fin = depuisParis(l.getUTCFullYear(), l.getUTCMonth() + 1, l.getUTCDate(), SNACK.fermeture) - (R.arretAvantFermeture || 15) * 60000;
+      // Les horaires de CE jour-la (Bourgoin : chaque jour les siens, Riad 08/11) ; null = ferme.
+      var h = SNACK.semaine ? SNACK.semaine[d.getUTCDay()] : [SNACK.ouverture, SNACK.fermeture];
+      if (!h) continue;
+      var debut = depuisParis(a, m, jj, R.debutCommandes || 8), ouv = depuisParis(a, m, jj, Math.floor(h[0]), Math.round(h[0] % 1 * 60));
+      var l = new Date(Date.UTC(a, m - 1, jj + (h[1] <= h[0] ? 1 : 0)));
+      var fin = depuisParis(l.getUTCFullYear(), l.getUTCMonth() + 1, l.getUTCDate(), Math.floor(h[1]), Math.round(h[1] % 1 * 60)) - (R.arretAvantFermeture || 15) * 60000;
       if (now >= debut && now < fin) return { ouv: new Date(ouv), fin: new Date(fin) };
     }
     if (R.apercuToujoursOuvert) return { ouv: new Date(now - 60000), fin: new Date(now + 4 * 3600000), apercu: true };

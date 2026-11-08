@@ -9,8 +9,25 @@
 
 // rayonKm : rayon de livraison par defaut, a fixer avec le client.
 // Horaires : donnes par Hakim le 15/10 (tous 11 h - 1 h, Vaulx jusqu'a 4 h).
-const HORAIRES = Object.fromEntries(['lyon-8', 'charpennes', 'la-duchere', 'rillieux-la-pape', 'vaulx-en-velin', 'venissieux', 'bourgoin-jallieu']
-  .map((id) => [id, id === 'vaulx-en-velin' ? '11 h – 4 h' : '11 h – 1 h']));
+// Un snack peut avoir ses horaires jour par jour (Bourgoin, Riad 08/11) :
+// du dimanche (0) au samedi (6), [ouverture, fermeture] en heures (11.5 = 11 h 30),
+// null = ferme ce jour-la ; une fermeture <= ouverture tombe apres minuit.
+const SEMAINES = {
+  'bourgoin-jallieu': [[12, 23], [11.5, 23], [11.5, 23], [11.5, 23], [11.5, 23], [17, 1], [12, 1]],
+};
+const JOURS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+const heure = (h) => Math.floor(h) + ' h' + (h % 1 ? ' ' + String(Math.round((h % 1) * 60)).padStart(2, '0') : '');
+// « 11 h – 1 h », ou « lun – jeu 11 h 30 – 23 h · ven 17 h – 1 h · … » (semaine lue du lundi au dimanche).
+function texteHoraires(sem) {
+  const t = (x) => (x ? heure(x[0]) + ' – ' + heure(x[1]) : 'fermé');
+  const ordre = [1, 2, 3, 4, 5, 6, 0], groupes = [];
+  for (const j of ordre) {
+    const g = groupes[groupes.length - 1];
+    if (g && t(sem[j]) === g.t) g.fin = j; else groupes.push({ debut: j, fin: j, t: t(sem[j]) });
+  }
+  if (groupes.length === 1) return groupes[0].t;
+  return groupes.map((g) => JOURS[g.debut] + (g.fin !== g.debut ? ' – ' + JOURS[g.fin] : '') + ' ' + g.t).join(' · ');
+}
 export const SNACKS = [
   { id: 'lyon-8', nom: 'Lyon 8', ville: 'Lyon 8e', adresse: '95 rue Villon, 69008 Lyon', tel: '07 53 59 38 91', lat: 45.7372664, lng: 4.8625766, note: '4,5', avis: 306 },
   { id: 'charpennes', nom: 'Charpennes', ville: 'Villeurbanne', adresse: '3 rue d’Inkermann, 69100 Villeurbanne', tel: '07 54 87 93 04', lat: 45.7704796, lng: 4.8659924, note: '4,6', avis: 161 },
@@ -20,7 +37,11 @@ export const SNACKS = [
   { id: 'venissieux', nom: 'Vénissieux', ville: 'Vénissieux', adresse: '61 boulevard Laurent Gérin, 69200 Vénissieux', tel: '07 53 91 82 47', lat: 45.7010038, lng: 4.8838309, note: '4,7', avis: 34 },
   // Pont-de-Cheruy retire le 16/10 : ce snack n'existe pas (Hakim).
   { id: 'bourgoin-jallieu', nom: 'Bourgoin-Jallieu', ville: 'Bourgoin-Jallieu', adresse: '49 avenue Gambetta, 38300 Bourgoin-Jallieu', tel: '07 75 43 84 16', lat: 45.5886073, lng: 5.2727873, note: '4,6', avis: 246 },
-].map((s) => ({ rayonKm: 5, horaires: HORAIRES[s.id] || null, ouverture: 11, fermeture: s.id === 'vaulx-en-velin' ? 4 : 1, ...s }));
+].map((s) => {
+  const ouverture = 11, fermeture = s.id === 'vaulx-en-velin' ? 4 : 1;
+  const semaine = SEMAINES[s.id] || Array.from({ length: 7 }, () => [ouverture, fermeture]);
+  return { rayonKm: 5, semaine, horaires: texteHoraires(semaine), ouverture, fermeture, ...s };
+});
 
 /* ---------------- les groupes d'options, partages ---------------- */
 const VIANDES = ['Steak', 'Merguez', 'Escalope', 'Tandoori', 'Curry', 'Tenders', 'Cordon bleu', 'Kebab'];
@@ -224,23 +245,30 @@ for (const c of CARTE) for (const i of c.items) {
 const P = (court, titre, ing, opts = {}) => ({ court, titre, ing, ...opts });
 const choixDe = (titre, liste) => ({ titre, min: 1, max: 1, options: o(liste) });
 const VIANDES_MAXI = ['Escalope', 'Escalope curry', 'Escalope tandoori', 'Steak'];
+// Burgers des formules « predefinis » (Riad, Bourgoin, 08/11) : sauce imposee
+// (sauceFixe, affichee sans choix) et seuls les ingredients qu'il cite se retirent.
+// Le Grill and Wrap, le Turkish, le Mielleux, Rolls and Croc's, le Forestier et
+// le Mexicain : formules propres au site, « voir avec Hakim », inchangees.
 const FORMULES = {
   'formule-classique': [P('Sandwich', 'Le sandwich escalope', [...LEG], { choix: choixDe('Assaisonnement', ['Curry', 'Tandoori', 'Paprika']) }),
-    P('Burger', 'Le burger brioché', [...LEG, 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Fish']) })],
-  'formule-giant': [P('Big Max', 'Le Big Max', [...LEG, 'Cornichon', 'Cheddar']), P('Giant', 'Le Giant', [...LEG, 'Cheddar'])],
+    P('Burger', 'Le burger brioché', ['Salade', 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Fish']), sauceFixe: 'Sauce gruyère' })],
+  'formule-giant': [P('Big Max', 'Le Big Max', ['Salade', 'Cheddar', 'Cornichon'], { sauceFixe: 'Sauce burger et gruyère' }),
+    P('Giant', 'Le Giant', ['Salade', 'Cheddar', 'Cornichon'], { sauceFixe: 'Sauce burger et gruyère' })],
   'formule-rolls-burger': [P('Galette', 'La galette', [...LEG], { choix: choixDe('Viande', ['Steak', 'Escalope']) }),
-    P('Burger', 'Le burger', [...LEG, 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Chicken']) })],
-  'formule-smash': [P('Smash steak', 'Le smash double steak', [...LEG, 'Cornichon', 'Oignons crispy', 'Cheddar']), P('Smash tenders', 'Le smash tenders', [...LEG, 'Cheddar'])],
-  'formule-crousty': [P('Crousty', 'Le crousty', ['Salade', 'Cheddar'], { choix: choixDe('Au choix', ['2 burgers crousty', '1 tacos crousty']) })],
+    P('Burger', 'Le burger', [...LEG, 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Chicken']), sauceFixe: 'Sauce burger et gruyère' })],
+  'formule-smash': [P('Smash steak', 'Le smash double steak', [...LEG, 'Cornichon'], { sauceFixe: 'Sauce moutarde-miel et ketchup' }),
+    P('Smash tenders', 'Le smash tenders', [...LEG], { sauceFixe: 'Sauce burger et gruyère' })],
+  // Crousty : sauce de la maison ; legumes et oignons crispy au choix (offerts, a ajouter).
+  'formule-crousty': [P('Crousty', 'Le crousty', ['Cheddar'], { choix: choixDe('Au choix', ['2 burgers crousty', '1 tacos crousty']), sauceFixe: 'Sauce de la maison', legumes: [...LEG, 'Oignons crispy'] })],
   'formule-double-rolls': [P('Rolls steak', 'Le rolls steak', [...LEG]), P('Rolls escalope', 'Le rolls escalope', [...LEG])],
   'formule-rolls-dwich': [P('Rolls', 'Le rolls', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) }),
     P('Sandwich', 'Le sandwich', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) })],
-  'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', [...LEG]), P('Burger escalope', 'Le burger matlouh escalope', [...LEG])],
+  'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', [...LEG], { sauceFixe: 'Sauce de la maison' }), P('Burger escalope', 'Le burger matlouh escalope', [...LEG], { sauceFixe: 'Sauce de la maison' })],
   'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI), legumes: true }),
-    P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
+    P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']), sauceFixe: 'Sauce gruyère' })],
   'formule-maxi-sandwich': [P('Maxi sandwich', 'Le maxi sandwich', [...LEG], { choix: choixDe('Viande', VIANDES_MAXI) }),
-    P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']) })],
-  'formule-street': [P('Wraps', 'Les deux wraps chicken', [...LEG, 'Cheddar']), P('Wings et tenders', 'Les 5 wings et 3 tenders', [])],
+    P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']), sauceFixe: 'Sauce gruyère' })],
+  'formule-street': [P('Wraps', 'Les deux wraps chicken', ['Salade'], { sauceFixe: 'Sauce burger' }), P('Wings et tenders', 'Les 5 wings et 3 tenders', [])],
   // Les formules d'avant, gardees a cote des nouvelles (Nicolas, 17/10).
   'formule-grill-wrap': [P('Anas Grill', 'L’Anas Grill', [...LEG, 'Cheddar', 'Bacon']), P('Wrap', 'Le wrap poulet', [...LEG, 'Cheddar'])],
   'formule-turkish': [P('Galette', 'La galette kebab', [...LEG], { sauces: 1 }), P('Cheese', 'Le cheese', ['Salade', 'Tomate', 'Cornichon', 'Cheddar'])],
@@ -259,10 +287,12 @@ for (const c of CARTE) for (const i of c.items) {
     return [
       ...(p.choix ? [{ id: 'choix-' + n, ...p.choix, ...tag }] : []),
       ...(p.ing.length ? [{ ...sans(...p.ing), id: 'retirer-' + n, ...tag }] : []),
-      ...(p.legumes ? [{ ...G.legumes, id: 'legumes-' + n, ...tag }] : []),
+      ...(p.legumes ? [{ ...G.legumes, id: 'legumes-' + n, ...(Array.isArray(p.legumes) ? { options: o(p.legumes), max: p.legumes.length } : {}), ...tag }] : []),
       ...(p.info ? [{ id: 'info-' + n, type: 'info', texte: p.info, ...tag }] : []),
+      // Sauce imposee (Riad, 08/11) : on la dit, sans la faire choisir.
+      ...(p.sauceFixe ? [{ id: 'info-sauce-' + n, type: 'info', texte: p.sauceFixe + ', comme en boutique.', ...tag }] : []),
       // Un croc's (croque-monsieur) ne prend pas de sauce : pas de carte Sauces.
-      ...(p.sauces === 0 ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
+      ...(p.sauces === 0 || p.sauceFixe ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
     ];
   });
 }

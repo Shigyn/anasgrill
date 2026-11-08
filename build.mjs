@@ -20,7 +20,7 @@ const PROD = process.env.PROD === '1';
 // Domaine achete par Nicolas le 27/10 : l'apercu y est aussi (toujours en noindex).
 const URL_SITE = 'https://www.anasgrill.fr/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '93';
+const V = '94';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -359,7 +359,7 @@ console.log(`${PAGES.length} pages, ${SNACKS.length} snacks, ${CARTE.reduce((n, 
 // toujours de la meme carte. Les photos et descriptions n'y servent pas.
 const CARTE_SERVEUR = {
   reglages: REGLAGES,
-  snacks: SNACKS.map(({ id, nom, adresse, lat, lng, ouverture, fermeture }) => ({ id, nom, adresse, lat, lng, ouverture, fermeture })),
+  snacks: SNACKS.map(({ id, nom, adresse, lat, lng, ouverture, fermeture, semaine }) => ({ id, nom, adresse, lat, lng, ouverture, fermeture, semaine })),
   plats: Object.fromEntries(CARTE.flatMap((c) => c.items).map((i) => [i.id, {
     n: i.n, p: i.p, ...(i.seulement ? { seulement: i.seulement } : {}),
     groupes: (i.groupes || []).filter((g) => g.type !== 'info').map((g) => ({

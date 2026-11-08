@@ -242,3 +242,36 @@ body.gerant .ge-kpi { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)
 .cu-carte[data-rouge] .cu-ico { background: rgba(255, 255, 255, .18); color: #fff; }
 .cu-carte[data-rouge] .cu-carte-txt small { color: rgba(255, 255, 255, .85); }
 .cu-carte[data-rouge].cu-carte-on { border-color: #fff; box-shadow: 0 0 0 1px #fff; }
+
+/* Heure de chaque commande, reglable par la cuisine (Riad, 08/11). */
+.cu-heure-btn { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 10px; border-radius: 12px; border: 1px dashed rgba(255, 196, 0, .45); background: rgba(255, 196, 0, .06); font: inherit; cursor: pointer; text-align: left; }
+.cu-heure-btn:hover, .cu-heure-btn:focus-visible { border-style: solid; border-color: var(--jaune); outline: none; }
+.cu-heure-btn i { font: 700 .7rem/1 var(--etroite); letter-spacing: .1em; text-transform: uppercase; font-style: normal; color: var(--jaune); }
+
+/* Rapport : les comptes d'un jour de service et le recap du mois (Riad, 08/11). */
+.cu-rapport { padding: 16px; display: grid; gap: 14px; max-width: 1000px; }
+.cu-rap-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.cu-rap-tete h2 { margin: 0; font: 400 1.3rem/1 var(--titre); text-transform: uppercase; color: var(--jaune); }
+.cu-rap-nav { display: flex; gap: 8px; align-items: center; }
+.cu-rap-nav .cu-bouton { min-width: 48px; font-size: 1.3rem; }
+.cu-rap-nav .cu-bouton:disabled { opacity: .35; cursor: default; }
+.cu-rap-nav input { min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--ligne-forte); background: #1a1714; color: var(--texte); font: 600 1rem var(--texte-police); color-scheme: dark; }
+.cu-rap-jour { margin: 0; display: grid; gap: 4px; }
+.cu-rap-jour b { font-size: 1.15rem; }
+.cu-rap-jour small { color: var(--doux); }
+.cu-rap-tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.cu-rap-tuile { display: grid; gap: 6px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--ligne); background: #1a1714; }
+.cu-rap-tuile small { font: 700 .74rem/1 var(--etroite); letter-spacing: .1em; text-transform: uppercase; color: var(--doux); }
+.cu-rap-tuile b { font: 700 1.6rem/1 var(--etroite); font-variant-numeric: tabular-nums; color: var(--texte); }
+.cu-rap-tuile span { color: var(--doux); font-size: .86rem; }
+.cu-rap-fort { border-color: rgba(255, 122, 0, .55); background: rgba(255, 122, 0, .1); }
+.cu-rap-fort b { color: var(--jaune); font-size: 2rem; }
+.cu-rap-detail summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.cu-rap-detail .ge-table-zone { margin-top: 8px; }
+.cu-rap-barre td { color: var(--pale); text-decoration: line-through; }
+.cu-rap-barre td:nth-child(4) { text-decoration: none; }
+.cu-rap-mois tbody tr { cursor: pointer; }
+.cu-rap-mois tbody tr:hover td { background: rgba(255, 255, 255, .03); }
+.cu-rap-mois tr.cu-rap-on td { background: rgba(255, 122, 0, .12); }
+.cu-rap-mois td:first-child { text-transform: capitalize; }
+.cu-rap-mois tfoot td { font-weight: 700; border-top: 1px solid var(--ligne-forte); border-bottom: 0; }
