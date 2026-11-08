@@ -20,7 +20,7 @@ const PROD = process.env.PROD === '1';
 // Domaine achete par Nicolas le 27/10 : l'apercu y est aussi (toujours en noindex).
 const URL_SITE = 'https://www.anasgrill.fr/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '94';
+const V = '95';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -280,6 +280,18 @@ for (const s of SNACKS) {
   }]);
 }
 
+// Suivi de commande en direct (Riad, 08/11) : /suivi/?c=<id>, jamais indexe.
+PAGES.push(['suivi/', {
+  titre: 'Ma commande — Anas Grill',
+  description: 'Le suivi en direct de ta commande Anas Grill : en préparation, prête, remise.',
+  classe: 'page-suivi',
+  tetes: PROD ? '<meta name="robots" content="noindex,nofollow">' : '',
+  scripts: ['suivi.js'],
+  corps: (r) => `
+<header class="entete suivi-entete"><div class="cadre entete-in"><a class="marque marque-petite" href="${r}" aria-label="Anas Grill, accueil">${LOGO_R(r)}</a></div></header>
+<main id="contenu" class="suivi" data-suivi aria-live="polite"></main>
+<script type="application/json" id="anas-snacks">${JSON.stringify(SNACKS.map((s) => ({ id: s.id, tel: s.tel })))}</script>`,
+}]);
 PAGES.push(['confidentialite/', { titre: 'Confidentialité et cookies — Anas Grill', description: 'Ce que le site Anas Grill fait de tes données et de ses cookies.', classe: 'page-texte', corps: () => `
 <main id="contenu" class="cadre etroit texte"><h1>Confidentialité et cookies</h1>
 <p>La société qui exploite le restaurant Anas Grill où tu commandes est responsable de tes données. Son nom figure sur ton relevé bancaire et sur ton reçu de paiement. Pour toute question : le restaurant, ou ANASGRILL SAS, 61 boulevard Laurent Gérin, 69200 Vénissieux.</p>
@@ -347,7 +359,7 @@ for (const [dossier, titre, js, tr, avant] of [['cuisine', 'Cuisine', 'cuisine.j
   fs.writeFileSync(path.join(ICI, dossier, 'version.json'), JSON.stringify({ v: V }));
 }
 
-fs.writeFileSync(path.join(ICI, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${PAGES.filter(([c]) => !/mentions|cgv/.test(c)).map(([c]) => `  <url><loc>${abs(c)}</loc></url>`).join('\n')}\n</urlset>\n`);
+fs.writeFileSync(path.join(ICI, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${PAGES.filter(([c]) => !/mentions|cgv|suivi/.test(c)).map(([c]) => `  <url><loc>${abs(c)}</loc></url>`).join('\n')}\n</urlset>\n`);
 fs.writeFileSync(path.join(ICI, 'version.json'), JSON.stringify({ v: V }));
 fs.writeFileSync(path.join(ICI, 'robots.txt'), PROD ? `User-agent: *\nAllow: /\n\nSitemap: ${URL_SITE}sitemap.xml\n` : `# Apercu : pas d'indexation.\nUser-agent: *\nDisallow: /\n`);
 fs.writeFileSync(path.join(ICI, '.nojekyll'), '');

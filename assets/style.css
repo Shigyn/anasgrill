@@ -867,3 +867,23 @@ button.ligne-texte:hover b { color: var(--jaune); }
 /* Supplements payants dans les tuiles (07/11) : le prix reste affiche, meme coche. */
 .ing.ing-payant em { opacity: 1; transform: none; font-size: .62rem; padding: 4px 6px; }
 .ing.ing-payant:has(input:checked) em { background: var(--feu); color: #1b0d00; }
+
+/* Suivi de commande en direct (/suivi/) */
+.suivi { min-height: 70vh; background: radial-gradient(60% 40% at 50% 0%, rgba(255, 122, 0, .22), transparent 70%); }
+.suivi .conf-in { padding-top: 28px; }
+.suivi-entete { position: static; }
+.suivi-etapes { list-style: none; margin: 14px 0 6px; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.suivi-etapes li { display: grid; justify-items: center; gap: 8px; color: var(--pale); font: 700 .82rem/1.1 var(--etroite); letter-spacing: .08em; text-transform: uppercase; }
+.suivi-etapes i { width: 100%; height: 6px; border-radius: 6px; background: var(--ligne-forte); }
+.suivi-etapes .faite { color: var(--doux); }
+.suivi-etapes .faite i { background: var(--vert); }
+.suivi-etapes .en-cours { color: var(--texte); }
+.suivi-etapes .en-cours i { background: var(--feu); animation: suivi-pouls 1.6s ease-in-out infinite; }
+@keyframes suivi-pouls { 50% { opacity: .45; } }
+.suivi-retard { width: 100%; padding: 14px 16px; border-radius: 16px; background: rgba(255, 77, 58, .12); border: 1px solid rgba(255, 77, 58, .45); text-align: left; }
+.suivi-retard b { color: var(--rouge); }
+.suivi-direct { margin: 6px 0 0; display: flex; align-items: center; gap: 8px; color: var(--pale); font-size: .9rem; }
+.suivi-direct i { width: 8px; height: 8px; border-radius: 50%; background: var(--vert); box-shadow: 0 0 0 4px rgba(62, 207, 110, .2); animation: suivi-pouls 1.6s ease-in-out infinite; }
+.suivi .conf-recap span small { display: block; font-size: .85rem; opacity: .75; }
+.suivi .bouton { margin-top: 6px; }
+@media (prefers-reduced-motion: reduce) { .suivi-etapes .en-cours i, .suivi-direct i { animation: none; } }

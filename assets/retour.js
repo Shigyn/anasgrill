@@ -45,6 +45,7 @@
       '<div class="conf-recap">' + (c.lignes || []).map(function (l) {
         return '<div><span>' + l.qte + ' × ' + esc(l.n) + (l.resume ? '<small>' + esc(l.resume) + '</small>' : '') + '</span></div>';
       }).join('') + '<div class="conf-total"><span>' + (c.paiement === 'sur_place' ? 'À payer au comptoir' : 'Payé') + '</span><span>' + euros(c.total_cents / 100) + '</span></div></div>' +
+      '<a class="bouton" href="' + ((window.ANAS || {}).racine || '') + 'suivi/?c=' + lu.id + '">Suivre ma commande en direct</a>' +
       '<button type="button" class="bouton bouton-ligne" data-retour-fermer>Fermer</button></div>';
     document.body.appendChild(d);
     document.documentElement.style.overflow = 'hidden';

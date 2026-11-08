@@ -730,6 +730,13 @@
 
   /* ===================== 3. Commande payee ===================== */
   function confirmer(srv, surPlace) {
+    // Vraie commande : la page de suivi en direct (survit a l'actualisation, Riad 08/11).
+    if (srv && srv.id) {
+      etat.lignes = []; garder();
+      try { sessionStorage.setItem('anas-commande-vue', srv.id); } catch (x) {}
+      location.replace(((window.ANAS || {}).racine || '../') + 'suivi/?c=' + srv.id);
+      return;
+    }
     // Le client vient de la voir en grand : pas de fenetre « VOTRE COMMANDE » s'il recharge tout de suite.
     try { if (srv && srv.id) sessionStorage.setItem('anas-commande-vue', srv.id); } catch (x) {}
     var i = etat.infos, liv = i.mode === 'livraison';
