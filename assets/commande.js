@@ -19,7 +19,7 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   // Les ingredients qu'on peut retirer : une petite photo (Unsplash) par ingredient.
   var iconeDe = function (n) {
-    var k = /salade/i.test(n) ? 'salade' : /tomate/i.test(n) ? 'tomate' : /oignon/i.test(n) ? 'oignon' : /cornichon/i.test(n) ? 'cornichon'
+    var k = /salade|l[ée]gume/i.test(n) ? 'salade' : /tomate/i.test(n) ? 'tomate' : /oignon/i.test(n) ? 'oignon' : /cornichon/i.test(n) ? 'cornichon'
       : /jalap/i.test(n) ? 'jalapeno' : /piment/i.test(n) ? 'piment' : /bacon/i.test(n) ? 'bacon' : /sauce/i.test(n) ? 'sauce' : /gruy/i.test(n) ? 'gruyere' : /kiri/i.test(n) ? 'kiri' : 'cheddar';
     return '<img class="ing-photo" src="../photos/ing-' + k + '.webp" alt="" width="160" height="160">';
   };
@@ -55,6 +55,7 @@
   function platOffre(o) {
     if (!o || !o.titre || !(o.prix > 0)) return null;
     var groupes = [];
+    if (o.viandes && o.viandes.length) groupes.push({ id: 'viande', titre: 'Viande au choix', min: 1, max: 1, options: o.viandes.map(function (n) { return { n: n, p: 0 }; }) });
     if (o.retirer && o.retirer.length) groupes.push({ id: 'retirer', type: 'retirer', titre: 'Ingrédients', aide: 'touche pour retirer', min: 0, max: o.retirer.length, options: o.retirer.map(function (n) { return { n: n, p: 0 }; }) });
     var max = o.sauces_max === 1 ? 1 : 2;
     if (o.sauces && o.sauces.length) groupes.push({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte' : 'jusqu’à 2, offertes', min: 0, max: max, options: o.sauces.map(function (n) { return { n: n, p: 0, photo: PHOTO_SAUCE[n] }; }) });

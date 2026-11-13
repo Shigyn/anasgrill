@@ -275,3 +275,4 @@ body.gerant .ge-kpi { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)
 .cu-rap-mois tr.cu-rap-on td { background: rgba(255, 122, 0, .12); }
 .cu-rap-mois td:first-child { text-transform: capitalize; }
 .cu-rap-mois tfoot td { font-weight: 700; border-top: 1px solid var(--ligne-forte); border-bottom: 0; }
+.ge-aide-petite { margin: 0 0 8px; font-size: .85rem; opacity: .75; }

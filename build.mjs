@@ -20,7 +20,7 @@ const PROD = process.env.PROD === '1';
 // Domaine achete par Nicolas le 27/10 : l'apercu y est aussi (toujours en noindex).
 const URL_SITE = 'https://www.anasgrill.fr/';
 const VIGNETTES = JSON.parse(fs.readFileSync(path.join(ICI, '_source', 'vignettes.json'), 'utf8'));
-const V = '95';
+const V = '96';
 // Delais (minutes) et capacite : a regler avec le client (cahier, question 6).
 // Cle PUBLIQUE Stripe (pk_test_... puis pk_live_...) : sans elle, le paiement
 // reste simule. Elle n'a rien de secret : elle est faite pour etre dans la page.
@@ -332,6 +332,8 @@ for (const [ch, o] of PAGES) {
 // Les espaces Cuisine (tablette de chaque snack) et Gerant : pages a part,
 // sans bandeau cookies (outil de travail, aucune mesure), jamais indexees.
 // Les sauces de la carte : le gerant choisit celles de son offre du moment.
+// Les viandes proposees sur la carte, pour l'offre du moment (Riad, 13/11).
+const VIANDES_CARTE = [...new Set(CARTE.flatMap((c) => c.items).flatMap((i) => i.groupes || []).filter((g) => g.id === 'viande').flatMap((g) => g.options.map((o) => o.n)))];
 const SAUCES_CARTE = [...new Set(CARTE.flatMap((c) => c.items).flatMap((i) => i.groupes || []).filter((g) => g.type === 'sauces').flatMap((g) => g.options.map((o) => o.n)))];
 const espace = (titre, js, avecTempsReel, avant = '') => `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -343,7 +345,7 @@ const espace = (titre, js, avecTempsReel, avant = '') => `<!doctype html>
 </head><body>
 <template data-logo>${LOGO_R('../')}</template>
 <div id="app"></div>
-<script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' }; window.AG_V = '${V}'; window.AG_SAUCES = ${JSON.stringify(SAUCES_CARTE)};</script>
+<script>window.LOCWEB_CONFIG = { supabaseUrl: 'https://ibqawtgnucakzdldnitj.supabase.co', supabaseAnonKey: 'sb_publishable_rpLrUo4Cqnfl8zSohDqO0A_Q5Vkj2Hk' }; window.AG_V = '${V}'; window.AG_SAUCES = ${JSON.stringify(SAUCES_CARTE)}; window.AG_VIANDES = ${JSON.stringify(VIANDES_CARTE)};</script>
 ${avecTempsReel ? '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>' : ''}
 ${avant}
 <script src="../assets/${js}?v=${V}" defer></script>

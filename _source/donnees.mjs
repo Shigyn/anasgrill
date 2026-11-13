@@ -99,12 +99,12 @@ export const CARTE = [
     id: 'formules-12', nom: 'Formules à 12 €', intro: 'Frites ou potatoes cheddar gruyère et boisson comprises.',
     items: [
       { id: 'formule-smash', n: 'Smash Grill', p: 12, photo: 'f-smash', d: 'Un smash burger double steak et un smash aux tenders, avec des frites ou potatoes cheddar gruyère et une boisson.' },
-      { id: 'formule-turkish', n: 'Le Turkish', p: 12, photo: 'f-turkish', d: 'Une galette kebab avec la sauce de ton choix et un cheese, avec des frites ou potatoes cheddar gruyère et une boisson.', groupes: [{ ...G.sauces, titre: 'Sauce de la galette', max: 1, aide: '' }] },
+      { id: 'formule-turkish', n: 'Le Turkish', p: 12, photo: 'f-turkish', d: 'Une galette kebab et un cheese, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-mielleux', n: 'Le Mielleux', p: 12, photo: 'f-mielleux', d: 'Un burger chèvre-miel aux noix de pécan et un wrap poulet-chèvre, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-crocs', n: 'Formule Crocs', p: 12, photo: 'f-crocs', d: 'Deux croc’s au bacon et deux cheeseburgers, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-rolls', n: 'Rolls and Croc’s', p: 12, photo: 'f-rolls', d: 'Un roulé (steak, curry, tandoori ou paprika) et un croc’s, avec des frites ou potatoes cheddar gruyère et une boisson.', groupes: [
         { id: 'roule', titre: 'Le roulé', min: 1, max: 1, options: o(['Steak', 'Curry', 'Tandoori', 'Paprika']) }] },
-      { id: 'formule-forestier', n: 'Le Forestier', p: 12, photo: 'f-forestier', d: 'Un sandwich forestier, un maxi brioché et un croc’s, avec des frites ou potatoes cheddar gruyère et une boisson.' },
+      { id: 'formule-forestier', n: 'Le Forestier', p: 12, photo: 'f-forestier', d: 'Un sandwich forestier et un maxi brioché, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-mexicain', n: 'Le Mexicain', p: 12, photo: 'f-mexicain', d: 'Deux fajitas bien relevées aux jalapeños, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-crousty', n: 'Crousty', p: 12, photo: 'f-crousty', d: 'Deux burgers crousty ou un tacos crousty, avec des frites ou potatoes cheddar gruyère et une boisson.' },
       { id: 'formule-double-rolls', n: 'Double Rolls', p: 12, photo: 'f-double-rolls', d: 'Un rolls au steak et un rolls à l’escalope, avec des frites ou potatoes cheddar gruyère et une boisson.' },
@@ -243,6 +243,10 @@ for (const c of CARTE) for (const i of c.items) {
    decoupee en ses plats ; chacun a son bloc dans la fiche (son choix, ses
    ingredients, ses sauces) et le panier dit « Sandwich : sans oignon ». */
 const P = (court, titre, ing, opts = {}) => ({ court, titre, ing, ...opts });
+// Formules « simples » (Riad, 13/11) : le client ne choisit pas ses sauces, il peut seulement
+// demander sans legumes, sans sauce ou sans fromage, pour chaque plat de la formule.
+const SIMPLE = ['Légumes', 'Sauce', 'Fromage'];
+const S = (court, titre, opts = {}) => P(court, titre, SIMPLE, { simple: true, ...opts });
 const choixDe = (titre, liste) => ({ titre, min: 1, max: 1, options: o(liste) });
 const VIANDES_MAXI = ['Escalope', 'Escalope curry', 'Escalope tandoori', 'Steak'];
 // Burgers des formules « predefinis » (Riad, Bourgoin, 08/11) : sauce imposee
@@ -252,31 +256,30 @@ const VIANDES_MAXI = ['Escalope', 'Escalope curry', 'Escalope tandoori', 'Steak'
 const FORMULES = {
   'formule-classique': [P('Sandwich', 'Le sandwich escalope', [...LEG], { choix: choixDe('Assaisonnement', ['Curry', 'Tandoori', 'Paprika']) }),
     P('Burger', 'Le burger brioché', ['Salade', 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Fish']), sauceFixe: 'Sauce gruyère' })],
-  'formule-giant': [P('Big Max', 'Le Big Max', ['Salade', 'Cheddar', 'Cornichon'], { sauceFixe: 'Sauce burger et gruyère' }),
-    P('Giant', 'Le Giant', ['Salade', 'Cheddar', 'Cornichon'], { sauceFixe: 'Sauce burger et gruyère' })],
+  'formule-giant': [S('Big Max', 'Le Big Max', { sauceFixe: 'Sauce burger et gruyère' }), S('Giant', 'Le Giant', { sauceFixe: 'Sauce burger et gruyère' })],
+  // Rolls and Burger (Riad, 13/11) : seul le rolls se compose, le burger est servi tel quel.
   'formule-rolls-burger': [P('Galette', 'La galette', [...LEG], { choix: choixDe('Viande', ['Steak', 'Escalope']) }),
-    P('Burger', 'Le burger', [...LEG, 'Cheddar'], { choix: choixDe('Viande', ['Steak', 'Chicken']), sauceFixe: 'Sauce burger et gruyère' })],
-  'formule-smash': [P('Smash steak', 'Le smash double steak', [...LEG, 'Cornichon'], { sauceFixe: 'Sauce moutarde-miel et ketchup' }),
-    P('Smash tenders', 'Le smash tenders', [...LEG], { sauceFixe: 'Sauce burger et gruyère' })],
-  // Crousty : sauce de la maison ; legumes et oignons crispy au choix (offerts, a ajouter).
-  'formule-crousty': [P('Crousty', 'Le crousty', ['Cheddar'], { choix: choixDe('Au choix', ['2 burgers crousty', '1 tacos crousty']), sauceFixe: 'Sauce de la maison', legumes: [...LEG, 'Oignons crispy'] })],
+    P('Burger', 'Le burger', [], { choix: choixDe('Viande', ['Steak', 'Chicken']), sauceFixe: 'Sauce burger et gruyère' })],
+  'formule-smash': [S('Smash steak', 'Le smash double steak', { sauceFixe: 'Sauce moutarde-miel et ketchup' }), S('Smash tenders', 'Le smash tenders', { sauceFixe: 'Sauce burger et gruyère' })],
+  'formule-crousty': [S('Crousty', 'Le crousty', { choix: choixDe('Au choix', ['2 burgers crousty', '1 tacos crousty']), sauceFixe: 'Sauce de la maison' })],
   'formule-double-rolls': [P('Rolls steak', 'Le rolls steak', [...LEG]), P('Rolls escalope', 'Le rolls escalope', [...LEG])],
   'formule-rolls-dwich': [P('Rolls', 'Le rolls', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) }),
     P('Sandwich', 'Le sandwich', [...LEG], { choix: choixDe('Viande', ['Escalope', 'Curry', 'Tandoori', 'Steak']) })],
-  'formule-algerien': [P('Burger steak', 'Le burger matlouh steak', [...LEG], { sauceFixe: 'Sauce de la maison' }), P('Burger escalope', 'Le burger matlouh escalope', [...LEG], { sauceFixe: 'Sauce de la maison' })],
+  'formule-algerien': [S('Burger steak', 'Le burger matlouh steak', { sauceFixe: 'Sauce de la maison' }), S('Burger escalope', 'Le burger matlouh escalope', { sauceFixe: 'Sauce de la maison' })],
   'formule-maxi-tacos': [P('Maxi tacos', 'Le maxi tacos', ['Cheddar'], { choix: choixDe('Viande', VIANDES_MAXI), legumes: true }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']), sauceFixe: 'Sauce gruyère' })],
   'formule-maxi-sandwich': [P('Maxi sandwich', 'Le maxi sandwich', [...LEG], { choix: choixDe('Viande', VIANDES_MAXI) }),
     P('Burger', 'Le burger', [...LEG, 'Cornichon', 'Cheddar'], { choix: choixDe('Au choix', ['Maxi brioché', 'Chicken brioché']), sauceFixe: 'Sauce gruyère' })],
-  'formule-street': [P('Wraps', 'Les deux wraps chicken', ['Salade'], { sauceFixe: 'Sauce burger' }), P('Wings et tenders', 'Les 5 wings et 3 tenders', [])],
+  'formule-street': [S('Wraps', 'Les deux wraps chicken', { sauceFixe: 'Sauce burger' }), P('Wings et tenders', 'Les 5 wings et 3 tenders', [], { sauces: 0 })],
   // Les formules d'avant, gardees a cote des nouvelles (Nicolas, 17/10).
-  'formule-grill-wrap': [P('Anas Grill', 'L’Anas Grill', [...LEG, 'Cheddar', 'Bacon']), P('Wrap', 'Le wrap poulet', [...LEG, 'Cheddar'])],
-  'formule-turkish': [P('Galette', 'La galette kebab', [...LEG], { sauces: 1 }), P('Cheese', 'Le cheese', ['Salade', 'Tomate', 'Cornichon', 'Cheddar'])],
-  'formule-mielleux': [P('Burger', 'Le burger chèvre-miel', [...LEG]), P('Wrap', 'Le wrap poulet-chèvre', ['Salade', 'Oignon'])],
-  'formule-crocs': [P('Croc’s', 'Les deux croc’s bacon', ['Bacon'], { sauces: 0 }), P('Cheeseburgers', 'Les deux cheeseburgers', ['Salade', 'Tomate', 'Cheddar'])],
+  'formule-grill-wrap': [S('Anas Grill', 'L’Anas Grill'), S('Wrap', 'Le wrap poulet')],
+  'formule-turkish': [S('Galette', 'La galette kebab'), S('Cheese', 'Le cheese')],
+  'formule-mielleux': [S('Burger', 'Le burger chèvre-miel'), S('Wrap', 'Le wrap poulet-chèvre')],
+  'formule-crocs': [P('Croc’s', 'Les deux croc’s bacon', ['Bacon'], { sauces: 0 }), S('Cheeseburgers', 'Les deux cheeseburgers')],
   'formule-rolls': [P('Roulé', 'Le roulé', [...LEG], { choix: choixDe('Viande', ['Steak', 'Curry', 'Tandoori', 'Paprika']) }), P('Croc’s', 'Le croc’s', [], { sauces: 0, info: 'Jambon et fromage fondu, servi tel quel.' })],
-  'formule-forestier': [P('Forestier', 'Le sandwich forestier', ['Salade']), P('Maxi', 'Le maxi brioché', [...LEG, 'Cheddar']), P('Croc’s', 'Le croc’s', [], { sauces: 0, info: 'Jambon et fromage fondu, servi tel quel.' })],
-  'formule-mexicain': [P('Fajitas', 'Les deux fajitas', [...LEG, 'Jalapeños', 'Cheddar'])],
+  // Forestier (Riad, 13/11) : plus de croc's dans la formule.
+  'formule-forestier': [S('Forestier', 'Le sandwich forestier'), S('Maxi', 'Le maxi brioché')],
+  'formule-mexicain': [S('Fajitas', 'Les deux fajitas')],
 };
 // « 1 frite ou potatoes cheddar gruyere » dans chaque formule (panneau du 16/10).
 const G_ACCOMP = { id: 'accompagnement', titre: 'Ton accompagnement', min: 1, max: 1, options: o(['Frites cheddar gruyère', 'Potatoes cheddar gruyère']) };
@@ -286,13 +289,13 @@ for (const c of CARTE) for (const i of c.items) {
     const tag = { partie: p.titre, court: p.court };
     return [
       ...(p.choix ? [{ id: 'choix-' + n, ...p.choix, ...tag }] : []),
-      ...(p.ing.length ? [{ ...sans(...p.ing), id: 'retirer-' + n, ...tag }] : []),
+      ...(p.ing.length ? [{ ...sans(...p.ing), id: 'retirer-' + n, ...(p.simple ? { titre: 'Sans…', aide: 'touche ce que tu ne veux pas' } : {}), ...tag }] : []),
       ...(p.legumes ? [{ ...G.legumes, id: 'legumes-' + n, ...(Array.isArray(p.legumes) ? { options: o(p.legumes), max: p.legumes.length } : {}), ...tag }] : []),
       ...(p.info ? [{ id: 'info-' + n, type: 'info', texte: p.info, ...tag }] : []),
       // Sauce imposee (Riad, 08/11) : on la dit, sans la faire choisir.
       ...(p.sauceFixe ? [{ id: 'info-sauce-' + n, type: 'info', texte: p.sauceFixe + ', comme en boutique.', ...tag }] : []),
       // Un croc's (croque-monsieur) ne prend pas de sauce : pas de carte Sauces.
-      ...(p.sauces === 0 || p.sauceFixe ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
+      ...(p.sauces === 0 || p.sauceFixe || p.simple ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
     ];
   });
 }

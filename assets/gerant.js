@@ -74,6 +74,8 @@
     $('[data-offre-max]').value = o.sauces_max === 1 ? '1' : '2';
     var sauces = o.titre ? (o.sauces || []) : (window.AG_SAUCES || []);
     $('[data-offre-sauces]').innerHTML = (window.AG_SAUCES || []).map(function (n) { return puce(n, sauces.indexOf(n) >= 0); }).join('');
+    var viandes = o.viandes || [];
+    $('[data-offre-viandes]').innerHTML = (window.AG_VIANDES || []).map(function (n) { return puce(n, viandes.indexOf(n) >= 0); }).join('');
     var sans = o.retirer || [];
     $('[data-offre-sans]').innerHTML = SANS_DE_BASE.concat(sans.filter(function (n) { return SANS_DE_BASE.indexOf(n) < 0; })).map(function (n) { return puce(n, sans.indexOf(n) >= 0); }).join('');
     $('[data-offre-photo-etat]').textContent = photoOffre ? 'Changer la photo' : 'Choisir une photo';
@@ -83,11 +85,11 @@
   function lireOffre() {
     return { titre: $('[data-offre-titre]').value.trim(), texte: $('[data-offre-texte]').value.trim(), image: photoOffre,
       prix: parseFloat(($('[data-offre-prix]').value || '').replace(',', '.')) || 0,
-      sauces: cochees('[data-offre-sauces]'), sauces_max: +$('[data-offre-max]').value, retirer: cochees('[data-offre-sans]') };
+      sauces: cochees('[data-offre-sauces]'), sauces_max: +$('[data-offre-max]').value, retirer: cochees('[data-offre-sans]'), viandes: cochees('[data-offre-viandes]') };
   }
   function apercuOffre() {
     var o = lireOffre();
-    var details = [o.sauces.length ? (o.sauces_max === 1 ? '1 sauce au choix' : 'jusqu’à 2 sauces') : 'sans choix de sauce', o.retirer.length ? 'sans ' + o.retirer.join(', sans ').toLowerCase() + ' possible' : ''].filter(Boolean).join(' · ');
+    var details = [o.viandes.length > 1 ? 'viande au choix : ' + o.viandes.join(', ').toLowerCase() : o.viandes.length ? 'viande : ' + o.viandes[0].toLowerCase() : '', o.sauces.length ? (o.sauces_max === 1 ? '1 sauce au choix' : 'jusqu’à 2 sauces') : 'sans choix de sauce', o.retirer.length ? 'sans ' + o.retirer.join(', sans ').toLowerCase() + ' possible' : ''].filter(Boolean).join(' · ');
     $('[data-offre-apercu]').innerHTML = '<li class="plat plat-offre"><div class="plat-bouton">' +
       '<span class="plat-photo">' + (photoOffre ? '<img src="' + esc(photoOffre) + '" alt="">' : '') + '</span>' +
       '<span class="plat-texte"><b>' + esc(o.titre || 'Titre de l’offre') + '</b>' + (o.texte ? '<small>' + esc(o.texte) + '</small>' : '') + '</span>' +
@@ -189,6 +191,7 @@
             '<label class="ge-champ"><span>Titre</span><input data-offre-titre maxlength="60" placeholder="ex. Formule du soir" required></label>' +
             '<label class="ge-champ"><span>Description</span><textarea data-offre-texte maxlength="200" rows="3" placeholder="ex. Tacos 2 viandes, frites et boisson"></textarea></label>' +
             '<label class="ge-champ"><span>Prix (€)</span><input data-offre-prix inputmode="decimal" placeholder="12,00" required></label>' +
+            '<fieldset class="ge-champ"><legend>Viande au choix</legend><p class="ge-aide-petite">Coche les viandes proposées : le client en choisira une. Rien de coché = pas de choix de viande.</p><div class="ge-puces" data-offre-viandes></div></fieldset>' +
             '<fieldset class="ge-champ"><legend>Sauces au choix</legend><div class="ge-puces" data-offre-sauces></div>' +
               '<label class="ge-ligne"><span>Le client peut en prendre</span><select data-offre-max><option value="2">jusqu’à 2</option><option value="1">une seule</option></select></label></fieldset>' +
             '<fieldset class="ge-champ"><legend>Boutons « sans … »</legend><div class="ge-puces" data-offre-sans></div>' +

@@ -19,18 +19,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
-<meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="../assets/style.css?v=95">
+<meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="../assets/style.css?v=96">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.anasgrill.fr/#anas-grill","name":"Anas Grill","url":"https://www.anasgrill.fr/","description":"Fast-food aux formules à 10 € toute l’année : sandwichs, tacos, burgers, à Lyon et en Isère."}]}</script>
 </head>
 <body class="page-suivi">
 <a class="evitement" href="#contenu">Aller au contenu</a>
 
-<header class="entete suivi-entete"><div class="cadre entete-in"><a class="marque marque-petite" href="../" aria-label="Anas Grill, accueil"><img class="logo" src="../assets/logo.webp?v=95" alt="Anas Grill" width="512" height="512"></a></div></header>
+<header class="entete suivi-entete"><div class="cadre entete-in"><a class="marque marque-petite" href="../" aria-label="Anas Grill, accueil"><img class="logo" src="../assets/logo.webp?v=96" alt="Anas Grill" width="512" height="512"></a></div></header>
 <main id="contenu" class="suivi" data-suivi aria-live="polite"></main>
 <script type="application/json" id="anas-snacks">[{"id":"lyon-8","tel":"07 53 59 38 91"},{"id":"charpennes","tel":"07 54 87 93 04"},{"id":"la-duchere","tel":"06 63 29 79 47"},{"id":"rillieux-la-pape","tel":"06 59 26 08 96"},{"id":"vaulx-en-velin","tel":"06 05 71 17 65"},{"id":"venissieux","tel":"07 53 91 82 47"},{"id":"bourgoin-jallieu","tel":"07 75 43 84 16"}]</script>
 <footer class="pied">
   <div class="cadre pied-in">
-    <a class="pied-logo" href="../"><img class="logo" src="../assets/logo.webp?v=95" alt="Anas Grill" width="512" height="512"></a>
+    <a class="pied-logo" href="../"><img class="logo" src="../assets/logo.webp?v=96" alt="Anas Grill" width="512" height="512"></a>
     <p>Les formules à 10 € toute l’année, dans nos 7 restaurants de Lyon et d’Isère.</p>
     <nav class="pied-snacks" aria-label="Nos restaurants"><a href="../lyon-8/">Lyon 8</a><a href="../charpennes/">Charpennes</a><a href="../la-duchere/">La Duchère</a><a href="../rillieux-la-pape/">Rillieux-la-Pape</a><a href="../vaulx-en-velin/">Vaulx-en-Velin</a><a href="../venissieux/">Vénissieux</a><a href="../bourgoin-jallieu/">Bourgoin-Jallieu</a></nav>
     <p class="pied-bas">© 2026 Anas Grill · <a href="../mentions-legales/">Mentions légales</a> · <a href="../cgv/">Conditions de vente</a> · <a href="../confidentialite/">Confidentialité</a> · <a href="#" data-cookies>Cookies</a> · Site réalisé par <a class="lien-locweb" href="https://locweb.fr" target="_blank" rel="noopener">LocWeb</a></p>
@@ -47,11 +47,11 @@
   // Page gardee en cache par le telephone (ancienne carte, ancien mode de
   // paiement) : si une version plus recente est en ligne, on recharge une fois.
   fetch('../version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (x) { return x.json(); }).then(function (j) {
-    if (j.v !== '95' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
+    if (j.v !== '96' && sessionStorage.getItem('ag-recharge') !== j.v) { sessionStorage.setItem('ag-recharge', j.v); location.reload(); }
   }).catch(function () {});
 </script>
-<script src="../assets/cookies.js?v=95" defer></script>
-<script src="../assets/appli.js?v=95" defer></script>
-<script src="../assets/suivi.js?v=95" defer></script>
+<script src="../assets/cookies.js?v=96" defer></script>
+<script src="../assets/appli.js?v=96" defer></script>
+<script src="../assets/suivi.js?v=96" defer></script>
 </body>
 </html>
