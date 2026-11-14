@@ -87,9 +87,13 @@
       prix: parseFloat(($('[data-offre-prix]').value || '').replace(',', '.')) || 0,
       sauces: cochees('[data-offre-sauces]'), sauces_max: +$('[data-offre-max]').value, retirer: cochees('[data-offre-sans]'), viandes: cochees('[data-offre-viandes]') };
   }
+  // Meme partage que le site et le serveur (15/11) : salade, tomate, oignon se choisissent, le reste se retire.
+  var CRU = /^(salade|tomate|oignon)$/i;
+  function crudites(l) { var c = l.filter(function (n) { return CRU.test(n); }); return c.length ? 'crudités au choix : ' + c.join(', ').toLowerCase() : ''; }
+  function autresSans(l) { var a = l.filter(function (n) { return !CRU.test(n); }); return a.length ? 'sans ' + a.join(', sans ').toLowerCase() + ' possible' : ''; }
   function apercuOffre() {
     var o = lireOffre();
-    var details = [o.viandes.length > 1 ? 'viande au choix : ' + o.viandes.join(', ').toLowerCase() : o.viandes.length ? 'viande : ' + o.viandes[0].toLowerCase() : '', o.sauces.length ? (o.sauces_max === 1 ? '1 sauce au choix' : 'jusqu’à 2 sauces') : 'sans choix de sauce', o.retirer.length ? 'sans ' + o.retirer.join(', sans ').toLowerCase() + ' possible' : ''].filter(Boolean).join(' · ');
+    var details = [o.viandes.length > 1 ? 'viande au choix : ' + o.viandes.join(', ').toLowerCase() : o.viandes.length ? 'viande : ' + o.viandes[0].toLowerCase() : '', o.sauces.length ? (o.sauces_max === 1 ? '1 sauce au choix' : 'jusqu’à 2 sauces') : 'sans choix de sauce', crudites(o.retirer), autresSans(o.retirer)].filter(Boolean).join(' · ');
     $('[data-offre-apercu]').innerHTML = '<li class="plat plat-offre"><div class="plat-bouton">' +
       '<span class="plat-photo">' + (photoOffre ? '<img src="' + esc(photoOffre) + '" alt="">' : '') + '</span>' +
       '<span class="plat-texte"><b>' + esc(o.titre || 'Titre de l’offre') + '</b>' + (o.texte ? '<small>' + esc(o.texte) + '</small>' : '') + '</span>' +
@@ -192,9 +196,9 @@
             '<label class="ge-champ"><span>Description</span><textarea data-offre-texte maxlength="200" rows="3" placeholder="ex. Tacos 2 viandes, frites et boisson"></textarea></label>' +
             '<label class="ge-champ"><span>Prix (€)</span><input data-offre-prix inputmode="decimal" placeholder="12,00" required></label>' +
             '<fieldset class="ge-champ"><legend>Viande au choix</legend><p class="ge-aide-petite">Coche les viandes proposées : le client en choisira une. Rien de coché = pas de choix de viande.</p><div class="ge-puces" data-offre-viandes></div></fieldset>' +
-            '<fieldset class="ge-champ"><legend>Sauces au choix</legend><div class="ge-puces" data-offre-sauces></div>' +
+            '<fieldset class="ge-champ"><legend>Sauces au choix</legend><p class="ge-aide-petite">Le client choisit toujours : ses sauces ou « sans sauce ».</p><div class="ge-puces" data-offre-sauces></div>' +
               '<label class="ge-ligne"><span>Le client peut en prendre</span><select data-offre-max><option value="2">jusqu’à 2</option><option value="1">une seule</option></select></label></fieldset>' +
-            '<fieldset class="ge-champ"><legend>Boutons « sans … »</legend><div class="ge-puces" data-offre-sans></div>' +
+            '<fieldset class="ge-champ"><legend>Ingrédients du plat</legend><p class="ge-aide-petite">Salade, tomate, oignon : le client choisit ses crudités (ou « sans crudités »). Les autres : il peut les retirer.</p><div class="ge-puces" data-offre-sans></div>' +
               '<div class="ge-ligne"><input data-offre-ajout maxlength="30" placeholder="Autre ingrédient (ex. Poivrons)"><button type="button" class="cu-bouton" data-offre-ajouter>Ajouter</button></div></fieldset>' +
             '<div class="cu-actions"><button class="cu-bouton cu-feu">Publier l’offre</button><button type="button" class="cu-bouton cu-discret" data-offre-retirer>Retirer l’offre</button></div>' +
           '</div><div class="ge-apercu"><small>Aperçu sur le site</small><ul class="plats" data-offre-apercu></ul></div></form>' +

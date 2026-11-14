@@ -46,6 +46,8 @@
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.refus || j.error || 'Le serveur ne répond pas. Réessaie dans un instant.'); return j; }); });
   }
   var ETAT = { pause: false, ferme: null, epuises: [], creneaux_pleins: [], offre: null };
+  var SANS_CRUDITES = 'Sans crudités';
+  var estCrudite = function (n) { return /^(salade|tomate|oignon)$/i.test(String(n).trim()); };
   var STRIPE = R.paiement === 'stripe' && R.stripePk;
   var PLATS = {};
   D.carte.forEach(function (c) { c.items.forEach(function (i) { PLATS[i.id] = i; }); });
@@ -56,9 +58,13 @@
     if (!o || !o.titre || !(o.prix > 0)) return null;
     var groupes = [];
     if (o.viandes && o.viandes.length) groupes.push({ id: 'viande', titre: 'Viande au choix', min: 1, max: 1, options: o.viandes.map(function (n) { return { n: n, p: 0 }; }) });
-    if (o.retirer && o.retirer.length) groupes.push({ id: 'retirer', type: 'retirer', titre: 'Ingrédients', aide: 'touche pour retirer', min: 0, max: o.retirer.length, options: o.retirer.map(function (n) { return { n: n, p: 0 }; }) });
+    // Salade, tomate, oignon : des crudites a choisir (ou « Sans crudités ») ; le reste se retire (Riad, 15/11).
+    var cru = (o.retirer || []).filter(estCrudite), autres = (o.retirer || []).filter(function (n) { return !estCrudite(n); });
+    if (cru.length) groupes.push({ id: 'legumes', type: 'crudites', titre: 'Crudités', aide: 'touche ce que tu veux, ou sans crudités', prefixe: 'avec ', min: 1, max: cru.length, options: [SANS_CRUDITES].concat(cru).map(function (n) { return { n: n, p: 0 }; }) });
+    if (autres.length) groupes.push({ id: 'retirer', type: 'retirer', titre: 'Ingrédients', aide: 'touche pour retirer', min: 0, max: autres.length, options: autres.map(function (n) { return { n: n, p: 0 }; }) });
     var max = o.sauces_max === 1 ? 1 : 2;
-    if (o.sauces && o.sauces.length) groupes.push({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte' : 'jusqu’à 2, offertes', min: 0, max: max, options: o.sauces.map(function (n) { return { n: n, p: 0, photo: PHOTO_SAUCE[n] }; }) });
+    var sauces = ['Sans sauce'].concat((o.sauces || []).filter(function (n) { return n !== 'Sans sauce'; }));
+    if (o.sauces && o.sauces.length) groupes.push({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte, ou sans sauce' : 'jusqu’à 2, offertes, ou sans sauce', min: 1, max: max, options: sauces.map(function (n) { return { n: n, p: 0, photo: PHOTO_SAUCE[n] }; }) });
     return { id: 'offre', n: o.titre, d: o.texte || '', p: o.prix, image: o.image || '', groupes: groupes };
   }
   function montrerOffre() {
@@ -72,6 +78,7 @@
       return;
     }
     PLATS.offre = plat;
+    nettoyerPanier();
     var plus = $('.plat-plus') ? $('.plat-plus').innerHTML : '+';
     var sec = document.createElement('section');
     sec.className = 'categorie categorie-offre'; sec.id = 'offre';
@@ -108,6 +115,27 @@
   var etat = { lignes: [], infos: { mode: 'emporter' } };
   try { var lu = JSON.parse(localStorage.getItem(CLE) || 'null'); if (lu && lu.lignes) etat = lu; } catch (e) {}
   etat.infos = etat.infos || { mode: 'emporter' };
+  // Une ligne est complete si chaque choix obligatoire a sa reponse et si chaque choix existe encore.
+  // Sinon le serveur la refuserait au paiement : on la retire tout de suite, en le disant (15/11).
+  function ligneComplete(l) {
+    var i = PLATS[l.id]; if (!i) return true; // l'offre, avant que le serveur l'ait envoyee
+    var ch = l.choix || {};
+    return (i.groupes || []).every(function (g) {
+      if (g.type === 'info') return true;
+      var v = ch[g.id] || [];
+      if (g.siChoix && ((ch[g.siChoix.groupe] || [])[0] || g.siChoix.sauf) === g.siChoix.sauf) return true;
+      var min = g.inclusSi && (ch[g.inclusSi.groupe] || [])[0] === g.inclusSi.option ? 1 : g.min;
+      return v.length >= min && v.every(function (n) { return g.options.some(function (x) { return x.n === n; }); });
+    });
+  }
+  function nettoyerPanier() {
+    var parties = etat.lignes.filter(function (l) { return !ligneComplete(l); });
+    if (!parties.length) return;
+    etat.lignes = etat.lignes.filter(ligneComplete);
+    garder(); majBarre();
+    toast(parties.map(function (l) { return l.n; }).join(', ') + ' : à remettre au panier, il faut choisir sauces et crudités');
+  }
+  setTimeout(nettoyerPanier, 0);
   // Pas de livraison pour l'instant (Hakim, 15/10) : tout est a emporter. R.livraison la rallume.
   if (!R.livraison) etat.infos.mode = 'emporter';
   try { var a = JSON.parse(localStorage.getItem('anas-adresse') || 'null'); if (a && !etat.infos.adresse) { etat.infos.adresse = a.label; etat.infos.lat = a.lat; etat.infos.lng = a.lng; } } catch (e) {}
@@ -164,7 +192,7 @@
     // n : la ligne du panier qu'on modifie (ses choix et sa quantite sont repris).
     var edit = n != null ? etat.lignes[n] : null;
     enCours = { plat: i, choix: edit ? JSON.parse(JSON.stringify(edit.choix || {})) : {}, qte: edit ? edit.qte : 1, ligne: edit ? n : null };
-    if (!edit) i.groupes.forEach(function (g) { if (g.min === 1 && g.max === 1 && g.id !== 'boisson' && g.id !== 'parfum') enCours.choix[g.id] = [g.options[0].n]; });
+    if (!edit) i.groupes.forEach(function (g) { if (g.min === 1 && g.max === 1 && g.id !== 'boisson' && g.id !== 'parfum' && g.type !== 'sauces' && g.type !== 'crudites') enCours.choix[g.id] = [g.options[0].n]; });
     // Un choix unique facultatif (le gratine) : « Sans » coche par defaut, pour pouvoir revenir en arriere.
     var optionsDe = function (g) { return g.max === 1 && g.min === 0 ? [{ n: 'Sans', p: 0 }].concat(g.options) : g.options; };
     feuille.innerHTML =
@@ -179,6 +207,14 @@
         // Les legumes du tacos sont dans les memes tuiles que les ingredients, decoches :
         // le client touche pour les ajouter (Nicolas, 07/11). Le groupe « legumes » reste a part pour le serveur.
         if (EXTRA.test(g.id) && retirerDe(i, g.id)) return '';
+        if (g.type === 'crudites') {
+          return '<fieldset class="groupe groupe-retirer groupe-crudites" data-groupe="' + g.id + '" data-crudites><legend><b>' + esc(g.titre) + '</b><small>Obligatoire</small></legend><div class="ings">' +
+            g.options.map(function (o) {
+              var sans = o.n === SANS_CRUDITES;
+              return '<label class="ing ing-ajout' + (sans ? ' ing-sans' : '') + '"><input type="checkbox" value="' + esc(o.n) + '"' + ((enCours.choix[g.id] || []).indexOf(o.n) >= 0 ? ' checked' : '') + '>' +
+                (sans ? '<i class="ing-photo ing-aucune" aria-hidden="true"></i>' : iconeDe(o.n)) + '<span>' + esc(o.n) + '</span><em>✓</em></label>';
+            }).join('') + '</div></fieldset>';
+        }
         if (g.type === 'retirer') {
           var ext = extrasDe(i, g.id);
           return '<fieldset class="groupe groupe-retirer" data-groupe="' + g.id + '" data-retirer><legend><b>' + esc(g.titre) + '</b><small>' + (ext.length ? 'touche pour retirer ou ajouter' : esc(g.aide)) + '</small></legend><div class="ings">' +
@@ -240,7 +276,7 @@
   // Un seul bloc « Ingredients » par plat (Nicolas, 07/11) : ce qui est dedans (coche, a retirer)
   // et ce qu'on peut ajouter (legumes, supplements : decoche). Les groupes restent separes pour le
   // serveur ; on les dessine seulement ensemble. retirer <-> legumes / supplements, retirer-0 <-> legumes-0.
-  var EXTRA = /^(legumes|supplements)(-\d+)?$/;
+  var EXTRA = /^supplements(-\d+)?$/;
   function suffixe(id) { var m = /-\d+$/.exec(id); return m ? m[0] : ''; }
   function retirerDe(i, idExtra) {
     var id = 'retirer' + suffixe(idExtra);
@@ -301,6 +337,12 @@
   }
   feuille.addEventListener('change', function (e) {
     var f = e.target.closest('[data-groupe]'); if (!f) return;
+    if (f.hasAttribute('data-crudites')) {
+      var sansC = e.target.value === SANS_CRUDITES;
+      if (e.target.checked) f.querySelectorAll('input').forEach(function (x) { if (x !== e.target && (sansC || x.value === SANS_CRUDITES)) x.checked = false; });
+      enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:checked'), function (x) { return x.value; });
+      majFiche(); return;
+    }
     if (f.hasAttribute('data-retirer')) {
       enCours.choix[f.getAttribute('data-groupe')] = [].map.call(f.querySelectorAll('input:not([data-leg]):not(:checked)'), function (x) { return x.value; });
       [].forEach.call(f.querySelectorAll('[data-leg]'), function (x) { enCours.choix[x.getAttribute('data-leg')] = []; });
@@ -340,7 +382,16 @@
     if (q) { enCours.qte = Math.max(1, Math.min(20, enCours.qte + +q.getAttribute('data-q'))); majFiche(); return; }
     if (e.target.closest('[data-ajouter-fiche]')) {
       var manque = enCours.plat.groupes.filter(function (g) { return (enCours.choix[g.id] || []).length < minDe(g); })[0];
-      if (manque) { toast('Choisis : ' + manque.titre.replace(/\s*\?$/, '').toLowerCase()); return; }
+      if (manque) {
+        toast('Choisis : ' + manque.titre.replace(/\s*\?$/, '').toLowerCase() + (manque.partie ? ' (' + manque.partie.toLowerCase() + ')' : ''));
+        var fm = feuille.querySelector('[data-groupe="' + manque.id + '"]');
+        if (fm) {
+          fm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (manque.type === 'sauces') ouvrirSauces(fm, true);
+          fm.classList.remove('a-choisir'); void fm.offsetWidth; fm.classList.add('a-choisir');
+        }
+        return;
+      }
       if (enCours.ligne != null) { remplacer(enCours.ligne, enCours.plat, enCours.choix, enCours.qte, prixFiche()); cacher(feuille); rouvrirPanier(); return; }
       ajouter(enCours.plat, enCours.choix, enCours.qte, prixFiche()); cacher(feuille);
     }
@@ -366,6 +417,7 @@
     if (g.siChoix && ((choix[g.siChoix.groupe] || [])[0] || g.siChoix.sauf) === g.siChoix.sauf) return '';
     return [g].map(function (g) {
       if (g.type === 'retirer') return (choix[g.id] || []).map(function (n) { return 'sans ' + n.toLowerCase(); }).join(', ');
+      if (g.type === 'crudites') return (choix[g.id] || [])[0] === SANS_CRUDITES ? 'sans crudités' : (choix[g.id] || []).length ? 'avec ' + choix[g.id].join(', ').toLowerCase() : '';
       if (g.type === 'sauces') return (choix[g.id] || [])[0] === 'Sans sauce' ? 'sans sauce' : (choix[g.id] || []).length ? 'sauce ' + fmtSauces(choix[g.id]).toLowerCase() : '';
       if (g.prefixe) return (choix[g.id] || []).length ? g.prefixe + choix[g.id].join(', ').toLowerCase() : '';
       var c = (choix[g.id] || []).filter(function (n) { return !/^Seul$|^Normal/.test(n); });

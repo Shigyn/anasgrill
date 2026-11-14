@@ -887,3 +887,20 @@ button.ligne-texte:hover b { color: var(--jaune); }
 .suivi .conf-recap span small { display: block; font-size: .85rem; opacity: .75; }
 .suivi .bouton { margin-top: 6px; }
 @media (prefers-reduced-motion: reduce) { .suivi-etapes .en-cours i, .suivi-direct i { animation: none; } }
+
+/* Crudites obligatoires (Riad, 15/11) : rien de coche au depart, le client touche ce qu'il veut ou « Sans crudités ». */
+.groupe-crudites .ing em { opacity: 0; transform: scale(.6); }
+.groupe-crudites .ing:has(input:checked) em { opacity: 1; transform: none; background: var(--feu); color: #1b0d00; }
+.groupe-crudites .ing:has(input:not(:checked)) em { opacity: 0; }
+.ing-aucune { display: block; position: relative; border: 2px dashed var(--doux); background: transparent; box-shadow: none; }
+.ing-aucune::after { content: ''; position: absolute; left: 50%; top: 12%; bottom: 12%; width: 2px; margin-left: -1px; background: var(--doux); transform: rotate(45deg); }
+.ing.ing-sans:has(input:checked) .ing-aucune { border-color: #ffae12; }
+.ing.ing-sans:has(input:checked) .ing-aucune::after { background: #ffae12; }
+/* La reponse qui manque : le bloc clignote une fois quand le client touche « Ajouter ». */
+.groupe.a-choisir { animation: a-choisir 1.2s ease; border-radius: 14px; }
+@keyframes a-choisir { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 20%, 60% { box-shadow: 0 0 0 3px var(--rouge); } }
+@media (prefers-reduced-motion: reduce) { .groupe.a-choisir { animation: none; box-shadow: 0 0 0 3px var(--rouge); } }
+/* Photo en hauteur (offre du moment du gerant) : elle ne doit jamais agrandir l'en-tete de la fiche
+   et cacher les choix (15/11). L'en-tete garde son format, la photo s'y cadre. */
+.feuille-tete { overflow: hidden; }
+.feuille-tete img { position: absolute; inset: 0; }

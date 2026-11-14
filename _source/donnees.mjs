@@ -58,6 +58,15 @@ const o = (liste) => liste.map((x) => (Array.isArray(x) ? { n: x[0], p: x[1] } :
 // avec le client (cahier, question menu).
 const sans = (...n) => ({ id: 'retirer', type: 'retirer', titre: 'Ingrédients', aide: 'touche pour retirer', min: 0, max: n.length, options: n.map((x) => ({ n: x, p: 0 })) });
 
+// Crudites et sauces OBLIGATOIRES partout (Riad, 15/11 : « le client peut payer alors qu'il n'a pas
+// choisi ses sauces et crudites »). Le client repond toujours : ses crudites ou « Sans crudités »,
+// ses sauces ou « Sans sauce ». Le ticket le dit toujours, la cuisine n'a jamais un vide a deviner.
+// Salade, tomate, oignon ne sont donc plus « a retirer » : ils se choisissent. Le reste (cheddar, bacon...) se retire.
+const CRUDITES = ['Salade', 'Tomate', 'Oignon'];
+const SANS_CRUDITES = 'Sans crudités';
+const crudites = (liste) => ({ id: 'legumes', type: 'crudites', titre: 'Crudités', aide: 'touche ce que tu veux, ou sans crudités', prefixe: 'avec ', min: 1, max: liste.length, options: o([SANS_CRUDITES, ...liste]) });
+const trier = (liste) => ({ cru: liste.filter((x) => CRUDITES.includes(x)), reste: liste.filter((x) => !CRUDITES.includes(x)) });
+
 const G = {
   viande: { id: 'viande', titre: 'Viande au choix', min: 1, max: 1, options: o(VIANDES) },
   // Panneau : « Sandwichs +1 € : merguez, steak, tandoori, curry ; +2 € : tenders, cordon bleu, kebab ».
@@ -71,8 +80,8 @@ const G = {
   viande2: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])) },
   maxi: { id: 'taille', titre: 'Taille', min: 1, max: 1, options: o([['Normal (1 viande)', 0], ['Maxi (2 viandes)', 3]]) },
   // Dans le maxi, la 2e viande est comprise : obligatoire et sans supplement.
-  // Tacos : les legumes au choix, offerts (Hakim, 07/11). Rien par defaut.
-  legumes: { id: 'legumes', titre: 'Légumes', aide: 'au choix, offerts', prefixe: 'avec ', min: 0, max: 3, options: o(['Salade', 'Tomate', 'Oignon']) },
+  // Tacos : les crudites au choix, offertes (Hakim, 07/11), obligatoires depuis le 15/11.
+  legumes: crudites(CRUDITES),
   // Tacos : la 2e viande n'apparait qu'en Maxi, comprise et obligatoire (Nicolas, 07/11 : « 2e viande » + « Maxi », c'etait en double).
   viande2Tacos: { id: 'viande2', titre: '2e viande ?', prefixe: '+ ', min: 0, max: 1, options: o(VIANDES.map((v) => [v, 2.5])), inclusSi: { groupe: 'taille', option: 'Maxi (2 viandes)' }, siChoix: { groupe: 'taille', sauf: 'Normal (1 viande)' } },
 };
@@ -227,15 +236,17 @@ const PERSO = {
 };
 // A grignoter et menus enfant : une sauce offerte, 1 EUR la sauce en plus.
 const UNE_SAUCE = ['bouchees-camembert', 'gr-tenders', 'gr-nuggets', 'enfant-cheese', 'enfant-nuggets'];
-const SAUCES_G = (max) => ({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte' : 'jusqu’à 2, offertes', min: 0, max, options: o(SAUCES) });
+// Toujours obligatoire, « Sans sauce » en premier (meme regle que le tacos du 07/11, etendue le 15/11).
+const SAUCES_G = (max) => ({ id: 'sauces', type: 'sauces', titre: max === 1 ? 'Ta sauce' : 'Tes sauces', aide: max === 1 ? 'une, offerte, ou sans sauce' : 'jusqu’à 2, offertes, ou sans sauce', min: 1, max, options: o(['Sans sauce', ...SAUCES]) });
 // Une offerte, puis 1 EUR la sauce en plus (jusqu'a 3).
-const SAUCES_PAYANTES = () => ({ ...SAUCES_G(3), titre: 'Tes sauces', aide: '1 offerte, 1 € la sauce en plus', offertes: 1, prixSup: 1 });
+const SAUCES_PAYANTES = () => ({ ...SAUCES_G(3), titre: 'Tes sauces', aide: '1 offerte, 1 € la sauce en plus, ou sans sauce', offertes: 1, prixSup: 1 });
 for (const c of CARTE) for (const i of c.items) {
   const autres = (i.groupes || []).filter((g) => g.type !== 'retirer' && g.id !== 'sauces');
   const saucesAvant = (i.groupes || []).find((g) => g.id === 'sauces');
   const requis = autres.filter((g) => (g.min >= 1 || g.id === 'viande2') && g.id !== 'menu');
   const reste = autres.filter((g) => !requis.includes(g));
-  i.groupes = [...requis, ...((PERSO[i.id] || []).length ? [sans(...PERSO[i.id])] : []), (UNE_SAUCE.includes(i.id) ? SAUCES_PAYANTES() : SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2)), ...reste];
+  const t = trier(PERSO[i.id] || []);
+  i.groupes = [...requis, ...(t.cru.length ? [crudites(t.cru)] : []), ...(t.reste.length ? [sans(...t.reste)] : []), (UNE_SAUCE.includes(i.id) ? SAUCES_PAYANTES() : SAUCES_G(saucesAvant && saucesAvant.max === 1 ? 1 : 2)), ...reste];
 }
 
 /* ---------------- les formules, element par element (Nicolas, 2026-10-15) ----------------
@@ -287,10 +298,13 @@ for (const c of CARTE) for (const i of c.items) {
   const parts = FORMULES[i.id]; if (!parts) continue;
   i.groupes = parts.flatMap((p, n) => {
     const tag = { partie: p.titre, court: p.court };
+    // Formules « simples » : leur « Sans… » (legumes, sauce, fromage) reste tel quel, la sauce y est imposee.
+    const t = p.simple ? { cru: [], reste: p.ing } : trier(p.ing);
+    const cru = Array.isArray(p.legumes) ? p.legumes : p.legumes ? CRUDITES : t.cru;
     return [
       ...(p.choix ? [{ id: 'choix-' + n, ...p.choix, ...tag }] : []),
-      ...(p.ing.length ? [{ ...sans(...p.ing), id: 'retirer-' + n, ...(p.simple ? { titre: 'Sans…', aide: 'touche ce que tu ne veux pas' } : {}), ...tag }] : []),
-      ...(p.legumes ? [{ ...G.legumes, id: 'legumes-' + n, ...(Array.isArray(p.legumes) ? { options: o(p.legumes), max: p.legumes.length } : {}), ...tag }] : []),
+      ...(cru.length ? [{ ...crudites(cru), id: 'legumes-' + n, ...tag }] : []),
+      ...(t.reste.length ? [{ ...sans(...t.reste), id: 'retirer-' + n, ...(p.simple ? { titre: 'Sans…', aide: 'touche ce que tu ne veux pas' } : {}), ...tag }] : []),
       ...(p.info ? [{ id: 'info-' + n, type: 'info', texte: p.info, ...tag }] : []),
       // Sauce imposee (Riad, 08/11) : on la dit, sans la faire choisir.
       ...(p.sauceFixe ? [{ id: 'info-sauce-' + n, type: 'info', texte: p.sauceFixe + ', comme en boutique.', ...tag }] : []),
@@ -323,13 +337,7 @@ CARTE.push(
   ] },
 );
 
-// Tacos : au moins une sauce obligatoire (Nicolas, 22/10), aussi dans la formule Maxi Tacos.
-const SAUCE_OBLIGATOIRE = { tacos: 'sauces', 'formule-maxi-tacos': 'sauces-0' };
-for (const c of CARTE) for (const i of c.items) {
-  const g = SAUCE_OBLIGATOIRE[i.id] && (i.groupes || []).find((x) => x.id === SAUCE_OBLIGATOIRE[i.id]);
-  // « Sans sauce » se choisit comme une sauce (Hakim, 07/11) : le client dit toujours ce qu'il veut.
-  if (g) { g.min = 1; g.aide = 'jusqu’à ' + g.max + ' offertes, ou sans sauce'; g.options = [{ n: 'Sans sauce', p: 0 }, ...g.options]; }
-}
+// Sauce obligatoire : n'est plus reservee au tacos (22/10), c'est la regle de SAUCES_G partout depuis le 15/11.
 
 // Les formules en DERNIERE categorie, pas en premiere (Hakim, 21/10).
 {
