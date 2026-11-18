@@ -116,8 +116,14 @@ const restaurantSchema = (s) => ({
   url: abs(s.id + '/'), telephone: s.tel, priceRange: '1–10 €', servesCuisine: ['Fast-food', 'Burgers', 'Tacos', 'Sandwichs'],
   address: { '@type': 'PostalAddress', streetAddress: s.adresse.split(',')[0], postalCode: (s.adresse.match(/\b\d{5}\b/) || [''])[0], addressLocality: s.ville.replace(/ \d+e$/, ''), addressCountry: 'FR' },
   geo: { '@type': 'GeoCoordinates', latitude: s.lat, longitude: s.lng }, hasMenu: abs(s.id + '/#carte'),
+  image: URL_SITE + 'photos/f-classique.webp',
+  // SEO 18/11 : les memes horaires que ceux affiches sur l'accueil (donnees.mjs).
+  openingHoursSpecification: s.semaine.map((x, j) => x && { '@type': 'OpeningHoursSpecification', dayOfWeek: 'https://schema.org/' + JOURS_EN[j], opens: hhmm(x[0]), closes: hhmm(x[1]) }).filter(Boolean),
   potentialAction: { '@type': 'OrderAction', target: abs(s.id + '/') },
 });
+const JOURS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function hhmm(h) { return String(Math.floor(h) % 24).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0'); }
+const CP = (s) => (s.adresse.match(/\b\d{5}\b/) || [''])[0];
 
 /* ---------------- La carte (Nicolas, 2026-10-14) ----------------
    « Tu as qu'a la designer, c'est mieux qu'une API », puis « faut qu'elle
@@ -159,7 +165,7 @@ const dispo = (snack) => (i) => !i.seulement || i.seulement.includes(snack.id);
 const PAGES = [];
 PAGES.push(['', {
   titre: 'Anas Grill — Commande en ligne · Lyon et Isère',
-  description: `Commandez chez Anas Grill en ligne : sandwichs, tacos, burgers, formules à 10 €. ${SNACKS.length} restaurants à Lyon, Villeurbanne, Vénissieux, Vaulx-en-Velin, Rillieux et Bourgoin-Jallieu.`,
+  description: `Commande en ligne Anas Grill : sandwichs, tacos, burgers, formules à 10 €. ${SNACKS.length} snacks à Lyon, Villeurbanne, Vénissieux, Vaulx, Rillieux, Bourgoin.`,
   classe: 'page-choix',
   scripts: ['choix.js', 'retour.js'],
   // Arrivee (retour de Nicolas, 2026-10-14) : la carte reduite au minimum,
@@ -233,7 +239,7 @@ const ligne = (i) => `
 for (const s of SNACKS) {
   PAGES.push([s.id + '/', {
     titre: `Anas Grill ${s.nom} — Commande en ligne, formules à 10 €`,
-    description: `Commandez chez Anas Grill ${s.nom} (${s.adresse}) : formules à 10 €, sandwichs, tacos, burgers. À emporter, paiement en ligne, prêt à l’heure.`,
+    description: `Anas Grill ${s.nom} (${CP(s)}) : formules à 10 €, sandwichs, tacos, burgers. Commande en ligne à emporter, prête à l’heure.`,
     classe: 'page-snack',
     schemas: [restaurantSchema(s)],
     scripts: ['commande.js', 'retour.js'],
@@ -262,6 +268,10 @@ for (const s of SNACKS) {
       <ul class="plats">${c.items.filter(dispo(s)).map(ligne).join('')}
       </ul>
     </section>`).join('')}
+    <section class="categorie snack-infos" id="infos">
+      <h2>Ton snack à ${esc(s.ville.replace(/ \d+e$/, ''))}</h2>
+      <p class="categorie-intro">Anas Grill ${esc(s.nom)}, ${esc(s.adresse)}. Ouvert ${esc(s.horaires)}. Commande en ligne à emporter : choisis tes plats, paie en ligne ou sur place, et récupère ta commande prête à l’heure. Une question ? <a href="tel:${s.tel.replace(/\s/g, '')}">${esc(s.tel)}</a></p>
+    </section>
   </div>
 </main>
 
@@ -361,7 +371,7 @@ for (const [dossier, titre, js, tr, avant] of [['cuisine', 'Cuisine', 'cuisine.j
   fs.writeFileSync(path.join(ICI, dossier, 'version.json'), JSON.stringify({ v: V }));
 }
 
-fs.writeFileSync(path.join(ICI, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${PAGES.filter(([c]) => !/mentions|cgv|suivi/.test(c)).map(([c]) => `  <url><loc>${abs(c)}</loc></url>`).join('\n')}\n</urlset>\n`);
+fs.writeFileSync(path.join(ICI, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${PAGES.filter(([c]) => !/mentions|cgv|suivi/.test(c)).map(([c]) => `  <url><loc>${abs(c)}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>`).join('\n')}\n</urlset>\n`);
 fs.writeFileSync(path.join(ICI, 'version.json'), JSON.stringify({ v: V }));
 fs.writeFileSync(path.join(ICI, 'robots.txt'), PROD ? `User-agent: *\nAllow: /\n\nSitemap: ${URL_SITE}sitemap.xml\n` : `# Apercu : pas d'indexation.\nUser-agent: *\nDisallow: /\n`);
 fs.writeFileSync(path.join(ICI, '.nojekyll'), '');
