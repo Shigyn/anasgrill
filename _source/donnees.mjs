@@ -14,9 +14,11 @@
 // null = ferme ce jour-la ; une fermeture <= ouverture tombe apres minuit.
 const SEMAINES = {
   'bourgoin-jallieu': [[12, 23], [11.5, 23], [11.5, 23], [11.5, 23], [11.5, 23], [17, 1], [12, 1]],
+  // Oullins (8e snack, 19/11) : horaires de sa fiche Google, fermeture a minuit (0 = apres minuit).
+  oullins: [[12, 0], [11, 0], [11, 0], [11, 0], [11, 0], [17, 0], [12, 0]],
 };
 const JOURS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
-const heure = (h) => Math.floor(h) + ' h' + (h % 1 ? ' ' + String(Math.round((h % 1) * 60)).padStart(2, '0') : '');
+const heure = (h) => h === 0 ? 'minuit' : Math.floor(h) + ' h' + (h % 1 ? ' ' + String(Math.round((h % 1) * 60)).padStart(2, '0') : '');
 // « 11 h – 1 h », ou « lun – jeu 11 h 30 – 23 h · ven 17 h – 1 h · … » (semaine lue du lundi au dimanche).
 function texteHoraires(sem) {
   const t = (x) => (x ? heure(x[0]) + ' – ' + heure(x[1]) : 'fermé');
@@ -34,6 +36,7 @@ export const SNACKS = [
   { id: 'la-duchere', nom: 'La Duchère', ville: 'Lyon 9e', adresse: '3 allée Victor Muhlstein, 69009 Lyon', tel: '06 63 29 79 47', lat: 45.7867347, lng: 4.7932779, note: '4,7', avis: 71 },
   { id: 'rillieux-la-pape', nom: 'Rillieux-la-Pape', ville: 'Rillieux-la-Pape', adresse: '3070 route de Strasbourg, 69140 Rillieux-la-Pape', tel: '06 59 26 08 96', lat: 45.8209225, lng: 4.8982348, note: '4,7', avis: 101 },
   { id: 'vaulx-en-velin', nom: 'Vaulx-en-Velin', ville: 'Vaulx-en-Velin', adresse: '18 avenue Eugène Hénaff, 69120 Vaulx-en-Velin', tel: '06 05 71 17 65', lat: 45.7742965, lng: 4.9277551, note: '4,4', avis: 24 },
+  { id: 'oullins', nom: 'Oullins', ville: 'Oullins-Pierre-Bénite', adresse: '25 boulevard John Fitzgerald Kennedy, 69600 Oullins-Pierre-Bénite', tel: '06 59 99 29 27', lat: 45.71864, lng: 4.7910412, note: '4,6', avis: 169 },
   { id: 'venissieux', nom: 'Vénissieux', ville: 'Vénissieux', adresse: '61 boulevard Laurent Gérin, 69200 Vénissieux', tel: '07 53 91 82 47', lat: 45.7010038, lng: 4.8838309, note: '4,7', avis: 34 },
   // Pont-de-Cheruy retire le 16/10 : ce snack n'existe pas (Hakim).
   { id: 'bourgoin-jallieu', nom: 'Bourgoin-Jallieu', ville: 'Bourgoin-Jallieu', adresse: '49 avenue Gambetta, 38300 Bourgoin-Jallieu', tel: '07 75 43 84 16', lat: 45.5886073, lng: 5.2727873, note: '4,6', avis: 246 },
