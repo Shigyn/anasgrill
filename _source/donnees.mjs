@@ -294,8 +294,13 @@ const FORMULES = {
 };
 // « 1 frite ou potatoes cheddar gruyere » dans chaque formule (panneau du 16/10).
 const G_ACCOMP = { id: 'accompagnement', titre: 'Ton accompagnement', min: 1, max: 1, options: o(['Frites cheddar gruyère', 'Potatoes cheddar gruyère']) };
+// Une seule sauce pour les deux plats d'une formule (Hakim via Nicolas, 19/11 : un client avait mis
+// sauce burger dans le rolls et une autre dans le sandwich, la boutique ne le fait pas). Des que deux
+// plats d'une formule ont leur sauce au choix, ils partagent un seul choix, pose apres les plats.
+const sauceAuChoix = (p) => !(p.sauces === 0 || p.sauceFixe || p.simple);
 for (const c of CARTE) for (const i of c.items) {
   const parts = FORMULES[i.id]; if (!parts) continue;
+  const commune = parts.filter(sauceAuChoix).length >= 2;
   i.groupes = parts.flatMap((p, n) => {
     const tag = { partie: p.titre, court: p.court };
     // Formules « simples » : leur « Sans… » (legumes, sauce, fromage) reste tel quel, la sauce y est imposee.
@@ -309,9 +314,10 @@ for (const c of CARTE) for (const i of c.items) {
       // Sauce imposee (Riad, 08/11) : on la dit, sans la faire choisir.
       ...(p.sauceFixe ? [{ id: 'info-sauce-' + n, type: 'info', texte: p.sauceFixe + ', comme en boutique.', ...tag }] : []),
       // Un croc's (croque-monsieur) ne prend pas de sauce : pas de carte Sauces.
-      ...(p.sauces === 0 || p.sauceFixe || p.simple ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
+      ...(!sauceAuChoix(p) || commune ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
     ];
   });
+  if (commune) i.groupes.push({ ...SAUCES_G(2), id: 'sauces-communes', aide: 'la même pour les deux, jusqu’à 2, ou sans sauce', partie: 'La sauce, la même pour les deux', court: 'Les deux' });
 }
 
 /* ---------------- boissons et desserts (Hakim, 15/10) ----------------
