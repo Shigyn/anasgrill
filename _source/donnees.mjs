@@ -297,6 +297,7 @@ const G_ACCOMP = { id: 'accompagnement', titre: 'Ton accompagnement', min: 1, ma
 // Une seule sauce pour les deux plats d'une formule (Hakim via Nicolas, 19/11 : un client avait mis
 // sauce burger dans le rolls et une autre dans le sandwich, la boutique ne le fait pas). Des que deux
 // plats d'une formule ont leur sauce au choix, ils partagent un seul choix, pose apres les plats.
+// Et la sauce gruyere en plus, toujours (Hakim, 19/11 : « 2 sauces plus sauce gruyere »).
 const sauceAuChoix = (p) => !(p.sauces === 0 || p.sauceFixe || p.simple);
 for (const c of CARTE) for (const i of c.items) {
   const parts = FORMULES[i.id]; if (!parts) continue;
@@ -317,7 +318,7 @@ for (const c of CARTE) for (const i of c.items) {
       ...(!sauceAuChoix(p) || commune ? [] : [{ ...SAUCES_G(p.sauces || 2), id: 'sauces-' + n, ...tag }]),
     ];
   });
-  if (commune) i.groupes.push({ ...SAUCES_G(2), id: 'sauces-communes', aide: 'la même pour les deux, jusqu’à 2, ou sans sauce', partie: 'La sauce, la même pour les deux', court: 'Les deux' });
+  if (commune) i.groupes.push({ ...SAUCES_G(2), id: 'sauces-communes', aide: 'jusqu’à 2, la même pour les deux, + sauce gruyère', plus: 'sauce gruyère', partie: 'La sauce, la même pour les deux', court: 'Les deux' });
 }
 
 /* ---------------- boissons et desserts (Hakim, 15/10) ----------------

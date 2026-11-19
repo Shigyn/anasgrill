@@ -418,7 +418,7 @@
     return [g].map(function (g) {
       if (g.type === 'retirer') return (choix[g.id] || []).map(function (n) { return 'sans ' + n.toLowerCase(); }).join(', ');
       if (g.type === 'crudites') return (choix[g.id] || [])[0] === SANS_CRUDITES ? 'sans crudités' : (choix[g.id] || []).length ? 'avec ' + choix[g.id].join(', ').toLowerCase() : '';
-      if (g.type === 'sauces') return (choix[g.id] || [])[0] === 'Sans sauce' ? 'sans sauce' : (choix[g.id] || []).length ? 'sauce ' + fmtSauces(choix[g.id]).toLowerCase() : '';
+      if (g.type === 'sauces') return ((choix[g.id] || [])[0] === 'Sans sauce' ? 'sans sauce' : (choix[g.id] || []).length ? 'sauce ' + fmtSauces(choix[g.id]).toLowerCase() : '') + (g.plus && (choix[g.id] || []).length ? ' + ' + g.plus : '');
       if (g.prefixe) return (choix[g.id] || []).length ? g.prefixe + choix[g.id].join(', ').toLowerCase() : '';
       var c = (choix[g.id] || []).filter(function (n) { return !/^Seul$|^Normal/.test(n); });
       return c.length ? c.join(', ') : '';
